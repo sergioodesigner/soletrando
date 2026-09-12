@@ -1,0 +1,109 @@
+// Service Worker for "Aprender Letras & Matemática"
+const CACHE_NAME = 'aprender-offline-v1';
+const AUDIO_CACHE = 'aprender-audio-kore-v1';
+
+const STATIC_ASSETS = [
+  '/',
+  '/manifest.webmanifest',
+  '/icon.svg',
+  '/globals.css'
+];
+
+// Install: Cache essential app shell assets
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(STATIC_ASSETS).catch((err) => {
+        console.warn('SW pre-cache warning:', err);
+      });
+    }).then(() => self.skipWaiting())
+  );
+});
+
+// Activate: Clean up old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME && key !== AUDIO_CACHE) {
+            return caches.delete(key);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+// Fetch: Smart routing for offline capability
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // 1. Audio files (/audio/kore/*.wav) - Cache First with Network Fallback
+  if (url.pathname.startsWith('/audio/kore/')) {
+    event.respondWith(
+      caches.open(AUDIO_CACHE).then(async (cache) => {
+        const cachedResponse = await cache.match(request);
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        try {
+          const networkResponse = await fetch(request);
+          if (networkResponse.ok) {
+            cache.put(request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch (err) {
+          // If offline and not in cache, return fallback if available
+          return new Response(null, { status: 404, statusText: 'Audio Not Found Offline' });
+        }
+      })
+    );
+    return;
+  }
+
+  // 2. Navigation requests (HTML pages) - Network First with Cache Fallback
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).then((response) => {
+        if (response.ok) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+        }
+        return response;
+      }).catch(() => {
+        return caches.match('/') || caches.match(request);
+      })
+    );
+    return;
+  }
+
+  // 3. Static assets (_next/static, css, js, images) - Stale While Revalidate
+  if (
+    url.pathname.startsWith('/_next/static/') ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('.svg') ||
+    url.pathname.endsWith('.png')
+  ) {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        const fetchPromise = fetch(request).then((networkResponse) => {
+          if (networkResponse.ok) {
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, networkResponse.clone()));
+          }
+          return networkResponse;
+        }).catch(() => cachedResponse);
+
+        return cachedResponse || fetchPromise;
+      })
+    );
+    return;
+  }
+
+  // Default network fetch for other endpoints
+  event.respondWith(
+    fetch(request).catch(() => caches.match(request))
+  );
+});

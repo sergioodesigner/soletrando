@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#3730a3" />
+    </linearGradient>
+    <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Base background with rounded corners -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Inner glowing circle / badge -->
+  <circle cx="256" cy="256" r="190" fill="#ffffff" opacity="0.1" />
+
+  <!-- Main Character 'A' -->
+  <g filter="url(#shadow)">
+    <!-- Stylized Alphabet Letter A -->
+    <path d="M190 350 L234 165 C237 150 250 142 264 142 C278 142 291 150 294 165 L338 350 C342 368 328 382 310 382 C298 382 288 373 285 362 L274 316 L242 316 L231 362 C228 373 218 382 206 382 C188 382 174 368 178 350 Z M258 240 L248 282 L268 282 Z" fill="#ffffff" />
+  </g>
+
+  <!-- Math Symbol '+' on upper right -->
+  <g transform="translate(340, 150)">
+    <circle cx="0" cy="0" r="42" fill="url(#starGrad)" />
+    <path d="M-18 0 L18 0 M0 -18 L0 18" stroke="#ffffff" stroke-width="10" stroke-linecap="round" />
+  </g>
+
+  <!-- Star Sparkle on upper left -->
+  <path d="M130 140 Q145 155 160 155 Q145 155 130 170 Q130 155 115 155 Q130 155 130 140 Z" fill="#fde047" />
+
+  <!-- Equal symbol '=' bottom right -->
+  <g transform="translate(355, 340)">
+    <circle cx="0" cy="0" r="32" fill="#10b981" />
+    <path d="M-12 -6 L12 -6 M-12 6 L12 6" stroke="#ffffff" stroke-width="7" stroke-linecap="round" />
+  </g>
+</svg>

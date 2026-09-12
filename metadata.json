@@ -1,0 +1,6 @@
+{
+  "name": "Aprender Letras & Matemática",
+  "description": "Aplicativo educativo com fases de letras, soletração e matemática para crianças e jovens, com suporte offline completo e voz natural Kore.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
