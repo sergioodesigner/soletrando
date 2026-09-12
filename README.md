@@ -34,7 +34,16 @@ node scripts/generate_elevenlabs_audios.mjs
 node scripts/generate_elevenlabs_audios.mjs --force
 ```
 
-## Deploy na Vercel
+## Modo TV (controle remoto)
+
+Abra na Smart TV e use **setas + OK**:
+
+- Link direto: `https://SEU-DOMINIO/?tv=1`
+- Ou toque em **Modo TV** no canto superior
+- Setas movem o destaque amarelo; **OK/Enter** confirma
+
+Detecta automaticamente várias Smart TVs (Tizen, webOS, Android TV, etc.).
+
 
 1. Importe o repositório [sergioodesigner/soletrando](https://github.com/sergioodesigner/soletrando) na Vercel.
 2. Framework: **Next.js** (detectado automaticamente).

@@ -1,1 +1,115 @@
 @import "tailwindcss";
+
+/* --------------------------------------------------
+   Modo TV — 10-foot UI + D-pad (controle remoto)
+   Ativado via html.tv-mode (hook useTvMode)
+-------------------------------------------------- */
+
+html.tv-mode {
+  font-size: 20px;
+}
+
+html.tv-mode body {
+  overflow-x: hidden;
+  cursor: none;
+}
+
+html.tv-mode.tv-cursor body {
+  cursor: auto;
+}
+
+/* Foco bem visível para setas/OK do controle */
+html.tv-mode :is(button, a, input, select, textarea, [tabindex]):focus {
+  outline: 4px solid #fbbf24 !important;
+  outline-offset: 6px !important;
+  box-shadow:
+    0 0 0 10px rgba(251, 191, 36, 0.35),
+    0 12px 40px rgba(15, 23, 42, 0.25) !important;
+  transform: scale(1.05);
+  z-index: 5;
+  position: relative;
+}
+
+html.tv-mode :is(button, a):focus:not(:focus-visible) {
+  /* TVs antigas só disparam :focus — manter anel sempre */
+  outline: 4px solid #fbbf24 !important;
+}
+
+html.tv-mode .tv-shell {
+  max-width: 1400px;
+  margin-inline: auto;
+  min-height: 100dvh;
+  padding: 1.25rem 2rem 2rem;
+}
+
+html.tv-mode .tv-header {
+  gap: 1rem;
+  padding-bottom: 1rem;
+}
+
+html.tv-mode .tv-banner {
+  display: flex;
+}
+
+html.tv-mode .tv-letter-tile {
+  width: 5.5rem !important;
+  height: 5.5rem !important;
+  font-size: 2.75rem !important;
+  min-width: 5.5rem;
+  min-height: 5.5rem;
+}
+
+html.tv-mode .tv-word-slot {
+  width: 4.5rem !important;
+  height: 6rem !important;
+  font-size: 2.75rem !important;
+  border-width: 4px !important;
+}
+
+html.tv-mode .tv-action-btn {
+  min-height: 4.5rem;
+  font-size: 1.15rem !important;
+  padding: 1rem 1.25rem !important;
+  border-radius: 1.25rem !important;
+}
+
+html.tv-mode .tv-math-option {
+  min-height: 5rem !important;
+  font-size: 1.75rem !important;
+  border-radius: 1.25rem !important;
+}
+
+html.tv-mode .tv-nav-chip {
+  min-height: 3.25rem;
+  min-width: 3.25rem;
+  padding: 0.75rem 1rem !important;
+  font-size: 1rem !important;
+}
+
+html.tv-mode .tv-hide-on-tv {
+  display: none !important;
+}
+
+html.tv-mode .tv-show-on-tv {
+  display: flex !important;
+}
+
+.tv-banner,
+.tv-show-on-tv {
+  display: none;
+}
+
+/* Área de jogo mais larga na TV */
+html.tv-mode main.tv-main {
+  max-width: 1100px;
+  width: 100%;
+  padding-top: 0.5rem;
+  padding-bottom: 1.5rem;
+}
+
+/* Evita hover “fantasma” em TVs com ponteiro virtual */
+@media (hover: none) {
+  html.tv-mode button:hover {
+    filter: none;
+  }
+}

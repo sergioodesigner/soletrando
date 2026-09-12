@@ -25,7 +25,8 @@ import {
   Wifi,
   WifiOff,
   HelpCircle,
-  Smartphone
+  Smartphone,
+  Tv
 } from 'lucide-react';
 import { 
   playSmartAudio, 
@@ -41,6 +42,8 @@ import {
 } from '@/lib/audioEngine';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useTvMode } from '@/hooks/useTvMode';
+import { initTvSpatialNavigation, focusFirstTvControl } from '@/lib/tvSpatialNav';
 
 // Normalize word to uppercase, remove accents and special chars
 const normalizeWord = (w: string) => 
@@ -414,6 +417,7 @@ interface LettersStageProps {
   onWinStar: () => void;
   speakAudio: (text: string, staticKey?: string) => Promise<void>;
   isAudioLoading: boolean;
+  tvMode?: boolean;
 }
 
 function LettersStage({
@@ -426,7 +430,8 @@ function LettersStage({
   totalWords,
   onWinStar,
   speakAudio,
-  isAudioLoading
+  isAudioLoading,
+  tvMode = false
 }: LettersStageProps) {
   const currentWord = wordObj.word;
   const [spelledCount, setSpelledCount] = useState(0);
@@ -455,6 +460,15 @@ function LettersStage({
   const questionSpeechText = wordObj.clue
     ? `Desafio de Soletrar! Pista: ${wordObj.clue}. Qual é a palavra? É ${formatWordForSpeech(currentWord)}! Toque nas letras para soletrar.`
     : `Desafio de Soletrar! Soletre a palavra: ${formatWordForSpeech(currentWord)}! Toque nas letras na ordem certa para formar a palavra.`;
+
+  useEffect(() => {
+    if (!tvMode) return;
+    const t = window.setTimeout(() => {
+      const firstLetter = document.querySelector<HTMLElement>('#letter-bank button');
+      (firstLetter || document.querySelector<HTMLElement>('#btn-speak-next-letter'))?.focus();
+    }, 120);
+    return () => clearTimeout(t);
+  }, [tvMode, currentWord]);
 
   const handleSpeakQuestion = () => {
     playSoundFx('pop');
@@ -547,10 +561,10 @@ function LettersStage({
           <button
             id="prev-word-btn"
             onClick={onPrevWord}
-            className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 shadow-xs active:scale-95 transition-all"
+            className={`tv-nav-chip p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 shadow-xs active:scale-95 transition-all ${tvMode ? 'p-4' : ''}`}
             title="Palavra anterior"
           >
-            <ChevronLeft size={22} />
+            <ChevronLeft size={tvMode ? 32 : 22} />
           </button>
 
           <div className="flex items-center gap-2">
@@ -570,10 +584,10 @@ function LettersStage({
           <button
             id="next-word-btn"
             onClick={onNextWord}
-            className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 shadow-xs active:scale-95 transition-all"
+            className={`tv-nav-chip p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 shadow-xs active:scale-95 transition-all ${tvMode ? 'p-4' : ''}`}
             title="Próxima palavra"
           >
-            <ChevronRight size={22} />
+            <ChevronRight size={tvMode ? 32 : 22} />
           </button>
         </div>
 
@@ -615,16 +629,16 @@ function LettersStage({
       </div>
 
       {/* Prominent Speech Action Buttons */}
-      <div className="w-full max-w-md mx-auto grid grid-cols-2 gap-2.5 sm:gap-3 my-2">
+      <div className={`w-full mx-auto grid grid-cols-2 gap-2.5 sm:gap-3 my-2 ${tvMode ? 'max-w-3xl gap-4' : 'max-w-md'}`}>
         {/* Botão 1: Falar Palavra Toda */}
         <button
           id="btn-speak-full-word"
           onClick={handleSpeakFullWord}
-          className="flex items-center justify-center gap-2.5 px-3 py-3 sm:py-3.5 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 active:scale-95 text-white rounded-2xl font-black shadow-md border-b-4 border-indigo-800 transition-all text-xs sm:text-sm group"
+          className={`tv-action-btn flex items-center justify-center gap-2.5 px-3 py-3 sm:py-3.5 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 active:scale-95 text-white rounded-2xl font-black shadow-md border-b-4 border-indigo-800 transition-all text-xs sm:text-sm group ${tvMode ? 'text-base py-5' : ''}`}
           title="Falar e ouvir a palavra toda"
         >
           <div className="p-1.5 rounded-xl bg-white/20 group-hover:bg-white/30 transition-colors">
-            <Volume2 size={22} className="text-white shrink-0" />
+            <Volume2 size={tvMode ? 28 : 22} className="text-white shrink-0" />
           </div>
           <div className="flex flex-col text-left leading-tight">
             <span className="text-[10px] sm:text-xs text-indigo-100 font-semibold uppercase tracking-wider">
@@ -639,9 +653,10 @@ function LettersStage({
         {/* Botão 2: Falar Próxima Letra */}
         <button
           id="btn-speak-next-letter"
+          data-tv-autofocus
           onClick={handleSpeakNextLetter}
           disabled={isLetterCelebrating || !expectedChar}
-          className="flex items-center justify-center gap-2.5 px-3 py-3 sm:py-3.5 bg-gradient-to-br from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 active:scale-95 text-amber-950 rounded-2xl font-black shadow-md border-b-4 border-amber-700 transition-all text-xs sm:text-sm disabled:opacity-50 group"
+          className={`tv-action-btn flex items-center justify-center gap-2.5 px-3 py-3 sm:py-3.5 bg-gradient-to-br from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 active:scale-95 text-amber-950 rounded-2xl font-black shadow-md border-b-4 border-amber-700 transition-all text-xs sm:text-sm disabled:opacity-50 group ${tvMode ? 'text-base py-5' : ''}`}
           title="Falar e ouvir apenas a próxima letra"
         >
           <div className="p-1.5 rounded-xl bg-amber-600/20 group-hover:bg-amber-600/30 transition-colors">
@@ -659,14 +674,14 @@ function LettersStage({
       </div>
 
       {/* Target Word Slots Area */}
-      <div className="my-auto py-4 flex flex-wrap items-center justify-center gap-2 sm:gap-3 max-w-full">
+      <div className={`my-auto py-4 flex flex-wrap items-center justify-center gap-2 sm:gap-3 max-w-full ${tvMode ? 'gap-4 py-6' : ''}`}>
         {currentWord.split('').map((char, idx) => {
           const isSpelled = idx < spelledCount;
           const isCurrent = idx === spelledCount;
           return (
             <div
               key={idx}
-              className={`relative flex items-center justify-center rounded-2xl font-black transition-all duration-200 ${
+              className={`tv-word-slot relative flex items-center justify-center rounded-2xl font-black transition-all duration-200 ${
                 ageGroup === '3-5'
                   ? 'w-14 h-20 sm:w-20 sm:h-24 text-4xl sm:text-6xl border-4'
                   : 'w-11 h-16 sm:w-16 sm:h-20 text-3xl sm:text-5xl border-3 sm:border-4'
@@ -692,15 +707,19 @@ function LettersStage({
 
       {/* Interactive Letter Bank */}
       <div className="w-full flex flex-col items-center mt-4">
-        <div className="flex flex-wrap justify-center gap-2 sm:gap-3 max-w-lg mb-4">
-          {letterBank.map((item) => {
+        <div
+          id="letter-bank"
+          className={`flex flex-wrap justify-center gap-2 sm:gap-3 mb-4 ${tvMode ? 'max-w-4xl gap-4' : 'max-w-lg'}`}
+        >
+          {letterBank.map((item, idx) => {
             const isWrong = wrongLetterId === item.id;
             const isHint = hintLetterId === item.id;
             return (
               <button
                 key={item.id}
+                data-tv-autofocus={idx === 0 ? true : undefined}
                 onClick={() => handleLetterClick(item)}
-                className={`relative font-black rounded-2xl shadow-sm border-b-4 active:border-b-0 active:translate-y-1 transition-all duration-150 select-none ${
+                className={`tv-letter-tile relative font-black rounded-2xl shadow-sm border-b-4 active:border-b-0 active:translate-y-1 transition-all duration-150 select-none ${
                   isWrong
                     ? 'bg-rose-100 border-rose-400 text-rose-700 animate-bounce'
                     : isHint
@@ -719,15 +738,15 @@ function LettersStage({
         </div>
 
         {/* Action Controls: Shuffle & Hint */}
-        <div className="flex items-center gap-3">
+        <div className={`flex items-center gap-3 ${tvMode ? 'gap-5 mt-2' : ''}`}>
           <button
             id="btn-shuffle-letters"
             onClick={handleManualShuffle}
             disabled={isLetterCelebrating}
-            className="flex items-center gap-1.5 px-4 py-3 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-bold text-sm sm:text-base shadow-xs active:scale-95 transition-all disabled:opacity-50"
+            className={`tv-action-btn flex items-center gap-1.5 px-4 py-3 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-bold text-sm sm:text-base shadow-xs active:scale-95 transition-all disabled:opacity-50 ${tvMode ? 'px-8 py-4 text-lg' : ''}`}
             title="Embaralhar as letras disponíveis"
           >
-            <Shuffle size={18} />
+            <Shuffle size={tvMode ? 24 : 18} />
             <span>Embaralhar</span>
           </button>
 
@@ -735,9 +754,9 @@ function LettersStage({
             id="btn-hint-letter"
             onClick={giveLetterHint}
             disabled={isLetterCelebrating || spelledCount >= currentWord.length}
-            className="flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50"
+            className={`tv-action-btn flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-4 text-xl' : ''}`}
           >
-            <Lightbulb size={20} className="fill-amber-100 text-amber-900" />
+            <Lightbulb size={tvMode ? 26 : 20} className="fill-amber-100 text-amber-900" />
             <span>DICA</span>
           </button>
         </div>
@@ -759,6 +778,7 @@ interface MathStageProps {
   onWinStar: () => void;
   speakAudio: (text: string, staticKey?: string) => Promise<void>;
   isAudioLoading: boolean;
+  tvMode?: boolean;
 }
 
 function MathStage({
@@ -770,7 +790,8 @@ function MathStage({
   totalProblems,
   onWinStar,
   speakAudio,
-  isAudioLoading
+  isAudioLoading,
+  tvMode = false
 }: MathStageProps) {
   const [selectedMathOption, setSelectedMathOption] = useState<number | string | null>(null);
   const [mathWrongOption, setMathWrongOption] = useState<number | string | null>(null);
@@ -950,23 +971,24 @@ function MathStage({
 
       {/* Answer Options Grid */}
       <div className="w-full mt-6">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-lg mx-auto mb-6">
+        <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 mx-auto mb-6 ${tvMode ? 'max-w-3xl gap-5' : 'max-w-lg'}`}>
           {problem.options.map((opt, idx) => {
             const isCorrect = selectedMathOption === opt;
             const isWrong = mathWrongOption === opt;
             return (
               <motion.button
                 key={idx}
-                whileHover={{ scale: 1.02 }}
+                data-tv-autofocus={idx === 0 ? true : undefined}
+                whileHover={tvMode ? undefined : { scale: 1.02 }}
                 whileTap={{ scale: 0.96 }}
                 onClick={() => handleMathOptionClick(opt)}
-                className={`relative font-black rounded-2xl border-b-4 py-4 sm:py-5 text-2xl sm:text-3xl shadow-sm transition-all flex items-center justify-center active:border-b-0 active:translate-y-1 ${
+                className={`tv-math-option relative font-black rounded-2xl border-b-4 py-4 sm:py-5 text-2xl sm:text-3xl shadow-sm transition-all flex items-center justify-center active:border-b-0 active:translate-y-1 ${
                   isCorrect
                     ? 'bg-emerald-500 border-emerald-700 text-white'
                     : isWrong
                       ? 'bg-red-100 border-red-400 text-red-700'
                       : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50'
-                }`}
+                } ${tvMode ? 'py-8 text-4xl' : ''}`}
               >
                 {opt}
               </motion.button>
@@ -980,9 +1002,9 @@ function MathStage({
             id="btn-hint-math"
             onClick={giveMathHint}
             disabled={isMathCelebrating}
-            className="flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50"
+            className={`tv-action-btn flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-5 text-xl' : ''}`}
           >
-            <Lightbulb size={20} className="fill-amber-100 text-amber-900" />
+            <Lightbulb size={tvMode ? 26 : 20} className="fill-amber-100 text-amber-900" />
             <span>AJUDA / DICA</span>
           </button>
         </div>
@@ -1007,6 +1029,7 @@ export default function EducationalApp() {
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const isOnline = useOnlineStatus();
   const { isInstallable, isInstalled, isIOS, install: installPWA } = usePWAInstall();
+  const { tvMode, toggleTvMode } = useTvMode();
   const [showIOSPrompt, setShowIOSPrompt] = useState(false);
 
   // Audio Strategy Settings
@@ -1046,6 +1069,21 @@ export default function EducationalApp() {
 
     getCachedAudioCount().then(setCachedAudioCount);
   }, []);
+
+  // Modo TV: setas do controle movem o foco; OK/Enter ativa o botão
+  useEffect(() => {
+    if (!tvMode) return;
+    const stopNav = initTvSpatialNavigation();
+    const t = window.setTimeout(() => focusFirstTvControl(), 200);
+    // Mostra cursor se houver mouse (TV com ponteiro)
+    const showCursor = () => document.documentElement.classList.add('tv-cursor');
+    window.addEventListener('mousemove', showCursor, { once: true });
+    return () => {
+      stopNav();
+      clearTimeout(t);
+      window.removeEventListener('mousemove', showCursor);
+    };
+  }, [tvMode, subject, ageGroup]);
 
   // Load custom words and audio mode from localStorage
   useEffect(() => {
@@ -1160,7 +1198,7 @@ export default function EducationalApp() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans select-none pb-8">
+    <div className={`min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans select-none pb-8 ${tvMode ? 'tv-shell pb-12' : ''}`}>
       {/* Offline Status Toast */}
       {mounted && !isOnline && (
         <div className="bg-amber-500 text-white px-4 py-1.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-xs transition-all">
@@ -1169,9 +1207,19 @@ export default function EducationalApp() {
         </div>
       )}
 
+      {/* Banner Modo TV */}
+      {tvMode && (
+        <div className="tv-banner bg-indigo-700 text-white px-4 py-2.5 text-sm sm:text-base font-bold items-center justify-center gap-3 shadow-sm">
+          <Tv size={20} className="shrink-0" />
+          <span>
+            Modo TV: use as <strong>setas</strong> do controle para navegar e <strong>OK</strong> para escolher
+          </span>
+        </div>
+      )}
+
       {/* Top Header & Console */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs px-3 sm:px-6 py-2.5">
-        <div className="max-w-3xl mx-auto flex flex-col gap-2">
+      <header className={`sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs px-3 sm:px-6 py-2.5 ${tvMode ? 'tv-header' : ''}`}>
+        <div className={`mx-auto flex flex-col gap-2 ${tvMode ? 'max-w-6xl gap-3' : 'max-w-3xl'}`}>
           
           {/* Top Row: Brand, PWA, Stars, Controls */}
           <div className="flex items-center justify-between">
@@ -1183,12 +1231,27 @@ export default function EducationalApp() {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Toggle Modo TV */}
+              <button
+                id="toggle-tv-mode-btn"
+                onClick={toggleTvMode}
+                className={`tv-nav-chip flex items-center gap-1.5 px-3 py-2 rounded-xl border font-extrabold text-xs shadow-2xs transition-all ${
+                  tvMode
+                    ? 'bg-indigo-600 border-indigo-500 text-white'
+                    : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+                }`}
+                title={tvMode ? 'Desativar modo TV' : 'Ativar modo TV (controle remoto)'}
+              >
+                <Tv size={16} />
+                <span className="hidden sm:inline">{tvMode ? 'TV ON' : 'Modo TV'}</span>
+              </button>
+
               {/* Install PWA Button if available */}
               {mounted && isInstallable && !isInstalled && (
                 <button
                   id="install-pwa-header-btn"
                   onClick={installPWA}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-extrabold text-xs shadow-2xs transition-all"
+                  className="tv-hide-on-tv hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-extrabold text-xs shadow-2xs transition-all"
                   title="Instalar aplicativo para usar offline"
                 >
                   <Smartphone size={15} />
@@ -1200,7 +1263,7 @@ export default function EducationalApp() {
               {mounted && isIOS && !isInstalled && (
                 <button
                   onClick={() => setShowIOSPrompt(true)}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200 font-extrabold text-xs shadow-2xs"
+                  className="tv-hide-on-tv hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200 font-extrabold text-xs shadow-2xs"
                   title="Como instalar no iPhone / iPad"
                 >
                   <Smartphone size={15} />
@@ -1224,24 +1287,24 @@ export default function EducationalApp() {
                   if (soundEnabled) stopAllAudio();
                   setSoundEnabled(!soundEnabled);
                 }}
-                className={`p-2 rounded-xl border transition-colors ${
+                className={`tv-nav-chip p-2 rounded-xl border transition-colors ${
                   soundEnabled 
                     ? 'bg-sky-50 border-sky-200 text-sky-600 hover:bg-sky-100' 
                     : 'bg-slate-100 border-slate-200 text-slate-400'
                 }`}
                 title={soundEnabled ? 'Áudio ativado' : 'Áudio desativado'}
               >
-                {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                {soundEnabled ? <Volume2 size={tvMode ? 24 : 18} /> : <VolumeX size={tvMode ? 24 : 18} />}
               </button>
 
               {/* Parents Settings */}
               <button
                 id="open-settings-button"
                 onClick={() => setShowSettingsModal(true)}
-                className="p-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200 transition-colors"
+                className={`tv-nav-chip p-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200 transition-colors ${tvMode ? 'tv-hide-on-tv' : ''}`}
                 title="Configurações dos Pais & Áudio"
               >
-                <Settings size={18} />
+                <Settings size={tvMode ? 24 : 18} />
               </button>
             </div>
           </div>
@@ -1284,7 +1347,7 @@ export default function EducationalApp() {
                       isSelected
                         ? 'bg-indigo-600 text-white shadow-xs ring-2 ring-indigo-300 font-black'
                         : 'text-slate-600 hover:bg-white/80 hover:text-slate-900 active:bg-slate-200 font-bold'
-                    }`}
+                    } ${tvMode ? 'tv-nav-chip min-h-[64px] text-base py-3' : ''}`}
                     title={`Faixa etária: ${fullLabels[age]} (${stageDesc[age]})`}
                   >
                     <span className="text-base leading-none">{icons[age]}</span>
@@ -1304,29 +1367,29 @@ export default function EducationalApp() {
           </div>
 
           {/* Third Row: Subject Switcher (Letras vs Matemática) */}
-          <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-2xl">
+          <div className={`grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-2xl ${tvMode ? 'gap-3 p-2' : ''}`}>
             <button
               id="tab-letras"
               onClick={() => handleSelectSubject('letras')}
-              className={`flex items-center justify-center gap-2 py-2 rounded-xl text-sm sm:text-base font-extrabold transition-all duration-200 ${
+              className={`tv-nav-chip flex items-center justify-center gap-2 py-2 rounded-xl text-sm sm:text-base font-extrabold transition-all duration-200 ${
                 subject === 'letras'
                   ? 'bg-white text-indigo-700 shadow-sm'
                   : 'text-slate-500 hover:text-slate-800'
-              }`}
+              } ${tvMode ? 'py-4 text-lg' : ''}`}
             >
-              <BookOpen size={18} />
+              <BookOpen size={tvMode ? 24 : 18} />
               <span>Letras & Palavras</span>
             </button>
             <button
               id="tab-matematica"
               onClick={() => handleSelectSubject('matematica')}
-              className={`flex items-center justify-center gap-2 py-2 rounded-xl text-sm sm:text-base font-extrabold transition-all duration-200 ${
+              className={`tv-nav-chip flex items-center justify-center gap-2 py-2 rounded-xl text-sm sm:text-base font-extrabold transition-all duration-200 ${
                 subject === 'matematica'
                   ? 'bg-white text-emerald-700 shadow-sm'
                   : 'text-slate-500 hover:text-slate-800'
-              }`}
+              } ${tvMode ? 'py-4 text-lg' : ''}`}
             >
-              <Calculator size={18} />
+              <Calculator size={tvMode ? 24 : 18} />
               <span>Matemática</span>
             </button>
           </div>
@@ -1334,7 +1397,7 @@ export default function EducationalApp() {
       </header>
 
       {/* Main Game Stage */}
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-4 sm:py-6 flex flex-col items-center justify-between">
+      <main className={`flex-1 w-full mx-auto px-4 py-4 sm:py-6 flex flex-col items-center justify-between ${tvMode ? 'tv-main max-w-5xl' : 'max-w-2xl'}`}>
         {subject === 'letras' ? (
           <LettersStage
             key={`letters-${ageGroup}-${wordIndex % currentWordList.length}-${activeWordObj.word}`}
@@ -1348,6 +1411,7 @@ export default function EducationalApp() {
             onWinStar={() => setStars(s => s + 1)}
             speakAudio={handleSpeak}
             isAudioLoading={isAudioLoading}
+            tvMode={tvMode}
           />
         ) : (
           <MathStage
@@ -1361,6 +1425,7 @@ export default function EducationalApp() {
             onWinStar={() => setStars(s => s + 1)}
             speakAudio={handleSpeak}
             isAudioLoading={isAudioLoading}
+            tvMode={tvMode}
           />
         )}
       </main>
@@ -1417,6 +1482,7 @@ export default function EducationalApp() {
               </h2>
               <button
                 onClick={() => setShowSettingsModal(false)}
+                data-tv-close
                 className="p-1.5 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
                 title="Fechar"
               >
@@ -1668,6 +1734,7 @@ export default function EducationalApp() {
 
             <button
               onClick={() => setShowSettingsModal(false)}
+              data-tv-close
               className="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white font-black py-2.5 rounded-xl shadow-md text-sm transition-all mt-2"
             >
               Voltar ao Jogo
