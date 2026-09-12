@@ -4,35 +4,50 @@
 import { getCachedAudio, saveCachedAudio, getCachedAudioCount, clearCachedAudios } from './audioStorage';
 import recordedManifest from './recordedAudioManifest.json';
 
-// Brazilian Portuguese phonetic letter names
+// Brazilian Portuguese phonetic letter names (for device TTS — ElevenLabs falha em letras isoladas)
 export const PT_LETTER_PHONETICS: Record<string, string> = {
-  A: 'A',
-  B: 'B',
-  C: 'C',
-  D: 'D',
-  E: 'E',
-  F: 'F',
-  G: 'G',
-  H: 'H',
+  A: 'Á',
+  B: 'Bê',
+  C: 'Cê',
+  D: 'Dê',
+  E: 'É',
+  F: 'Éfe',
+  G: 'Gê',
+  H: 'Agá',
   I: 'I',
-  J: 'J',
-  K: 'K',
-  L: 'L',
-  M: 'M',
-  N: 'N',
-  O: 'O',
-  P: 'P',
-  Q: 'Q',
-  R: 'R',
-  S: 'S',
-  T: 'T',
+  J: 'Jota',
+  K: 'Cá',
+  L: 'Éle',
+  M: 'Ême',
+  N: 'Êne',
+  O: 'Ó',
+  P: 'Pê',
+  Q: 'Quê',
+  R: 'Érre',
+  S: 'Ésse',
+  T: 'Tê',
   U: 'U',
-  V: 'V',
-  W: 'W',
-  X: 'X',
-  Y: 'Y',
-  Z: 'Z'
+  V: 'Vê',
+  W: 'Dáblio',
+  X: 'Xis',
+  Y: 'Ípsilon',
+  Z: 'Zê'
 };
+
+/** Só o toque na letra isolada usa voz do aparelho. “Próxima letra” continua com Bella. */
+export function isLetterSpeechKey(staticKey?: string): boolean {
+  if (!staticKey) return false;
+  return staticKey.startsWith('letra_');
+}
+
+export function isIsolatedLetterText(text: string): boolean {
+  const clean = text.trim();
+  if (clean.length === 1 && /[A-Za-zÀ-ÿÁÉÍÓÚáéíóúÂÊÔâêôÃÕãõÇç]/.test(clean)) {
+    return true;
+  }
+  const lower = clean.toLowerCase();
+  return Object.values(PT_LETTER_PHONETICS).some((p) => p.toLowerCase() === lower);
+}
 
 // Comprehensive pre-recorded audio library (WAV & MP3 files)
 // Includes all 26 letters, 10 counting numbers, all default words, clues, challenges, celebrations & math questions
@@ -151,7 +166,11 @@ export function getFriendlyPhoneticText(text: string): string {
   return text;
 }
 
-export function speakTunedLocal(text: string, enabled: boolean = true) {
+export function speakTunedLocal(
+  text: string,
+  enabled: boolean = true,
+  opts: { slowerForLetter?: boolean } = {}
+) {
   if (!enabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
   try {
     window.speechSynthesis.cancel();
@@ -159,8 +178,9 @@ export function speakTunedLocal(text: string, enabled: boolean = true) {
     const spokenText = getFriendlyPhoneticText(text);
     const utterance = new SpeechSynthesisUtterance(spokenText);
     utterance.lang = 'pt-BR';
-    utterance.rate = 0.88; // Slightly slower, clear pacing for kids
-    utterance.pitch = 1.08; // Friendly, warm, slightly elevated pitch
+    // Letras isoladas: mais lento e claro para crianças
+    utterance.rate = opts.slowerForLetter ? 0.78 : 0.88;
+    utterance.pitch = 1.08;
     if (voice) {
       utterance.voice = voice;
     }
@@ -202,7 +222,7 @@ export interface PlayAudioOptions {
   useKoreApi?: boolean;
   soundEnabled?: boolean;
   onLoadingChange?: (loading: boolean) => void;
-  onVoiceTypeUsed?: (type: 'kore_static' | 'kore_cached' | 'kore_api' | 'local_fallback') => void;
+  onVoiceTypeUsed?: (type: 'kore_static' | 'kore_cached' | 'kore_api' | 'local_fallback' | 'local_letter') => void;
 }
 
 let ttsQuotaCooldownUntil = 0;
@@ -235,11 +255,21 @@ export async function playSmartAudio(
   const cleanText = text.trim();
   const slugKey = staticKey || toAudioKey(cleanText);
 
+  // Letras isoladas: voz sintetizada do aparelho (pt-BR).
+  // ElevenLabs / áudios gravados costumam pronunciar letras de forma errada.
+  const useDeviceLetterVoice =
+    isLetterSpeechKey(staticKey) || isIsolatedLetterText(cleanText);
+
+  if (useDeviceLetterVoice) {
+    onVoiceTypeUsed?.('local_letter');
+    speakTunedLocal(cleanText, soundEnabled, { slowerForLetter: true });
+    return;
+  }
+
   // 1. TIER 1: Check Pre-recorded Audio Library (Instant 0ms, 100% Offline, Natural Voice)
   const candidateKeys = [
     staticKey,
     slugKey,
-    `letra_${slugKey}`,
     `proxima_letra_${slugKey}`,
     `palavra_${slugKey}`,
     `desafio_${slugKey}`,

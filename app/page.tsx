@@ -474,7 +474,7 @@ function LettersStage({
     const upper = expectedChar.toUpperCase();
     const phonetic = PT_LETTER_PHONETICS[upper] || upper;
     const staticKey = `proxima_letra_${upper.toLowerCase()}`;
-    speakAudio(`A próxima letra é: ${phonetic}!`, staticKey);
+    speakAudio(`A próxima letra é ${phonetic}!`, staticKey);
 
     const target = letterBank.find(x => x.char === expectedChar);
     if (target) {
@@ -1472,7 +1472,7 @@ export default function EducationalApp() {
                   </div>
 
                   <p className="text-xs text-indigo-900/90 leading-relaxed">
-                    O aplicativo possui <strong>277 falas gravadas em alta fidelidade</strong> já integradas (todas as letras, números de contagem, palavras, pistas, desafios e matemática). Elas tocam <strong>instantaneamente</strong> e funcionam <strong>100% offline</strong> sem depender de sintetizador ou APIs lentas.
+                    O aplicativo possui <strong>falas gravadas (voz Bella)</strong> para palavras, pistas, desafios, matemática e “próxima letra”. <strong>Toque na letra</strong> usa a voz sintetizada do aparelho em português brasileiro (mais clara para Á, Bê, Cê…). O restante toca <strong>instantaneamente</strong> e funciona <strong>offline</strong>.
                   </p>
 
                   <div className="grid grid-cols-1 gap-2 pt-1">
