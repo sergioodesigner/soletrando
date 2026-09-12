@@ -486,9 +486,8 @@ function LettersStage({
   const handleLetterClick = (item: LetterItem) => {
     if (isLetterCelebrating) return;
     const upper = item.char.toUpperCase();
-    const phonetic = PT_LETTER_PHONETICS[upper] || upper;
-    // Sem pop junto da fala — evita eco/sobreposição com a voz
-    speakAudio(phonetic, `letra_${upper.toLowerCase()}`);
+    // Fala o nome da letra sem forçar acento (A de CASA = "A", não "Á")
+    speakAudio(upper, `letra_${upper.toLowerCase()}`);
 
     if (item.char === expectedChar) {
       const newCount = spelledCount + 1;
@@ -1468,7 +1467,7 @@ export default function EducationalApp() {
                   </div>
 
                   <p className="text-xs text-indigo-900/90 leading-relaxed">
-                    O aplicativo possui <strong>falas gravadas (voz Bella)</strong> para palavras, pistas, desafios, matemática e “próxima letra”. <strong>Toque na letra</strong> usa a voz sintetizada do aparelho em português brasileiro (mais clara para Á, Bê, Cê…). O restante toca <strong>instantaneamente</strong> e funciona <strong>offline</strong>.
+                    O aplicativo possui <strong>falas gravadas (voz Bella)</strong> para palavras, pistas, desafios, matemática e “próxima letra”. <strong>Toque na letra</strong> usa a voz sintetizada do aparelho em português brasileiro (A, Bê, Cê…). O restante toca <strong>instantaneamente</strong> e funciona <strong>offline</strong>.
                   </p>
 
                   <div className="grid grid-cols-1 gap-2 pt-1">

@@ -4,33 +4,34 @@
 import { getCachedAudio, saveCachedAudio, getCachedAudioCount, clearCachedAudios } from './audioStorage';
 import recordedManifest from './recordedAudioManifest.json';
 
-// Brazilian Portuguese phonetic letter names (for device TTS — ElevenLabs falha em letras isoladas)
+// Nomes das letras para TTS do aparelho (soletrar).
+// Evitar Á/É/Ó — o sintetizador exagera o acento agudo (ex.: A de CASA virava “Á”).
 export const PT_LETTER_PHONETICS: Record<string, string> = {
-  A: 'Á',
+  A: 'A',
   B: 'Bê',
   C: 'Cê',
   D: 'Dê',
-  E: 'É',
-  F: 'Éfe',
+  E: 'E',
+  F: 'efe',
   G: 'Gê',
-  H: 'Agá',
+  H: 'agá',
   I: 'I',
-  J: 'Jota',
-  K: 'Cá',
-  L: 'Éle',
-  M: 'Ême',
-  N: 'Êne',
-  O: 'Ó',
+  J: 'jota',
+  K: 'cá',
+  L: 'ele',
+  M: 'eme',
+  N: 'ene',
+  O: 'O',
   P: 'Pê',
-  Q: 'Quê',
-  R: 'Érre',
-  S: 'Ésse',
+  Q: 'quê',
+  R: 'erre',
+  S: 'esse',
   T: 'Tê',
   U: 'U',
   V: 'Vê',
-  W: 'Dáblio',
-  X: 'Xis',
-  Y: 'Ípsilon',
+  W: 'dáblio',
+  X: 'xis',
+  Y: 'ípsilon',
   Z: 'Zê'
 };
 
@@ -173,11 +174,19 @@ let speakLocalTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Speak locally with tuned pitch & rate for educational warmth
 export function getFriendlyPhoneticText(text: string): string {
-  const clean = text.trim().toUpperCase();
+  // Remove acentos do input (ex.: "Á" → "A") para não forçar agudo no TTS
+  const clean = text
+    .trim()
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
   if (clean.length === 1 && PT_LETTER_PHONETICS[clean]) {
     return PT_LETTER_PHONETICS[clean];
   }
-  return text;
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
 export function speakTunedLocal(
