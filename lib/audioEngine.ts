@@ -52,14 +52,6 @@ export function isIsolatedLetterText(text: string): boolean {
 // Comprehensive pre-recorded audio library (WAV & MP3 files)
 // Includes all 26 letters, 10 counting numbers, all default words, clues, challenges, celebrations & math questions
 export const RECORDED_AUDIO_MAP: Record<string, string> = {
-  // Pre-generated Kore WAVs (priority)
-  'letra_b': '/audio/kore/letra_b.wav',
-  'proxima_letra_a': '/audio/kore/proxima_letra_a.wav',
-  'proxima_letra_b': '/audio/kore/proxima_letra_b.wav',
-  'proxima_letra_n': '/audio/kore/proxima_letra_n.wav',
-  'parabens_acertou': '/audio/kore/parabens_acertou.wav',
-  'fase_9_11': '/audio/kore/fase_9_11.wav',
-  // Pre-recorded Natural Brazilian Portuguese Voice Library (277+ files)
   ...(recordedManifest as Record<string, string>),
 };
 
@@ -67,57 +59,74 @@ export const RECORDED_AUDIO_MAP: Record<string, string> = {
 export const PREGENERATED_KORE_FILES: Record<string, string> = RECORDED_AUDIO_MAP;
 
 // Clean Web Audio Synthesizer for instant tactile sound feedback
+let sharedAudioCtx: AudioContext | null = null;
+
+function getFxAudioContext(): AudioContext | null {
+  if (typeof window === 'undefined') return null;
+  const AudioContextClass =
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!sharedAudioCtx || sharedAudioCtx.state === 'closed') {
+    sharedAudioCtx = new AudioContextClass();
+  }
+  if (sharedAudioCtx.state === 'suspended') {
+    sharedAudioCtx.resume().catch(() => {});
+  }
+  return sharedAudioCtx;
+}
+
 export function playSoundFx(type: 'correct' | 'wrong' | 'pop' | 'star' | 'shuffle') {
   if (typeof window === 'undefined') return;
   try {
-    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
+    const ctx = getFxAudioContext();
+    if (!ctx) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
     gain.connect(ctx.destination);
 
+    // Volumes baixos para não “ecoar” por cima da voz Bella / TTS
     if (type === 'correct') {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(440, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.25);
-      gain.gain.setValueAtTime(0.18, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
       osc.start();
-      osc.stop(ctx.currentTime + 0.25);
+      osc.stop(ctx.currentTime + 0.2);
     } else if (type === 'wrong') {
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(240, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(160, ctx.currentTime + 0.2);
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+      osc.frequency.exponentialRampToValueAtTime(160, ctx.currentTime + 0.14);
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.14);
       osc.start();
-      osc.stop(ctx.currentTime + 0.2);
+      osc.stop(ctx.currentTime + 0.14);
     } else if (type === 'pop') {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(560, ctx.currentTime);
-      gain.gain.setValueAtTime(0.1, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.045, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
       osc.start();
-      osc.stop(ctx.currentTime + 0.1);
+      osc.stop(ctx.currentTime + 0.08);
     } else if (type === 'shuffle') {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(320, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(580, ctx.currentTime + 0.14);
-      gain.gain.setValueAtTime(0.09, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.14);
+      osc.frequency.exponentialRampToValueAtTime(580, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.04, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
       osc.start();
-      osc.stop(ctx.currentTime + 0.14);
+      osc.stop(ctx.currentTime + 0.12);
     } else if (type === 'star') {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(523, ctx.currentTime);
-      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
-      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.2);
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.08);
+      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.16);
+      gain.gain.setValueAtTime(0.07, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
       osc.start();
-      osc.stop(ctx.currentTime + 0.35);
+      osc.stop(ctx.currentTime + 0.28);
     }
   } catch {
     // Web Audio fallback
@@ -157,6 +166,11 @@ export function pickBestDefaultPtVoice(): SpeechSynthesisVoice | null {
   return voices.find(v => v.lang.toLowerCase().startsWith('pt')) || null;
 }
 
+// In-memory audio player reference (antes de speakTunedLocal / stopAllAudio)
+let activeAudioElement: HTMLAudioElement | null = null;
+let playGeneration = 0;
+let speakLocalTimer: ReturnType<typeof setTimeout> | null = null;
+
 // Speak locally with tuned pitch & rate for educational warmth
 export function getFriendlyPhoneticText(text: string): string {
   const clean = text.trim().toUpperCase();
@@ -173,34 +187,59 @@ export function speakTunedLocal(
 ) {
   if (!enabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
   try {
-    window.speechSynthesis.cancel();
     const voice = activeSelectedVoice || pickBestDefaultPtVoice();
     const spokenText = getFriendlyPhoneticText(text);
     const utterance = new SpeechSynthesisUtterance(spokenText);
     utterance.lang = 'pt-BR';
-    // Letras isoladas: mais lento e claro para crianças
-    utterance.rate = opts.slowerForLetter ? 0.78 : 0.88;
-    utterance.pitch = 1.08;
+    utterance.rate = opts.slowerForLetter ? 0.82 : 0.9;
+    utterance.pitch = 1.0;
+    utterance.volume = 1;
     if (voice) {
       utterance.voice = voice;
     }
-    window.speechSynthesis.speak(utterance);
+
+    // cancel() + speak() imediato causa eco/duplicação no Chrome/Safari
+    window.speechSynthesis.cancel();
+    if (speakLocalTimer) {
+      clearTimeout(speakLocalTimer);
+      speakLocalTimer = null;
+    }
+    speakLocalTimer = setTimeout(() => {
+      speakLocalTimer = null;
+      try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+        window.speechSynthesis.speak(utterance);
+      } catch {
+        // ignore
+      }
+    }, 60);
   } catch {
     // Graceful fallback
   }
 }
 
-// In-memory audio player reference
-let activeAudioElement: HTMLAudioElement | null = null;
-
 // Stop any active audio
 export function stopAllAudio() {
   if (typeof window !== 'undefined') {
+    if (speakLocalTimer) {
+      clearTimeout(speakLocalTimer);
+      speakLocalTimer = null;
+    }
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
     if (activeAudioElement) {
-      activeAudioElement.pause();
+      try {
+        activeAudioElement.onended = null;
+        activeAudioElement.onerror = null;
+        activeAudioElement.pause();
+        activeAudioElement.removeAttribute('src');
+        activeAudioElement.load();
+      } catch {
+        // ignore
+      }
       activeAudioElement = null;
     }
   }
@@ -250,6 +289,7 @@ export async function playSmartAudio(
 
   if (!soundEnabled || !text) return;
 
+  const generation = ++playGeneration;
   stopAllAudio();
 
   const cleanText = text.trim();
@@ -261,6 +301,7 @@ export async function playSmartAudio(
     isLetterSpeechKey(staticKey) || isIsolatedLetterText(cleanText);
 
   if (useDeviceLetterVoice) {
+    if (generation !== playGeneration) return;
     onVoiceTypeUsed?.('local_letter');
     speakTunedLocal(cleanText, soundEnabled, { slowerForLetter: true });
     return;
@@ -280,11 +321,16 @@ export async function playSmartAudio(
     `math_dica_${slugKey}`,
   ].filter(Boolean) as string[];
 
+  const hasBundledRecording = candidateKeys.some((key) => Boolean(RECORDED_AUDIO_MAP[key]));
+
   for (const key of candidateKeys) {
+    if (generation !== playGeneration) return;
     if (RECORDED_AUDIO_MAP[key]) {
       try {
         const audioUrl = RECORDED_AUDIO_MAP[key];
         const audio = new Audio(audioUrl);
+        audio.preload = 'auto';
+        audio.volume = 1;
         activeAudioElement = audio;
         audio.onended = () => {
           if (activeAudioElement === audio) activeAudioElement = null;
@@ -294,6 +340,10 @@ export async function playSmartAudio(
         };
         onVoiceTypeUsed?.('kore_static');
         await audio.play();
+        if (generation !== playGeneration) {
+          audio.pause();
+          return;
+        }
         return;
       } catch (err) {
         console.warn('Playback error for static audio:', key, err);
@@ -304,23 +354,30 @@ export async function playSmartAudio(
 
   // 2. TIER 2: Check IndexedDB Persistent Cache
   try {
+    if (generation !== playGeneration) return;
     const cachedDataUrl = await getCachedAudio(slugKey);
     if (cachedDataUrl) {
       const audio = new Audio(cachedDataUrl);
+      audio.volume = 1;
       activeAudioElement = audio;
       onVoiceTypeUsed?.('kore_cached');
       await audio.play();
+      if (generation !== playGeneration) {
+        audio.pause();
+        return;
+      }
       return;
     }
   } catch {
     // Continue to next tier
   }
 
-  // 3. TIER 3: If Online, Kore API Enabled, and Quota is available
+  // 3. TIER 3: Kore/Gemini API — só para textos sem gravação Bella.
+  // Evita voz “sintética” + eco quando o MP3 falha e a API entra por cima.
   const isOnline = typeof navigator !== 'undefined' ? (navigator.onLine ?? true) : true;
   const isQuotaActive = Date.now() < ttsQuotaCooldownUntil;
 
-  if (useKoreApi && isOnline && !isQuotaActive) {
+  if (useKoreApi && isOnline && !isQuotaActive && !hasBundledRecording) {
     try {
       onLoadingChange?.(true);
       const controller = new AbortController();
@@ -339,6 +396,8 @@ export async function playSmartAudio(
       clearTimeout(timeoutId);
       onLoadingChange?.(false);
 
+      if (generation !== playGeneration) return;
+
       if (res.ok) {
         const data = await res.json();
         if (data.isQuota) {
@@ -350,6 +409,7 @@ export async function playSmartAudio(
           saveCachedAudio(slugKey, cleanText, dataUrl).catch(() => {});
 
           const audio = new Audio(dataUrl);
+          audio.volume = 1;
           activeAudioElement = audio;
           onVoiceTypeUsed?.('kore_api');
           await audio.play();
@@ -363,6 +423,7 @@ export async function playSmartAudio(
   }
 
   // 4. TIER 4: Local Optimized Web Speech Synthesis Fallback (Instant & 100% Offline)
+  if (generation !== playGeneration) return;
   onVoiceTypeUsed?.('local_fallback');
   speakTunedLocal(cleanText, soundEnabled);
 }

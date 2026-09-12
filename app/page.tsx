@@ -474,13 +474,8 @@ function LettersStage({
     const upper = expectedChar.toUpperCase();
     const phonetic = PT_LETTER_PHONETICS[upper] || upper;
     const staticKey = `proxima_letra_${upper.toLowerCase()}`;
+    // Só fala — sem destacar a letra, para a criança descobrir sozinha
     speakAudio(`A próxima letra é ${phonetic}!`, staticKey);
-
-    const target = letterBank.find(x => x.char === expectedChar);
-    if (target) {
-      setHintLetterId(target.id);
-      setTimeout(() => setHintLetterId(null), 2200);
-    }
   };
 
   const handleManualShuffle = () => {
@@ -492,8 +487,8 @@ function LettersStage({
     if (isLetterCelebrating) return;
     const upper = item.char.toUpperCase();
     const phonetic = PT_LETTER_PHONETICS[upper] || upper;
+    // Sem pop junto da fala — evita eco/sobreposição com a voz
     speakAudio(phonetic, `letra_${upper.toLowerCase()}`);
-    playSoundFx('pop');
 
     if (item.char === expectedChar) {
       const newCount = spelledCount + 1;
@@ -525,7 +520,8 @@ function LettersStage({
         setLetterBank(prev => prev.filter(x => x.id !== item.id));
       }
     } else {
-      playSoundFx('wrong');
+      // Beep curto depois de um instante, sem cortar a letra
+      setTimeout(() => playSoundFx('wrong'), 280);
       setWrongLetterId(item.id);
       setTimeout(() => setWrongLetterId(null), 500);
     }

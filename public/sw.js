@@ -1,6 +1,6 @@
 // Service Worker for "Aprender Letras & Matemática"
-const CACHE_NAME = 'aprender-offline-v1';
-const AUDIO_CACHE = 'aprender-audio-kore-v1';
+const CACHE_NAME = 'aprender-offline-v2';
+const AUDIO_CACHE = 'aprender-audio-recorded-v2';
 
 const STATIC_ASSETS = [
   '/',
@@ -40,8 +40,8 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // 1. Audio files (/audio/kore/*.wav) - Cache First with Network Fallback
-  if (url.pathname.startsWith('/audio/kore/')) {
+  // 1. Audio files — Cache First com rede
+  if (url.pathname.startsWith('/audio/')) {
     event.respondWith(
       caches.open(AUDIO_CACHE).then(async (cache) => {
         const cachedResponse = await cache.match(request);
@@ -55,7 +55,6 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         } catch (err) {
-          // If offline and not in cache, return fallback if available
           return new Response(null, { status: 404, statusText: 'Audio Not Found Offline' });
         }
       })
