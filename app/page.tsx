@@ -1135,12 +1135,10 @@ export default function EducationalApp() {
     getCachedAudioCount().then(setCachedAudioCount);
   }, []);
 
-  // Modo TV: setas do controle movem o foco; OK/Enter ativa o botão
+  // Navegação por setas SEMPRE ativa — a 1ª seta liga o modo TV se precisar
   useEffect(() => {
-    if (!tvMode) return;
     const stopNav = initTvSpatialNavigation();
-    const t = window.setTimeout(() => focusFirstTvControl(), 200);
-    // Mostra cursor se houver mouse (TV com ponteiro)
+    const t = window.setTimeout(() => focusFirstTvControl(), 250);
     const showCursor = () => document.documentElement.classList.add('tv-cursor');
     window.addEventListener('mousemove', showCursor, { once: true });
     return () => {
@@ -1148,7 +1146,7 @@ export default function EducationalApp() {
       clearTimeout(t);
       window.removeEventListener('mousemove', showCursor);
     };
-  }, [tvMode, subject, ageGroup]);
+  }, [subject, ageGroup]);
 
   // Load custom words and audio mode from localStorage
   useEffect(() => {
@@ -1288,7 +1286,10 @@ export default function EducationalApp() {
   };
 
   return (
-    <div className={`min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans select-none pb-8 ${tvMode ? 'tv-shell pb-12' : ''}`}>
+    <div
+      data-tv-nav
+      className={`min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans select-none pb-8 ${tvMode ? 'tv-shell pb-12' : ''}`}
+    >
       {/* Offline Status Toast */}
       {mounted && !isOnline && (
         <div className="bg-amber-500 text-white px-4 py-1.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-xs transition-all">

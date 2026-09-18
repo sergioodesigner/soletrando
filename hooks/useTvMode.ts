@@ -20,6 +20,12 @@ function detectSmartTvUa(): boolean {
   );
 }
 
+/** Telas grandes em paisagem — provável TV / monitor com controle */
+function detectLikelyTvScreen(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth >= 1100 && window.innerHeight >= 600 && window.innerWidth > window.innerHeight;
+}
+
 function initialTvMode(): boolean {
   const query = readQueryTvFlag();
   if (query !== null) return query;
@@ -30,12 +36,12 @@ function initialTvMode(): boolean {
   } catch {
     // ignore
   }
-  return detectSmartTvUa();
+  return detectSmartTvUa() || detectLikelyTvScreen();
 }
 
 /**
  * Modo TV: foco grande + navegação por setas/OK do controle remoto.
- * Ative com ?tv=1, UA de Smart TV, ou toggle manual.
+ * Ative com ?tv=1, UA de Smart TV, tela grande, ou toggle manual.
  */
 export function useTvMode() {
   const [tvMode, setTvModeState] = useState(false);
@@ -63,6 +69,16 @@ export function useTvMode() {
       // ignore
     }
   }, [tvMode, ready]);
+
+  // Spatial nav pode ligar o modo TV na 1ª seta
+  useEffect(() => {
+    const onAuto = (ev: Event) => {
+      const detail = (ev as CustomEvent).detail;
+      if (detail) setTvModeState(true);
+    };
+    window.addEventListener('aprender:tv-mode', onAuto);
+    return () => window.removeEventListener('aprender:tv-mode', onAuto);
+  }, []);
 
   const setTvMode = useCallback((value: boolean) => {
     setTvModeState(value);
