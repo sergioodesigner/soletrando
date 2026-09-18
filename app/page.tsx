@@ -773,6 +773,7 @@ interface MathStageProps {
   soundEnabled: boolean;
   onNextProblem: () => void;
   onPrevProblem: () => void;
+  onMissProblem: () => void;
   mathIndex: number;
   totalProblems: number;
   onWinStar: () => void;
@@ -786,6 +787,7 @@ function MathStage({
   soundEnabled,
   onNextProblem,
   onPrevProblem,
+  onMissProblem,
   mathIndex,
   totalProblems,
   onWinStar,
@@ -850,14 +852,12 @@ function MathStage({
     setDisabledOptions((prev) => (prev.includes(opt) ? prev : [...prev, opt]));
 
     if (nextAttempts >= MAX_ATTEMPTS) {
-      setSelectedMathOption(problem.answer);
+      // Não revela a resposta — pula e agenda para outra oportunidade
       setIsMathCelebrating(true);
-      speakAudio(
-        `A resposta certa era ${problem.answer}! Vamos para a próxima!`
-      );
+      speakAudio('Vamos tentar essa de novo mais tarde! Próxima pergunta!');
       setTimeout(() => {
-        onNextProblem();
-      }, 2800);
+        onMissProblem();
+      }, 2200);
     } else {
       speakAudio('Tente de novo! Você tem mais uma chance!', 'tente_de_novo');
       setTimeout(() => setMathWrongOption(null), 700);
@@ -1110,6 +1110,10 @@ export default function EducationalApp() {
   // Indices
   const [wordIndex, setWordIndex] = useState(0);
   const [mathIndex, setMathIndex] = useState(0);
+  // Fila de índices das perguntas — erros voltam mais tarde na fila
+  const [mathOrder, setMathOrder] = useState<number[]>(() =>
+    MATH_PROBLEMS['3-5'].map((_, i) => i)
+  );
   const [settingsTab, setSettingsTab] = useState<'audio' | 'palavras'>('audio');
 
   // Load voices & cached audio count on mount
@@ -1215,12 +1219,37 @@ export default function EducationalApp() {
   const currentWordList = ageGroup === '3-5' ? customWords : INITIAL_WORDS[ageGroup];
   const activeWordObj = currentWordList[wordIndex % currentWordList.length] || { word: 'BOLA' };
   const currentMathList = MATH_PROBLEMS[ageGroup];
-  const activeMathProblem = currentMathList[mathIndex % currentMathList.length];
+  const mathOrderSafe =
+    mathOrder.length === 0 || mathOrder.some((i) => i < 0 || i >= currentMathList.length)
+      ? currentMathList.map((_, i) => i)
+      : mathOrder;
+  const mathPos = mathIndex % Math.max(mathOrderSafe.length, 1);
+  const activeMathProblem =
+    currentMathList[mathOrderSafe[mathPos] ?? 0] || currentMathList[0];
+
+  const goNextMath = () => setMathIndex((prev) => prev + 1);
+  const goPrevMath = () => setMathIndex((prev) => Math.max(0, prev - 1));
+  const handleMissMath = () => {
+    // Recoloca a pergunta atual daqui a 2 desafios (sem revelar a resposta)
+    setMathOrder((prev) => {
+      const order =
+        prev.length === 0 || prev.some((i) => i < 0 || i >= currentMathList.length)
+          ? currentMathList.map((_, i) => i)
+          : [...prev];
+      const pos = mathIndex % order.length;
+      const missed = order[pos];
+      const insertAt = Math.min(pos + 3, order.length);
+      order.splice(insertAt, 0, missed);
+      return order;
+    });
+    setMathIndex((prev) => prev + 1);
+  };
 
   const handleSelectAgeGroup = (newAge: AgeGroup) => {
     setAgeGroup(newAge);
     setWordIndex(0);
     setMathIndex(0);
+    setMathOrder(MATH_PROBLEMS[newAge].map((_, i) => i));
     const ageNames: Record<AgeGroup, string> = {
       '3-5': 'Fase 3 a 5 anos! Bem-vindos pequenos!',
       '6-8': 'Fase 6 a 8 anos! Vamos praticar!',
@@ -1476,12 +1505,13 @@ export default function EducationalApp() {
           />
         ) : (
           <MathStage
-            key={`math-${ageGroup}-${mathIndex % currentMathList.length}-${activeMathProblem.id}`}
+            key={`math-${ageGroup}-${mathPos}-${activeMathProblem.id}-${mathIndex}`}
             problem={activeMathProblem}
             soundEnabled={soundEnabled}
-            onNextProblem={() => setMathIndex(prev => (prev + 1) % currentMathList.length)}
-            onPrevProblem={() => setMathIndex(prev => (prev - 1 + currentMathList.length) % currentMathList.length)}
-            mathIndex={mathIndex % currentMathList.length}
+            onNextProblem={goNextMath}
+            onPrevProblem={goPrevMath}
+            onMissProblem={handleMissMath}
+            mathIndex={mathPos}
             totalProblems={currentMathList.length}
             onWinStar={() => setStars(s => s + 1)}
             speakAudio={handleSpeak}
