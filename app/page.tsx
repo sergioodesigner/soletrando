@@ -798,9 +798,32 @@ function MathStage({
   const [mathHintActive, setMathHintActive] = useState(false);
   const [isMathCelebrating, setIsMathCelebrating] = useState(false);
   const [tappedCountItems, setTappedCountItems] = useState<number[]>([]);
+  // Só libera as alternativas depois de ouvir a pergunta
+  const [showOptions, setShowOptions] = useState(false);
+  const [wrongAttempts, setWrongAttempts] = useState(0);
+  const [disabledOptions, setDisabledOptions] = useState<(number | string)[]>([]);
+  // Embaralha a cada montagem (cada pergunta), para a certa não ficar sempre no mesmo lugar
+  const [shuffledOptions] = useState<(number | string)[]>(() => {
+    const opts = [...problem.options];
+    for (let i = opts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [opts[i], opts[j]] = [opts[j], opts[i]];
+    }
+    return opts;
+  });
+
+  const MAX_ATTEMPTS = 2;
+  const chancesLeft = MAX_ATTEMPTS - wrongAttempts;
+
+  const handleSpeakQuestion = () => {
+    playSoundFx('pop');
+    speakAudio(problem.speechText, `math_pergunta_${problem.id}`);
+    setShowOptions(true);
+  };
 
   const handleMathOptionClick = (opt: number | string) => {
-    if (isMathCelebrating) return;
+    if (isMathCelebrating || !showOptions || disabledOptions.includes(opt)) return;
+
     if (opt === problem.answer) {
       setSelectedMathOption(opt);
       setIsMathCelebrating(true);
@@ -816,15 +839,33 @@ function MathStage({
       setTimeout(() => {
         onNextProblem();
       }, 2500);
+      return;
+    }
+
+    // Errou
+    playSoundFx('wrong');
+    setMathWrongOption(opt);
+    const nextAttempts = wrongAttempts + 1;
+    setWrongAttempts(nextAttempts);
+    setDisabledOptions((prev) => (prev.includes(opt) ? prev : [...prev, opt]));
+
+    if (nextAttempts >= MAX_ATTEMPTS) {
+      setSelectedMathOption(problem.answer);
+      setIsMathCelebrating(true);
+      speakAudio(
+        `A resposta certa era ${problem.answer}! Vamos para a próxima!`
+      );
+      setTimeout(() => {
+        onNextProblem();
+      }, 2800);
     } else {
-      playSoundFx('wrong');
-      setMathWrongOption(opt);
-      speakAudio('Tente de novo!', 'tente_de_novo');
-      setTimeout(() => setMathWrongOption(null), 600);
+      speakAudio('Tente de novo! Você tem mais uma chance!', 'tente_de_novo');
+      setTimeout(() => setMathWrongOption(null), 700);
     }
   };
 
   const giveMathHint = () => {
+    if (!showOptions) return;
     setMathHintActive(true);
     playSoundFx('pop');
     speakAudio(problem.hint, `math_dica_${problem.id}`);
@@ -861,10 +902,7 @@ function MathStage({
           </span>
           <button
             id="speak-math-btn"
-            onClick={() => {
-              playSoundFx('pop');
-              speakAudio(problem.speechText, `math_pergunta_${problem.id}`);
-            }}
+            onClick={handleSpeakQuestion}
             className="p-1.5 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors shadow-2xs"
             title="Ouvir desafio de matemática"
           >
@@ -884,26 +922,38 @@ function MathStage({
 
       {/* Problem Display Card */}
       <div className="w-full bg-white rounded-3xl border-2 border-slate-200 p-5 sm:p-8 shadow-sm flex flex-col items-center text-center my-auto">
-        <h2 className="text-xl sm:text-2xl font-black text-slate-800 mb-2">
+        <h2 className={`font-black text-slate-800 mb-2 ${tvMode ? 'text-3xl' : 'text-xl sm:text-2xl'}`}>
           {problem.question}
         </h2>
 
         {/* Prominent Question Speech Button */}
         <button
           id="btn-speak-math-prominent"
-          onClick={() => {
-            playSoundFx('pop');
-            speakAudio(problem.speechText, `math_pergunta_${problem.id}`);
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-800 rounded-full font-bold text-xs sm:text-sm border border-emerald-200 shadow-2xs transition-all my-2"
+          data-tv-autofocus
+          onClick={handleSpeakQuestion}
+          className={`flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-800 rounded-full font-bold text-xs sm:text-sm border border-emerald-200 shadow-2xs transition-all my-2 ${
+            !showOptions ? 'ring-4 ring-emerald-200 animate-pulse' : ''
+          } ${tvMode ? 'tv-action-btn text-base px-6 py-4' : ''}`}
           title="Ouvir a pergunta em voz alta"
         >
-          <Volume2 size={18} className="text-emerald-600 shrink-0" />
-          <span>Ouvir a Pergunta em Voz Alta</span>
+          <Volume2 size={tvMode ? 24 : 18} className="text-emerald-600 shrink-0" />
+          <span>{showOptions ? 'Ouvir a Pergunta de Novo' : 'Ouvir a Pergunta em Voz Alta'}</span>
           {isAudioLoading && (
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping ml-1" />
           )}
         </button>
+
+        {!showOptions && (
+          <p className="text-xs sm:text-sm text-slate-500 font-semibold mt-1 max-w-md">
+            Escute a pergunta para liberar as alternativas
+          </p>
+        )}
+
+        {showOptions && chancesLeft < MAX_ATTEMPTS && !isMathCelebrating && (
+          <p className="text-xs sm:text-sm font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 mt-2">
+            {chancesLeft === 1 ? 'Última chance!' : `${chancesLeft} chances restantes`}
+          </p>
+        )}
 
         {/* Special Interactive Counting Display for 3-5 Years */}
         {problem.visualItems && (
@@ -969,45 +1019,56 @@ function MathStage({
         )}
       </div>
 
-      {/* Answer Options Grid */}
+      {/* Answer Options Grid — só depois de ouvir a pergunta */}
       <div className="w-full mt-6">
-        <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 mx-auto mb-6 ${tvMode ? 'max-w-3xl gap-5' : 'max-w-lg'}`}>
-          {problem.options.map((opt, idx) => {
-            const isCorrect = selectedMathOption === opt;
-            const isWrong = mathWrongOption === opt;
-            return (
-              <motion.button
-                key={idx}
-                data-tv-autofocus={idx === 0 ? true : undefined}
-                whileHover={tvMode ? undefined : { scale: 1.02 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => handleMathOptionClick(opt)}
-                className={`tv-math-option relative font-black rounded-2xl border-b-4 py-4 sm:py-5 text-2xl sm:text-3xl shadow-sm transition-all flex items-center justify-center active:border-b-0 active:translate-y-1 ${
-                  isCorrect
-                    ? 'bg-emerald-500 border-emerald-700 text-white'
-                    : isWrong
-                      ? 'bg-red-100 border-red-400 text-red-700'
-                      : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50'
-                } ${tvMode ? 'py-8 text-4xl' : ''}`}
-              >
-                {opt}
-              </motion.button>
-            );
-          })}
-        </div>
+        {showOptions ? (
+          <>
+            <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 mx-auto mb-6 ${tvMode ? 'max-w-3xl gap-5' : 'max-w-lg'}`}>
+              {shuffledOptions.map((opt, idx) => {
+                const isCorrect = selectedMathOption === opt;
+                const isWrong = mathWrongOption === opt || disabledOptions.includes(opt);
+                const isDisabled = disabledOptions.includes(opt) && opt !== problem.answer;
+                return (
+                  <motion.button
+                    key={`${String(opt)}-${idx}`}
+                    data-tv-autofocus={idx === 0 ? true : undefined}
+                    whileHover={tvMode ? undefined : { scale: 1.02 }}
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => handleMathOptionClick(opt)}
+                    disabled={isMathCelebrating || isDisabled}
+                    className={`tv-math-option relative font-black rounded-2xl border-b-4 py-4 sm:py-5 text-2xl sm:text-3xl shadow-sm transition-all flex items-center justify-center active:border-b-0 active:translate-y-1 ${
+                      isCorrect
+                        ? 'bg-emerald-500 border-emerald-700 text-white'
+                        : isWrong
+                          ? 'bg-red-100 border-red-400 text-red-700 opacity-60'
+                          : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50'
+                    } ${tvMode ? 'py-8 text-4xl' : ''} disabled:cursor-not-allowed`}
+                  >
+                    {opt}
+                  </motion.button>
+                );
+              })}
+            </div>
 
-        {/* Hint Button */}
-        <div className="flex justify-center">
-          <button
-            id="btn-hint-math"
-            onClick={giveMathHint}
-            disabled={isMathCelebrating}
-            className={`tv-action-btn flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-5 text-xl' : ''}`}
-          >
-            <Lightbulb size={tvMode ? 26 : 20} className="fill-amber-100 text-amber-900" />
-            <span>AJUDA / DICA</span>
-          </button>
-        </div>
+            <div className="flex justify-center">
+              <button
+                id="btn-hint-math"
+                onClick={giveMathHint}
+                disabled={isMathCelebrating}
+                className={`tv-action-btn flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-5 text-xl' : ''}`}
+              >
+                <Lightbulb size={tvMode ? 26 : 20} className="fill-amber-100 text-amber-900" />
+                <span>AJUDA / DICA</span>
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex justify-center mb-4">
+            <div className="bg-slate-100 border border-slate-200 text-slate-500 rounded-2xl px-5 py-4 text-sm font-bold text-center max-w-md">
+              As alternativas aparecem depois que você ouvir a pergunta
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
