@@ -26,19 +26,21 @@ export const PT_LETTER_PHONETICS: Record<string, string> = {
   Q: 'quê',
   R: 'erre',
   S: 'esse',
-  T: 'Tê',
+  // "Tê" maiúsculo/agudo costuma soar como inglês "tea" ou alongar demais.
+  T: 'tê',
   U: 'U',
   V: 'Vê',
   W: 'dáblio',
+  // Minúsculo evita inglês "ex" / "eks".
   X: 'xis',
   Y: 'ípsilon',
   Z: 'Zê'
 };
 
-/** Só o toque na letra isolada usa voz do aparelho. “Próxima letra” continua com Bella. */
+/** Só o toque na letra isolada (chave letra_*). "próxima letra" NÃO entra aqui. */
 export function isLetterSpeechKey(staticKey?: string): boolean {
   if (!staticKey) return false;
-  return staticKey.startsWith('letra_');
+  return /^letra_[a-z]$/i.test(staticKey);
 }
 
 export function isIsolatedLetterText(text: string): boolean {
@@ -50,11 +52,29 @@ export function isIsolatedLetterText(text: string): boolean {
   return Object.values(PT_LETTER_PHONETICS).some((p) => p.toLowerCase() === lower);
 }
 
+function letterKeyFromText(text: string): string | undefined {
+  const clean = text.trim();
+  if (clean.length === 1) {
+    const upper = clean.toUpperCase();
+    if (PT_LETTER_PHONETICS[upper]) return `letra_${upper.toLowerCase()}`;
+  }
+  const lower = clean.toLowerCase();
+  for (const [letter, phonetic] of Object.entries(PT_LETTER_PHONETICS)) {
+    if (phonetic.toLowerCase() === lower) return `letra_${letter.toLowerCase()}`;
+  }
+  return undefined;
+}
+
 // Comprehensive pre-recorded audio library (WAV & MP3 files)
 // Includes all 26 letters, 10 counting numbers, all default words, clues, challenges, celebrations & math questions
-export const RECORDED_AUDIO_MAP: Record<string, string> = {
-  ...(recordedManifest as Record<string, string>),
-};
+const rawManifest = recordedManifest as Record<string, string>;
+/** Versão do bundle — invalida cache HTTP de MP3 antigos (PCM inválido). */
+export const AUDIO_CACHE_VERSION =
+  rawManifest.__version || String(Object.keys(rawManifest).length);
+
+export const RECORDED_AUDIO_MAP: Record<string, string> = Object.fromEntries(
+  Object.entries(rawManifest).filter(([key]) => key !== '__version')
+);
 
 // Backwards compatibility alias
 export const PREGENERATED_KORE_FILES: Record<string, string> = RECORDED_AUDIO_MAP;
@@ -303,22 +323,14 @@ export async function playSmartAudio(
 
   const cleanText = text.trim();
   const slugKey = staticKey || toAudioKey(cleanText);
+  const inferredLetterKey =
+    (staticKey && isLetterSpeechKey(staticKey) ? staticKey : undefined) ||
+    letterKeyFromText(cleanText);
 
-  // Letras isoladas: voz sintetizada do aparelho (pt-BR).
-  // ElevenLabs / áudios gravados costumam pronunciar letras de forma errada.
-  const useDeviceLetterVoice =
-    isLetterSpeechKey(staticKey) || isIsolatedLetterText(cleanText);
-
-  if (useDeviceLetterVoice) {
-    if (generation !== playGeneration) return;
-    onVoiceTypeUsed?.('local_letter');
-    speakTunedLocal(cleanText, soundEnabled, { slowerForLetter: true });
-    return;
-  }
-
-  // 1. TIER 1: Check Pre-recorded Audio Library (Instant 0ms, 100% Offline, Natural Voice)
+  // 1. TIER 1: Pre-recorded library (inclui letra_*.mp3 quando existir)
   const candidateKeys = [
     staticKey,
+    inferredLetterKey,
     slugKey,
     `proxima_letra_${slugKey}`,
     `palavra_${slugKey}`,
@@ -334,31 +346,29 @@ export async function playSmartAudio(
 
   for (const key of candidateKeys) {
     if (generation !== playGeneration) return;
-    if (RECORDED_AUDIO_MAP[key]) {
-      try {
-        const audioUrl = RECORDED_AUDIO_MAP[key];
-        const audio = new Audio(audioUrl);
-        audio.preload = 'auto';
-        audio.volume = 1;
-        activeAudioElement = audio;
-        audio.onended = () => {
-          if (activeAudioElement === audio) activeAudioElement = null;
-        };
-        audio.onerror = () => {
-          if (activeAudioElement === audio) activeAudioElement = null;
-        };
-        onVoiceTypeUsed?.('kore_static');
-        await audio.play();
-        if (generation !== playGeneration) {
-          audio.pause();
-          return;
-        }
-        return;
-      } catch (err) {
-        console.warn('Playback error for static audio:', key, err);
-        // Continue to next candidate or tier
-      }
+    const audioUrl = RECORDED_AUDIO_MAP[key];
+    if (!audioUrl) continue;
+
+    const played = await playRecordedUrl(audioUrl, generation, () => {
+      onVoiceTypeUsed?.(
+        inferredLetterKey && key === inferredLetterKey ? 'kore_static' : 'kore_static'
+      );
+    });
+    if (played) {
+      if (generation !== playGeneration) return;
+      return;
     }
+  }
+
+  // Fallback de letra: só se NÃO houver MP3 gravado
+  const useDeviceLetterVoice =
+    Boolean(inferredLetterKey) && !RECORDED_AUDIO_MAP[inferredLetterKey!];
+
+  if (useDeviceLetterVoice) {
+    if (generation !== playGeneration) return;
+    onVoiceTypeUsed?.('local_letter');
+    speakTunedLocal(cleanText, soundEnabled, { slowerForLetter: true });
+    return;
   }
 
   // 2. TIER 2: Check IndexedDB Persistent Cache
@@ -435,6 +445,65 @@ export async function playSmartAudio(
   if (generation !== playGeneration) return;
   onVoiceTypeUsed?.('local_fallback');
   speakTunedLocal(cleanText, soundEnabled);
+}
+
+/** Toca URL gravada; retorna false se o browser não conseguir decodificar (ex.: cache de PCM antigo). */
+function playRecordedUrl(
+  audioUrl: string,
+  generation: number,
+  onStart?: () => void
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (generation !== playGeneration) {
+      resolve(false);
+      return;
+    }
+
+    const audio = new Audio();
+    audio.preload = 'auto';
+    audio.volume = 1;
+    let settled = false;
+
+    const finish = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      audio.onerror = null;
+      audio.onended = null;
+      resolve(ok);
+    };
+
+    audio.onerror = () => {
+      if (activeAudioElement === audio) activeAudioElement = null;
+      finish(false);
+    };
+
+    audio.onended = () => {
+      if (activeAudioElement === audio) activeAudioElement = null;
+    };
+
+    // Cache-bust: evita MP3 PCM inválido antigo no HTTP cache do browser
+    const bust = audioUrl.includes('?')
+      ? audioUrl
+      : `${audioUrl}?v=${encodeURIComponent(AUDIO_CACHE_VERSION)}`;
+    audio.src = bust;
+    activeAudioElement = audio;
+    onStart?.();
+
+    audio
+      .play()
+      .then(() => {
+        if (generation !== playGeneration) {
+          audio.pause();
+          finish(false);
+          return;
+        }
+        finish(true);
+      })
+      .catch(() => {
+        if (activeAudioElement === audio) activeAudioElement = null;
+        finish(false);
+      });
+  });
 }
 
 export { getCachedAudioCount, clearCachedAudios };

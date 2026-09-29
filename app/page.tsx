@@ -49,9 +49,23 @@ import { initTvSpatialNavigation, focusFirstTvControl } from '@/lib/tvSpatialNav
 const normalizeWord = (w: string) => 
   w.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim().replace(/[^A-Z]/g, '');
 
-// Formats uppercase word to Titlecase so TTS voices pronounce naturally
+// Ortografia falada (acentos + respelling) para o TTS acertar a sílaba tônica / o som.
+// Chave = palavra do jogo (sem acento). Valor = como deve soar na narração.
+const SPEECH_WORD_FORMS: Record<string, string> = {
+  METAFORA: 'Metáfora',
+  HIPOTESE: 'Hipótese',
+  // "Paradoxo" sozinho o TTS costuma ler o X como "ch"; "quiso" força /ks/.
+  PARADOXO: 'Paradóquiso',
+  CONSCIENCIA: 'Consciência',
+  RESILIENCIA: 'Resiliência',
+  ATMOSFERA: 'Atmosfera'
+};
+
+// Formats uppercase word for natural Brazilian Portuguese TTS
 const formatWordForSpeech = (w: string): string => {
   if (!w) return '';
+  const upper = w.trim().toUpperCase();
+  if (SPEECH_WORD_FORMS[upper]) return SPEECH_WORD_FORMS[upper];
   const clean = w.trim();
   return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
 };
@@ -3088,7 +3102,7 @@ export default function EducationalApp() {
                   </div>
 
                   <p className="text-xs text-indigo-900/90 leading-relaxed">
-                    O aplicativo possui <strong>falas gravadas (voz Bella)</strong> para palavras, pistas, desafios, matemática e “próxima letra”. <strong>Toque na letra</strong> usa a voz sintetizada do aparelho em português brasileiro (A, Bê, Cê…). O restante toca <strong>instantaneamente</strong> e funciona <strong>offline</strong>.
+                    O aplicativo possui <strong>falas gravadas (voz Bella)</strong> para letras, palavras, pistas, desafios, matemática e “próxima letra”. Os áudios gravados têm prioridade; se algum faltar, usa a voz do aparelho. Tudo toca <strong>instantaneamente</strong> e funciona <strong>offline</strong>.
                   </p>
 
                   <div className="grid grid-cols-1 gap-2 pt-1">

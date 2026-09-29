@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "clean": "next clean",
-    "generate-audios": "node scripts/generate_audios_batch.mjs"
+    "generate-audios": "node scripts/generate_audios_batch.mjs",
+    "generate-audios:pronuncia": "node scripts/generate_audios_batch.mjs --only=pronuncia"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
