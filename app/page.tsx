@@ -30,7 +30,9 @@ import {
 } from 'lucide-react';
 import { 
   playSmartAudio, 
-  playSoundFx, 
+  playSoundFx,
+  playStarChime,
+  playWinSound,
   PT_LETTER_PHONETICS, 
   getAvailablePtVoices, 
   setSelectedVoice, 
@@ -443,52 +445,6 @@ function generateHardBank(word: string, spelledCount: number, extraDecoys: numbe
 // Strict path tracking: drawing outside is blocked and clipped to the letter stencil.
 // Star checkpoints and musical chimes stimulate the child to trace inside the outline.
 // -------------------------------------------------------------
-const PENTATONIC_CHIMES = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
-
-function playStarChime(index: number) {
-  try {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const freq = PENTATONIC_CHIMES[index % PENTATONIC_CHIMES.length] || 659.25;
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(freq * 1.33, ctx.currentTime + 0.12);
-    gain.gain.setValueAtTime(0.25, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.35);
-  } catch {
-    // Ignore audio autoplay restrictions
-  }
-}
-
-function playWinSound() {
-  try {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.08);
-      gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.08);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.4);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(ctx.currentTime + i * 0.08);
-      osc.stop(ctx.currentTime + i * 0.08 + 0.4);
-    });
-  } catch {
-    // Ignore
-  }
-}
-
 interface StarPoint {
   id: number;
   x: number;
@@ -516,6 +472,7 @@ function LetterTracingModal({
   const [done, setDone] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     const bg = bgCanvasRef.current;
     const draw = drawCanvasRef.current;
     if (!bg || !draw) return;
@@ -523,133 +480,161 @@ function LetterTracingModal({
     const bgCtx = bg.getContext('2d')!;
     const dCtx = draw.getContext('2d')!;
 
-    bgCtx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-    dCtx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    const paintLetterTrack = () => {
+      if (cancelled) return;
 
-    // Dynamic large font calculation to maximize letter size without clipping
-    let fontSize = 230;
-    bgCtx.font = `bold ${fontSize}px "Nunito", "Arial Rounded MT Bold", Arial, sans-serif`;
-    let metrics = bgCtx.measureText(letter);
-    while (metrics.width > CANVAS_SIZE - 46 && fontSize > 150) {
-      fontSize -= 8;
-      bgCtx.font = `bold ${fontSize}px "Nunito", "Arial Rounded MT Bold", Arial, sans-serif`;
-      metrics = bgCtx.measureText(letter);
-    }
-    const fontStr = `bold ${fontSize}px "Nunito", "Arial Rounded MT Bold", Arial, sans-serif`;
-    bgCtx.font = fontStr;
-    bgCtx.textAlign = 'center';
-    bgCtx.textBaseline = 'middle';
+      bgCtx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+      dCtx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-    const cx = CANVAS_SIZE / 2;
-    const cy = CANVAS_SIZE / 2;
-
-    // 1. Offscreen letter track mask (in-memory) for exact boundary check & counting
-    const trackCanvas = document.createElement('canvas');
-    trackCanvas.width = CANVAS_SIZE;
-    trackCanvas.height = CANVAS_SIZE;
-    const tCtx = trackCanvas.getContext('2d', { willReadFrequently: true })!;
-    tCtx.font = fontStr;
-    tCtx.textAlign = 'center';
-    tCtx.textBaseline = 'middle';
-    tCtx.lineWidth = 44;
-    tCtx.lineCap = 'round';
-    tCtx.lineJoin = 'round';
-    tCtx.strokeStyle = '#000000';
-    tCtx.fillStyle = '#000000';
-    tCtx.strokeText(letter, cx, cy);
-    tCtx.fillText(letter, cx, cy);
-    trackDataRef.current = tCtx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE).data;
-
-    // 2. Offscreen reference canvas (in-memory) for star sampling along the centerline
-    const refCanvas = document.createElement('canvas');
-    refCanvas.width = CANVAS_SIZE;
-    refCanvas.height = CANVAS_SIZE;
-    const rCtx = refCanvas.getContext('2d', { willReadFrequently: true })!;
-    rCtx.font = fontStr;
-    rCtx.textAlign = 'center';
-    rCtx.textBaseline = 'middle';
-    rCtx.fillStyle = '#000000';
-    rCtx.fillText(letter, cx, cy);
-
-    // 3. Background Canvas: Floating Letter Track (no square frame)
-    // Outer border of the road
-    bgCtx.lineWidth = 48;
-    bgCtx.lineCap = 'round';
-    bgCtx.lineJoin = 'round';
-    bgCtx.strokeStyle = '#e2e8f0';
-    bgCtx.strokeText(letter, cx, cy);
-
-    // Inner crisp white road track
-    bgCtx.lineWidth = 38;
-    bgCtx.strokeStyle = '#ffffff';
-    bgCtx.strokeText(letter, cx, cy);
-
-    // Soft letter fill
-    bgCtx.fillStyle = '#f8fafc';
-    bgCtx.fillText(letter, cx, cy);
-
-    // Centerline dashed guide
-    bgCtx.lineWidth = 2.5;
-    bgCtx.setLineDash([8, 7]);
-    bgCtx.strokeStyle = '#94a3b8';
-    bgCtx.strokeText(letter, cx, cy);
-    bgCtx.setLineDash([]);
-
-    // 4. Sample Star Checkpoints from letter pixels
-    const refData = rCtx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE).data;
-    const candidatePoints: { x: number; y: number }[] = [];
-    for (let y = 16; y < CANVAS_SIZE - 16; y += 4) {
-      for (let x = 16; x < CANVAS_SIZE - 16; x += 4) {
-        if (refData[(y * CANVAS_SIZE + x) * 4 + 3] > 180) {
-          candidatePoints.push({ x, y });
-        }
+      // Dynamic large font — maximize letter without clipping
+      let fontSize = 230;
+      const fontFamily = '"Nunito", "Arial Rounded MT Bold", Arial, sans-serif';
+      bgCtx.font = `bold ${fontSize}px ${fontFamily}`;
+      let metrics = bgCtx.measureText(letter);
+      while (metrics.width > CANVAS_SIZE - 46 && fontSize > 150) {
+        fontSize -= 8;
+        bgCtx.font = `bold ${fontSize}px ${fontFamily}`;
+        metrics = bgCtx.measureText(letter);
       }
-    }
+      const fontStr = `bold ${fontSize}px ${fontFamily}`;
+      bgCtx.font = fontStr;
+      bgCtx.textAlign = 'center';
+      bgCtx.textBaseline = 'middle';
 
-    const interior = candidatePoints.filter(p => {
-      const check = (dx: number, dy: number) => {
-        const nx = p.x + dx, ny = p.y + dy;
-        if (nx < 0 || nx >= CANVAS_SIZE || ny < 0 || ny >= CANVAS_SIZE) return false;
-        return refData[(ny * CANVAS_SIZE + nx) * 4 + 3] > 180;
-      };
-      return check(0, -6) && check(0, 6) && check(-6, 0) && check(6, 0);
-    });
+      const cx = CANVAS_SIZE / 2;
+      const cy = CANVAS_SIZE / 2;
 
-    const pool = interior.length > 25 ? interior : candidatePoints;
-    const newStars: StarPoint[] = [];
+      // 1. Offscreen track mask (hit-test + coverage)
+      const trackCanvas = document.createElement('canvas');
+      trackCanvas.width = CANVAS_SIZE;
+      trackCanvas.height = CANVAS_SIZE;
+      const tCtx = trackCanvas.getContext('2d', { willReadFrequently: true })!;
+      tCtx.font = fontStr;
+      tCtx.textAlign = 'center';
+      tCtx.textBaseline = 'middle';
+      tCtx.lineWidth = 44;
+      tCtx.lineCap = 'round';
+      tCtx.lineJoin = 'round';
+      tCtx.strokeStyle = '#000000';
+      tCtx.fillStyle = '#000000';
+      tCtx.strokeText(letter, cx, cy);
+      tCtx.fillText(letter, cx, cy);
+      trackDataRef.current = tCtx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE).data;
 
-    if (pool.length > 0) {
-      pool.sort((a, b) => a.y - b.y || a.x - b.x);
-      newStars.push({ id: 0, x: pool[0].x, y: pool[0].y, collected: false });
+      // 2. Offscreen fill-only reference for star sampling
+      const refCanvas = document.createElement('canvas');
+      refCanvas.width = CANVAS_SIZE;
+      refCanvas.height = CANVAS_SIZE;
+      const rCtx = refCanvas.getContext('2d', { willReadFrequently: true })!;
+      rCtx.font = fontStr;
+      rCtx.textAlign = 'center';
+      rCtx.textBaseline = 'middle';
+      rCtx.fillStyle = '#000000';
+      rCtx.fillText(letter, cx, cy);
 
-      const targetCount = 5;
-      while (newStars.length < targetCount && pool.length > newStars.length) {
-        let best = pool[0];
-        let maxMinDist = -1;
-        for (const pt of pool) {
-          let minDist = Infinity;
-          for (const s of newStars) {
-            const d = Math.hypot(pt.x - s.x, pt.y - s.y);
-            if (d < minDist) minDist = d;
-          }
-          if (minDist > maxMinDist) {
-            maxMinDist = minDist;
-            best = pt;
+      // 3. Visible road — UMA camada de borda + preenchimento (sem strokeText empilhado).
+      // strokeText em letras oca (O, D, A…) desenha contorno externo E interno;
+      // empilhar vários strokeText criava vários anéis concêntricos.
+      bgCtx.lineCap = 'round';
+      bgCtx.lineJoin = 'round';
+      bgCtx.lineWidth = 10;
+      bgCtx.strokeStyle = '#cbd5e1';
+      bgCtx.strokeText(letter, cx, cy);
+      bgCtx.fillStyle = '#ffffff';
+      bgCtx.fillText(letter, cx, cy);
+
+      // 4. Sample star checkpoints from letter body pixels
+      const refData = rCtx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE).data;
+      const candidatePoints: { x: number; y: number }[] = [];
+      for (let y = 16; y < CANVAS_SIZE - 16; y += 4) {
+        for (let x = 16; x < CANVAS_SIZE - 16; x += 4) {
+          if (refData[(y * CANVAS_SIZE + x) * 4 + 3] > 180) {
+            candidatePoints.push({ x, y });
           }
         }
-        if (maxMinDist < 32) break;
-        newStars.push({ id: newStars.length, x: best.x, y: best.y, collected: false });
       }
 
-      newStars.sort((a, b) => a.y - b.y || a.x - b.x);
-      newStars.forEach((s, idx) => { s.id = idx; });
+      const interior = candidatePoints.filter(p => {
+        const check = (dx: number, dy: number) => {
+          const nx = p.x + dx, ny = p.y + dy;
+          if (nx < 0 || nx >= CANVAS_SIZE || ny < 0 || ny >= CANVAS_SIZE) return false;
+          return refData[(ny * CANVAS_SIZE + nx) * 4 + 3] > 180;
+        };
+        return check(0, -6) && check(0, 6) && check(-6, 0) && check(6, 0);
+      });
+
+      const pool = interior.length > 25 ? interior : candidatePoints;
+      const newStars: StarPoint[] = [];
+
+      if (pool.length > 0) {
+        pool.sort((a, b) => a.y - b.y || a.x - b.x);
+        newStars.push({ id: 0, x: pool[0].x, y: pool[0].y, collected: false });
+
+        const targetCount = 5;
+        while (newStars.length < targetCount && pool.length > newStars.length) {
+          let best = pool[0];
+          let maxMinDist = -1;
+          for (const pt of pool) {
+            let minDist = Infinity;
+            for (const s of newStars) {
+              const d = Math.hypot(pt.x - s.x, pt.y - s.y);
+              if (d < minDist) minDist = d;
+            }
+            if (minDist > maxMinDist) {
+              maxMinDist = minDist;
+              best = pt;
+            }
+          }
+          if (maxMinDist < 32) break;
+          newStars.push({ id: newStars.length, x: best.x, y: best.y, collected: false });
+        }
+
+        newStars.sort((a, b) => a.y - b.y || a.x - b.x);
+        newStars.forEach((s, idx) => { s.id = idx; });
+      }
+
+      // 5. Guia tracejada ÚNICA ligando as estrelas (evita anéis duplicados do strokeText)
+      if (newStars.length >= 2) {
+        const ordered = [...newStars].sort(
+          (a, b) => Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx)
+        );
+        bgCtx.beginPath();
+        bgCtx.setLineDash([8, 7]);
+        bgCtx.strokeStyle = '#94a3b8';
+        bgCtx.lineWidth = 2.5;
+        ordered.forEach((s, i) => {
+          if (i === 0) bgCtx.moveTo(s.x, s.y);
+          else bgCtx.lineTo(s.x, s.y);
+        });
+        // Letras fechadas (O, D…) — fecha o laço; abertas ficam com caminho parcial ok
+        if (/[ABDOPQR]/i.test(letter)) {
+          bgCtx.closePath();
+        }
+        bgCtx.stroke();
+        bgCtx.setLineDash([]);
+      }
+
+      if (cancelled) return;
+      setStars(newStars);
+      setCoverage(0);
+      setDone(false);
+      setOffTrack(false);
+      setHasStarted(false);
+    };
+
+    // Espera a fonte carregar para não desenhar 2× (fallback + Nunito)
+    const fontsReady = document.fonts?.ready;
+    if (fontsReady) {
+      fontsReady.then(paintLetterTrack);
+    } else {
+      paintLetterTrack();
     }
 
-    setStars(newStars);
-    setCoverage(0);
-    setDone(false);
-    setOffTrack(false);
-    setHasStarted(false);
+    return () => {
+      cancelled = true;
+      bgCtx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+      dCtx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    };
   }, [letter]);
 
   const getPos = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
@@ -1143,8 +1128,9 @@ function LettersStage({
     playSoundFx('pop');
     setHintLevel(1);
     if (ageGroup === '3-5') {
-      // Mini-desafio de traçado
+      // Mini-desafio de traçado + áudio da dica
       setShowTracingModal(true);
+      speakAudio('Olha a letra brilhando! Trace o caminho com o dedinho!', 'dica_brilho');
     } else {
       // 6-8, 9-11, 12-14: fala vogal ou consoante
       const upper = expectedChar.toUpperCase();
@@ -2272,8 +2258,8 @@ function MathStage({
       } else {
         const ans = Number(problem.answer);
         if (!isNaN(ans)) {
-          const tipo = ans % 2 === 0 ? 'par' : 'ímpar';
-          speakAudio(`Dica: A resposta é um número ${tipo}!`, `math_dica_paridade_${tipo}`);
+          const tipo = ans % 2 === 0 ? 'par' : 'impar';
+          speakAudio(`Dica: A resposta é um número ${tipo === 'par' ? 'par' : 'ímpar'}!`, `math_dica_paridade_${tipo}`);
           setMathHintActive(true);
         } else {
           speakAudio(problem.hint, `math_dica_${problem.id}`);
@@ -2284,8 +2270,8 @@ function MathStage({
       // 2ª dica: par/ímpar para 3-5 e 6-8; elimina opção para 9-12
       if (ageGroup === '3-5' || ageGroup === '6-8') {
         const ans = Number(problem.answer);
-        const tipo = !isNaN(ans) ? (ans % 2 === 0 ? 'par' : 'ímpar') : null;
-        if (tipo) speakAudio(`Mais uma dica: A resposta é ${tipo}!`, `math_dica2_${tipo}`);
+        const tipo = !isNaN(ans) ? (ans % 2 === 0 ? 'par' : 'impar') : null;
+        if (tipo) speakAudio(`Mais uma dica: A resposta é ${tipo === 'par' ? 'par' : 'ímpar'}!`, `math_dica2_${tipo}`);
         setMathHintActive(true);
       } else {
         // 9-11/12-14: elimina uma alternativa errada

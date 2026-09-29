@@ -97,6 +97,54 @@ function getFxAudioContext(): AudioContext | null {
   return sharedAudioCtx;
 }
 
+const PENTATONIC_CHIMES = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
+
+/** Sino pentatônico ao contar/tocar itens nas dicas (usa AudioContext compartilhado). */
+export function playStarChime(index: number) {
+  if (typeof window === 'undefined') return;
+  try {
+    const ctx = getFxAudioContext();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const freq = PENTATONIC_CHIMES[index % PENTATONIC_CHIMES.length] || 659.25;
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.33, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.22, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.35);
+  } catch {
+    // Ignore audio autoplay restrictions
+  }
+}
+
+/** Arpejo curto de vitória no mini-desafio. */
+export function playWinSound() {
+  if (typeof window === 'undefined') return;
+  try {
+    const ctx = getFxAudioContext();
+    if (!ctx) return;
+    [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.08);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime + i * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.08);
+      osc.stop(ctx.currentTime + i * 0.08 + 0.4);
+    });
+  } catch {
+    // Ignore
+  }
+}
+
 export function playSoundFx(type: 'correct' | 'wrong' | 'pop' | 'star' | 'shuffle') {
   if (typeof window === 'undefined') return;
   try {
@@ -233,6 +281,7 @@ export function speakTunedLocal(
       clearTimeout(speakLocalTimer);
       speakLocalTimer = null;
     }
+    // Delay mínimo — delays longos perdem o gesto do usuário no iOS e o áudio fica mudo
     speakLocalTimer = setTimeout(() => {
       speakLocalTimer = null;
       try {
@@ -243,7 +292,7 @@ export function speakTunedLocal(
       } catch {
         // ignore
       }
-    }, 60);
+    }, 16);
   } catch {
     // Graceful fallback
   }
@@ -322,6 +371,11 @@ export async function playSmartAudio(
   stopAllAudio();
 
   const cleanText = text.trim();
+  const normalizeKey = (key: string) =>
+    key
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
   const slugKey = staticKey || toAudioKey(cleanText);
   const inferredLetterKey =
     (staticKey && isLetterSpeechKey(staticKey) ? staticKey : undefined) ||
@@ -330,8 +384,10 @@ export async function playSmartAudio(
   // 1. TIER 1: Pre-recorded library (inclui letra_*.mp3 quando existir)
   const candidateKeys = [
     staticKey,
+    staticKey ? normalizeKey(staticKey) : undefined,
     inferredLetterKey,
     slugKey,
+    normalizeKey(slugKey),
     `proxima_letra_${slugKey}`,
     `palavra_${slugKey}`,
     `desafio_${slugKey}`,
@@ -342,19 +398,20 @@ export async function playSmartAudio(
     `math_dica_${slugKey}`,
   ].filter(Boolean) as string[];
 
-  const hasBundledRecording = candidateKeys.some((key) => Boolean(RECORDED_AUDIO_MAP[key]));
+  // Dedup preserving order
+  const uniqueKeys = [...new Set(candidateKeys)];
 
-  for (const key of candidateKeys) {
+  let playedRecorded = false;
+  for (const key of uniqueKeys) {
     if (generation !== playGeneration) return;
     const audioUrl = RECORDED_AUDIO_MAP[key];
     if (!audioUrl) continue;
 
     const played = await playRecordedUrl(audioUrl, generation, () => {
-      onVoiceTypeUsed?.(
-        inferredLetterKey && key === inferredLetterKey ? 'kore_static' : 'kore_static'
-      );
+      onVoiceTypeUsed?.('kore_static');
     });
     if (played) {
+      playedRecorded = true;
       if (generation !== playGeneration) return;
       return;
     }
@@ -391,12 +448,11 @@ export async function playSmartAudio(
     // Continue to next tier
   }
 
-  // 3. TIER 3: Kore/Gemini API — só para textos sem gravação Bella.
-  // Evita voz “sintética” + eco quando o MP3 falha e a API entra por cima.
+  // 3. TIER 3: Kore/Gemini API — se MP3 do manifesto falhou ou não existe
   const isOnline = typeof navigator !== 'undefined' ? (navigator.onLine ?? true) : true;
   const isQuotaActive = Date.now() < ttsQuotaCooldownUntil;
 
-  if (useKoreApi && isOnline && !isQuotaActive && !hasBundledRecording) {
+  if (useKoreApi && isOnline && !isQuotaActive && !playedRecorded) {
     try {
       onLoadingChange?.(true);
       const controller = new AbortController();
