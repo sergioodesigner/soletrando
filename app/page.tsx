@@ -1870,51 +1870,6 @@ function MathInteractiveHintModal({
             );
           })()}
 
-          {/* D. Missing to 10 Mode */}
-          {config.type === 'fingers_missing10' && (
-            <div className="w-full flex flex-col items-center gap-3">
-              <div className="flex items-center justify-center gap-4 flex-wrap">
-                {[0, 1].map((handIdx) => (
-                  <div key={handIdx} className="flex flex-col items-center gap-1">
-                    <span className="text-xs font-black text-slate-500 uppercase tracking-wide">Mão {handIdx + 1}</span>
-                    <div className="relative w-[110px] h-[110px]">
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[86px] h-[52px] bg-amber-200 border-2 border-amber-300 rounded-b-[40px] rounded-t-[16px] shadow-sm" />
-                      {[0,1,2,3,4].map((fi) => {
-                        const fingerId = handIdx * 5 + fi;
-                        const isPreStanding = fingerId < (config.standing || 7);
-                        const isRaised = raisedMissingFingers.includes(fingerId);
-                        const heights = [44, 56, 64, 56, 40];
-                        const offsets = [4, 18, 31, 44, 58];
-                        return (
-                          <button
-                            key={fi}
-                            type="button"
-                            onClick={() => !isPreStanding && !isRaised && handleRaiseMissingFinger(fingerId, config.missing || 3)}
-                            disabled={isPreStanding || isRaised}
-                            style={{ left: offsets[fi], height: isPreStanding || isRaised ? heights[fi] : 12, bottom: 44 }}
-                            className={`absolute w-[14px] rounded-t-full border-2 transition-all duration-300 origin-bottom ${
-                              isPreStanding
-                                ? 'bg-indigo-300 border-indigo-400'
-                                : isRaised
-                                  ? 'bg-emerald-400 border-emerald-500'
-                                  : 'bg-amber-100 border-dashed border-amber-300 cursor-pointer hover:bg-amber-300 animate-pulse'
-                            }`}
-                          />
-                        );
-                      })}
-                    </div>
-                    <div className="text-center text-xs font-bold mt-1 text-slate-500">
-                      Mão {handIdx + 1}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="bg-amber-50 border border-amber-200 px-4 py-1.5 rounded-full text-xs font-bold text-amber-900">
-                ☝️ Levante os dedos em falta! Levantados: {raisedMissingFingers.length} de {config.missing}
-              </div>
-            </div>
-          )}
-
           {/* C. Apple Missing Mode ("Quanto falta para 10?") */}
           {config.type === 'items_missing' && (() => {
             const standing = config.standing || 7;
