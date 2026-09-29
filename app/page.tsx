@@ -18,7 +18,6 @@ import {
   X, 
   ChevronRight, 
   ChevronLeft,
-  Shuffle,
   Bot,
   Check,
   Download,
@@ -402,7 +401,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
 const PT_VOWELS = new Set(['A','E','I','O','U']);
 const isVowel = (c: string) => PT_VOWELS.has(c.toUpperCase());
 
-// Helper to generate letter bank (normal difficulty)
+// Helper to generate letter bank — sempre 15 alternativas (5 por linha × 3)
 function generateBank(word: string): LetterItem[] {
   const letters: LetterItem[] = word.split('').map((char, i) => ({
     id: `word-${i}-${char}`,
@@ -411,19 +410,21 @@ function generateBank(word: string): LetterItem[] {
   }));
 
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const decoyCount = Math.max(3, 11 - word.length);
-  for (let i = 0; i < decoyCount; i++) {
+  const targetSize = Math.max(15, word.length);
+  let decoyIdx = 0;
+  while (letters.length < targetSize) {
     const randomChar = alphabet[Math.floor(Math.random() * alphabet.length)];
     letters.push({
-      id: `decoy-${i}-${randomChar}`,
+      id: `decoy-${decoyIdx}-${randomChar}`,
       char: randomChar,
       isTarget: false
     });
+    decoyIdx++;
   }
   return letters.sort(() => Math.random() - 0.5);
 }
 
-// Hard bank: word remaining letters + 3 fixed decoys + extra decoys by progress
+// Hard bank: letras restantes + iscas até 15 (ou até caber o restante da palavra)
 function generateHardBank(word: string, spelledCount: number, extraDecoys: number): LetterItem[] {
   const remaining = word.slice(spelledCount).split('').map((char, i) => ({
     id: `word-${spelledCount + i}-${char}`,
@@ -431,13 +432,69 @@ function generateHardBank(word: string, spelledCount: number, extraDecoys: numbe
     isTarget: true
   }));
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const totalDecoys = 3 + extraDecoys;
+  const targetSize = Math.max(15, remaining.length);
   const decoys: LetterItem[] = [];
-  for (let i = 0; i < totalDecoys; i++) {
+  let i = 0;
+  while (remaining.length + decoys.length < targetSize || decoys.length < 3 + extraDecoys) {
+    if (remaining.length + decoys.length >= targetSize && decoys.length >= 3 + extraDecoys) break;
     const randomChar = alphabet[Math.floor(Math.random() * alphabet.length)];
     decoys.push({ id: `decoy-hard-${i}-${randomChar}`, char: randomChar, isTarget: false });
+    i++;
+    if (i > 40) break;
   }
   return [...remaining, ...decoys].sort(() => Math.random() - 0.5);
+}
+
+/** Expande alternativas de matemática para exatamente 15 (5 por linha × 3). */
+function expandMathOptions(
+  answer: number | string,
+  baseOptions: (number | string)[],
+  count = 15
+): (number | string)[] {
+  const seen = new Set(baseOptions.map(String));
+  const result: (number | string)[] = [...baseOptions];
+
+  const pushUnique = (value: number | string) => {
+    const key = String(value);
+    if (seen.has(key)) return;
+    seen.add(key);
+    result.push(value);
+  };
+
+  if (typeof answer === 'string' && answer.includes('R$')) {
+    const base = Number(answer.replace(/\D/g, '')) || 30;
+    for (let n = 5; result.length < count && n < 200; n += 5) {
+      if (base + n > 0) pushUnique(`R$ ${base + n}`);
+      if (base - n > 0) pushUnique(`R$ ${base - n}`);
+    }
+  } else if (typeof answer === 'string' && answer.includes('/')) {
+    const fracs = [
+      '1/2', '1/3', '1/4', '1/5', '1/6', '1/8',
+      '2/3', '2/4', '2/5', '2/6', '2/8',
+      '3/4', '3/5', '3/6', '3/8',
+      '4/5', '4/6', '4/8', '5/6', '5/8', '7/8', '4/3', '5/4'
+    ];
+    for (const f of fracs) {
+      if (result.length >= count) break;
+      pushUnique(f);
+    }
+  } else {
+    const numAns = typeof answer === 'number' ? answer : Number(answer);
+    if (!Number.isNaN(numAns)) {
+      let n = 1;
+      while (result.length < count && n < 60) {
+        pushUnique(numAns + n);
+        if (numAns - n >= 0) pushUnique(numAns - n);
+        n++;
+      }
+    }
+  }
+
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result.slice(0, count);
 }
 
 // -------------------------------------------------------------
@@ -1060,11 +1117,6 @@ function LettersStage({
     speakAudio(`A próxima letra é ${phonetic}!`, staticKey);
   };
 
-  const handleManualShuffle = () => {
-    playSoundFx('shuffle');
-    setLetterBank(prev => [...prev].sort(() => Math.random() - 0.5));
-  };
-
   const handleLetterClick = (item: LetterItem) => {
     if (isLetterCelebrating || disabledByHint.includes(item.id)) return;
     const upper = item.char.toUpperCase();
@@ -1185,14 +1237,14 @@ function LettersStage({
         onSuccess={handleTracingSuccess}
       />
     )}
-    <div className="w-full flex-1 flex flex-col items-center justify-between">
+    <div className="w-full flex flex-col items-center gap-1.5">
       {/* Word Progress & Header */}
-      <div className="w-full flex flex-col items-center gap-2 mb-3">
+      <div className="w-full flex flex-col items-center gap-1 shrink-0">
         {/* Clue with individual listen button */}
         {wordObj.clue && (
-          <div className="w-full max-w-md bg-indigo-50/90 border border-indigo-100 rounded-2xl px-4 py-2 flex items-center justify-between gap-2 shadow-2xs">
-            <div className="text-left text-xs sm:text-sm font-semibold text-indigo-950 flex items-center gap-2">
-              <span className="text-base">💡</span>
+          <div className="w-full max-w-md bg-indigo-50/90 border border-indigo-100 rounded-xl px-3 py-1.5 flex items-center justify-between gap-2 shadow-2xs">
+            <div className="text-left text-xs font-semibold text-indigo-950 flex items-center gap-1.5">
+              <span className="text-sm">💡</span>
               <span><strong>Pista:</strong> {wordObj.clue}</span>
             </div>
             <button
@@ -1202,10 +1254,10 @@ function LettersStage({
                 const slug = currentWord.toLowerCase();
                 speakAudio(`Pista: ${wordObj.clue}`, `pista_${slug}`);
               }}
-              className="p-1.5 rounded-full bg-white text-indigo-600 hover:bg-indigo-100 transition-colors shrink-0 shadow-2xs"
+              className="p-1 rounded-full bg-white text-indigo-600 hover:bg-indigo-100 transition-colors shrink-0 shadow-2xs"
               title="Ouvir apenas a pista"
             >
-              <Volume2 size={16} />
+              <Volume2 size={14} />
             </button>
           </div>
         )}
@@ -1214,34 +1266,34 @@ function LettersStage({
         <button
           id="btn-speak-word-prominent"
           onClick={handleSpeakQuestion}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 active:scale-95 text-indigo-800 rounded-full font-bold text-xs sm:text-sm border border-indigo-200 shadow-2xs transition-all mt-1"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 active:scale-95 text-indigo-800 rounded-full font-bold text-xs border border-indigo-200 shadow-2xs transition-all"
           title="Ouvir a pergunta do desafio em voz alta"
         >
-          <Volume2 size={18} className="text-indigo-600 shrink-0" />
+          <Volume2 size={16} className="text-indigo-600 shrink-0" />
           <span>Ouvir a Pergunta em Voz Alta</span>
           {isAudioLoading && (
-            <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-ping ml-1" />
+            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-ping ml-1" />
           )}
         </button>
       </div>
 
       {/* Prominent Speech Action Buttons */}
-      <div className={`w-full mx-auto grid grid-cols-2 gap-2.5 sm:gap-3 my-2 ${tvMode ? 'max-w-3xl gap-4' : 'max-w-md'}`}>
+      <div className={`w-full mx-auto grid grid-cols-2 gap-2 shrink-0 ${tvMode ? 'max-w-3xl gap-4' : 'max-w-md'}`}>
         {/* Botão 1: Falar Palavra Toda */}
         <button
           id="btn-speak-full-word"
           onClick={handleSpeakFullWord}
-          className={`tv-action-btn flex items-center justify-center gap-2.5 px-3 py-3 sm:py-3.5 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 active:scale-95 text-white rounded-2xl font-black shadow-md border-b-4 border-indigo-800 transition-all text-xs sm:text-sm group ${tvMode ? 'text-base py-5' : ''}`}
+          className={`tv-action-btn flex items-center justify-center gap-2 px-2.5 py-2 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 active:scale-95 text-white rounded-xl font-black shadow-md border-b-4 border-indigo-800 transition-all text-xs group ${tvMode ? 'text-base py-5' : ''}`}
           title="Falar e ouvir a palavra toda"
         >
-          <div className="p-1.5 rounded-xl bg-white/20 group-hover:bg-white/30 transition-colors">
-            <Volume2 size={tvMode ? 28 : 22} className="text-white shrink-0" />
+          <div className="p-1 rounded-lg bg-white/20 group-hover:bg-white/30 transition-colors">
+            <Volume2 size={tvMode ? 28 : 18} className="text-white shrink-0" />
           </div>
           <div className="flex flex-col text-left leading-tight">
-            <span className="text-[10px] sm:text-xs text-indigo-100 font-semibold uppercase tracking-wider">
+            <span className="text-[9px] sm:text-[10px] text-indigo-100 font-semibold uppercase tracking-wider">
               Ouvir Tudo
             </span>
-            <span className="text-xs sm:text-sm font-extrabold tracking-wide">
+            <span className="text-xs font-extrabold tracking-wide">
               Falar Palavra
             </span>
           </div>
@@ -1253,17 +1305,17 @@ function LettersStage({
           data-tv-autofocus
           onClick={handleSpeakNextLetter}
           disabled={isLetterCelebrating || !expectedChar}
-          className={`tv-action-btn flex items-center justify-center gap-2.5 px-3 py-3 sm:py-3.5 bg-gradient-to-br from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 active:scale-95 text-amber-950 rounded-2xl font-black shadow-md border-b-4 border-amber-700 transition-all text-xs sm:text-sm disabled:opacity-50 group ${tvMode ? 'text-base py-5' : ''}`}
+          className={`tv-action-btn flex items-center justify-center gap-2 px-2.5 py-2 bg-gradient-to-br from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 active:scale-95 text-amber-950 rounded-xl font-black shadow-md border-b-4 border-amber-700 transition-all text-xs disabled:opacity-50 group ${tvMode ? 'text-base py-5' : ''}`}
           title="Falar e ouvir apenas a próxima letra"
         >
-          <div className="p-1.5 rounded-xl bg-amber-600/20 group-hover:bg-amber-600/30 transition-colors">
-            <Volume1 size={22} className="text-amber-950 shrink-0" />
+          <div className="p-1 rounded-lg bg-amber-600/20 group-hover:bg-amber-600/30 transition-colors">
+            <Volume1 size={tvMode ? 22 : 18} className="text-amber-950 shrink-0" />
           </div>
           <div className="flex flex-col text-left leading-tight">
-            <span className="text-[10px] sm:text-xs text-amber-900/80 font-semibold uppercase tracking-wider">
+            <span className="text-[9px] sm:text-[10px] text-amber-900/80 font-semibold uppercase tracking-wider">
               {expectedChar ? `Letra ${expectedChar}` : 'Finalizada'}
             </span>
-            <span className="text-xs sm:text-sm font-extrabold tracking-wide">
+            <span className="text-xs font-extrabold tracking-wide">
               Próxima Letra
             </span>
           </div>
@@ -1271,22 +1323,22 @@ function LettersStage({
       </div>
 
       {/* Target Word Slots Area */}
-      <div className={`my-auto py-4 flex flex-wrap items-center justify-center gap-2 sm:gap-3 max-w-full ${tvMode ? 'gap-4 py-6' : ''}`}>
+      <div className={`py-1 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 max-w-full shrink-0 ${tvMode ? 'gap-4 py-4' : ''}`}>
         {currentWord.split('').map((char, idx) => {
           const isSpelled = idx < spelledCount;
           const isCurrent = idx === spelledCount;
           return (
             <div
               key={idx}
-              className={`tv-word-slot relative flex items-center justify-center rounded-2xl font-black transition-all duration-200 ${
-                ageGroup === '3-5'
-                  ? 'w-14 h-20 sm:w-20 sm:h-24 text-4xl sm:text-6xl border-4'
-                  : 'w-11 h-16 sm:w-16 sm:h-20 text-3xl sm:text-5xl border-3 sm:border-4'
+              className={`tv-word-slot relative flex items-center justify-center rounded-xl font-black transition-all duration-200 ${
+                  ageGroup === '3-5'
+                  ? 'w-11 h-14 sm:w-14 sm:h-16 text-3xl sm:text-4xl border-3'
+                  : 'w-9 h-12 sm:w-12 sm:h-14 text-2xl sm:text-3xl border-2 sm:border-3'
               } ${
                 isSpelled
                   ? 'bg-emerald-500 border-emerald-600 text-white shadow-md'
                   : isCurrent
-                    ? 'bg-white border-amber-400 shadow-md ring-4 ring-amber-100'
+                    ? 'bg-white border-amber-400 shadow-md ring-2 ring-amber-100'
                     : 'bg-white/70 border-slate-200'
               }`}
             >
@@ -1295,18 +1347,18 @@ function LettersStage({
                   {char}
                 </span>
               ) : (
-                <div className="w-1/2 h-1.5 rounded-full bg-slate-300 opacity-60 absolute bottom-3" />
+                <div className="w-1/2 h-1 rounded-full bg-slate-300 opacity-60 absolute bottom-2" />
               )}
             </div>
           );
         })}
       </div>
 
-      {/* Interactive Letter Bank */}
-      <div className="w-full flex flex-col items-center mt-4">
+      {/* Interactive Letter Bank + Dica (sempre na área visível) */}
+      <div className="w-full flex flex-col items-center shrink-0 pb-1">
         <div
           id="letter-bank"
-          className={`flex flex-wrap justify-center gap-2 sm:gap-3 mb-4 ${tvMode ? 'max-w-4xl gap-4' : 'max-w-lg'}`}
+          className={`grid grid-cols-5 gap-1.5 sm:gap-2 mb-2 w-full ${tvMode ? 'max-w-4xl gap-4' : 'max-w-lg'}`}
         >
           {letterBank.map((item, idx) => {
             const isWrong = wrongLetterId === item.id;
@@ -1318,7 +1370,7 @@ function LettersStage({
                 data-tv-autofocus={idx === 0 ? true : undefined}
                 onClick={() => handleLetterClick(item)}
                 disabled={isDisabled}
-                className={`tv-letter-tile relative font-black rounded-2xl shadow-sm border-b-4 active:border-b-0 active:translate-y-1 transition-all duration-150 select-none ${
+                className={`tv-letter-tile relative font-black rounded-xl shadow-sm border-b-4 active:border-b-0 active:translate-y-1 transition-all duration-150 select-none ${
                   isDisabled
                     ? 'bg-slate-100 border-slate-200 text-slate-300 opacity-40 cursor-not-allowed'
                     : isWrong
@@ -1328,8 +1380,8 @@ function LettersStage({
                         : 'bg-white border-slate-300 hover:border-slate-400 text-slate-800 hover:bg-slate-50'
                 } ${
                   ageGroup === '3-5'
-                    ? 'w-16 h-16 sm:w-20 sm:h-20 text-4xl sm:text-5xl'
-                    : 'w-12 h-12 sm:w-16 sm:h-16 text-2xl sm:text-4xl'
+                    ? 'w-full aspect-square max-h-12 sm:max-h-14 text-2xl sm:text-3xl'
+                    : 'w-full aspect-square max-h-10 sm:max-h-12 text-lg sm:text-2xl'
                 }`}
               >
                 {item.char}
@@ -1338,28 +1390,17 @@ function LettersStage({
           })}
         </div>
 
-        {/* Action Controls: Shuffle & Hint */}
-        <div className={`flex items-center gap-3 ${tvMode ? 'gap-5 mt-2' : ''}`}>
-          <button
-            id="btn-shuffle-letters"
-            onClick={handleManualShuffle}
-            disabled={isLetterCelebrating}
-            className={`tv-action-btn flex items-center gap-1.5 px-4 py-3 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-bold text-sm sm:text-base shadow-xs active:scale-95 transition-all disabled:opacity-50 ${tvMode ? 'px-8 py-4 text-lg' : ''}`}
-            title="Embaralhar as letras disponíveis"
-          >
-            <Shuffle size={tvMode ? 24 : 18} />
-            <span>Embaralhar</span>
-          </button>
-
+        {/* Action Controls: Hint — altura reservada para a dica não sumir */}
+        <div className={`flex items-center justify-center gap-2 min-h-[40px] ${tvMode ? 'gap-5 mt-2 min-h-[56px]' : ''}`}>
           {/* Hint buttons: appear after 2 errors, 2 levels */}
           {wrongLetterCount > 1 && hintLevel < 1 && (
             <button
               id="btn-hint-letter-1"
               onClick={giveHint1}
               disabled={isLetterCelebrating || spelledCount >= currentWord.length}
-              className={`tv-action-btn flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-4 text-xl' : ''}`}
+              className={`tv-action-btn flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-4 py-2 rounded-full font-black text-sm shadow-md border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-4 text-xl' : ''}`}
             >
-              <Lightbulb size={tvMode ? 26 : 20} className="fill-amber-100 text-amber-900" />
+              <Lightbulb size={tvMode ? 26 : 16} className="fill-amber-100 text-amber-900" />
               <span>DICA</span>
             </button>
           )}
@@ -1368,9 +1409,9 @@ function LettersStage({
               id="btn-hint-letter-2"
               onClick={giveHint2}
               disabled={isLetterCelebrating || spelledCount >= currentWord.length}
-              className={`tv-action-btn flex items-center gap-2 bg-gradient-to-r from-orange-400 to-orange-500 text-orange-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-orange-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-4 text-xl' : ''}`}
+              className={`tv-action-btn flex items-center gap-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-orange-950 px-4 py-2 rounded-full font-black text-sm shadow-md border-b-4 border-orange-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-4 text-xl' : ''}`}
             >
-              <Lightbulb size={tvMode ? 26 : 20} className="fill-orange-100 text-orange-900" />
+              <Lightbulb size={tvMode ? 26 : 16} className="fill-orange-100 text-orange-900" />
               <span>MAIS UMA DICA</span>
             </button>
           )}
@@ -1692,10 +1733,15 @@ function MathInteractiveHintModal({
           </button>
         </div>
 
-        {/* Speak instruction button */}
+        {/* Speak instruction button — usa áudio gravado math_dica_{id} */}
         <button
           type="button"
-          onClick={() => speakAudio(config.instruction, `math_hint_instruction_${config.type}`)}
+          onClick={() =>
+            speakAudio(
+              problem.hint || config.instruction,
+              `math_dica_${problem.id}`
+            )
+          }
           className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 px-4 py-2 rounded-full font-bold text-sm transition-all cursor-pointer shadow-xs active:scale-95 w-full justify-center"
         >
           <span className="text-xl">🔊</span>
@@ -2170,19 +2216,12 @@ function MathStage({
   const [tappedCountItems, setTappedCountItems] = useState<number[]>([]);
   // Mini-desafio interativo de matemática (Cesto / Mãozinhas)
   const [showInteractiveMathModal, setShowInteractiveMathModal] = useState(false);
-  // Só libera as alternativas depois de ouvir a pergunta
-  const [showOptions, setShowOptions] = useState(false);
   const [wrongAttempts, setWrongAttempts] = useState(0);
   const [disabledOptions, setDisabledOptions] = useState<(number | string)[]>([]);
-  // Embaralha a cada montagem (cada pergunta), para a certa não ficar sempre no mesmo lugar
-  const [shuffledOptions] = useState<(number | string)[]>(() => {
-    const opts = [...problem.options];
-    for (let i = opts.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [opts[i], opts[j]] = [opts[j], opts[i]];
-    }
-    return opts;
-  });
+  // 15 alternativas embaralhadas (5 por linha × 3)
+  const [shuffledOptions] = useState<(number | string)[]>(() =>
+    expandMathOptions(problem.answer, problem.options, 15)
+  );
 
   const MAX_ATTEMPTS = 4;
   const chancesLeft = MAX_ATTEMPTS - wrongAttempts;
@@ -2190,11 +2229,10 @@ function MathStage({
   const handleSpeakQuestion = () => {
     playSoundFx('pop');
     speakAudio(problem.speechText, `math_pergunta_${problem.id}`);
-    setShowOptions(true);
   };
 
   const handleMathOptionClick = (opt: number | string) => {
-    if (isMathCelebrating || !showOptions || disabledOptions.includes(opt)) return;
+    if (isMathCelebrating || disabledOptions.includes(opt)) return;
 
     if (opt === problem.answer) {
       setSelectedMathOption(opt);
@@ -2238,7 +2276,7 @@ function MathStage({
   const [mathHintLevel, setMathHintLevel] = useState(0);
 
   const giveMathHint = () => {
-    if (!showOptions || mathHintLevel >= 2) return;
+    if (mathHintLevel >= 2) return;
     playSoundFx('pop');
     const nextLevel = mathHintLevel + 1;
     setMathHintLevel(nextLevel);
@@ -2310,46 +2348,38 @@ function MathStage({
         speakAudio={speakAudio}
       />
     )}
-    <div className="w-full flex-1 flex flex-col items-center justify-between">
+    <div className="w-full flex flex-col items-center gap-2">
       {/* Problem Display Card */}
-      <div className="w-full bg-white rounded-3xl border-2 border-slate-200 p-4 sm:p-6 shadow-sm flex flex-col items-center text-center my-auto">
+      <div className="w-full bg-white rounded-2xl border-2 border-slate-200 p-2.5 sm:p-3 shadow-sm flex flex-col items-center text-center shrink-0">
 
         {/* Prominent Question Speech Button */}
         <button
           id="btn-speak-math-prominent"
           data-tv-autofocus
           onClick={handleSpeakQuestion}
-          className={`flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-800 rounded-full font-bold text-xs sm:text-sm border border-emerald-200 shadow-2xs transition-all my-2 ${
-            !showOptions ? 'ring-4 ring-emerald-200 animate-pulse' : ''
-          } ${tvMode ? 'tv-action-btn text-base px-6 py-4' : ''}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-800 rounded-full font-bold text-xs border border-emerald-200 shadow-2xs transition-all ${tvMode ? 'tv-action-btn text-base px-6 py-4' : ''}`}
           title="Ouvir a pergunta em voz alta"
         >
-          <Volume2 size={tvMode ? 24 : 18} className="text-emerald-600 shrink-0" />
-          <span>{showOptions ? 'Ouvir a Pergunta de Novo' : 'Ouvir a Pergunta em Voz Alta'}</span>
+          <Volume2 size={tvMode ? 24 : 16} className="text-emerald-600 shrink-0" />
+          <span>Ouvir a Pergunta em Voz Alta</span>
           {isAudioLoading && (
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping ml-1" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping ml-1" />
           )}
         </button>
 
-        {!showOptions && (
-          <p className="text-xs sm:text-sm text-slate-500 font-semibold mt-1 max-w-md">
-            Escute a pergunta para liberar as alternativas
-          </p>
-        )}
-
-        {showOptions && chancesLeft < MAX_ATTEMPTS && !isMathCelebrating && (
-          <p className="text-xs sm:text-sm font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 mt-2">
+        {chancesLeft < MAX_ATTEMPTS && !isMathCelebrating && (
+          <p className="text-[11px] sm:text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-0.5 mt-1.5">
             {chancesLeft === 1 ? 'Última chance!' : `${chancesLeft} chances restantes`}
           </p>
         )}
 
         {/* Special Interactive Counting Display for 3-5 Years */}
         {problem.visualItems && (
-          <div className="my-3 flex flex-col items-center">
-            <p className="text-xs sm:text-sm text-slate-500 font-medium mb-3">
+          <div className="my-1.5 flex flex-col items-center">
+            <p className="text-[11px] sm:text-xs text-slate-500 font-medium mb-1.5">
               👆 Toque nos itens para contar em voz alta:
             </p>
-            <div className="flex flex-wrap justify-center gap-3 sm:gap-4 max-w-sm">
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-3 max-w-sm">
               {Array.from({ length: problem.visualItems.total }).map((_, i) => {
                 const isTapped = tappedCountItems.includes(i);
                 return (
@@ -2357,7 +2387,7 @@ function MathStage({
                     key={i}
                     whileTap={{ scale: 0.85 }}
                     onClick={() => handleTapCountItem(i)}
-                    className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-4xl sm:text-5xl shadow-xs border-2 transition-all ${
+                    className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center text-3xl sm:text-4xl shadow-xs border-2 transition-all ${
                       isTapped
                         ? 'bg-amber-50 border-amber-400 scale-105 ring-2 ring-amber-200'
                         : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
@@ -2365,7 +2395,7 @@ function MathStage({
                   >
                     <span>{problem.visualItems?.emoji}</span>
                     {isTapped && (
-                      <span className="absolute -top-2 -right-2 bg-indigo-600 text-white text-xs font-black rounded-full w-6 h-6 flex items-center justify-center shadow-xs">
+                      <span className="absolute -top-1.5 -right-1.5 bg-indigo-600 text-white text-[10px] font-black rounded-full w-5 h-5 flex items-center justify-center shadow-xs">
                         {tappedCountItems.indexOf(i) + 1}
                       </span>
                     )}
@@ -2378,100 +2408,79 @@ function MathStage({
 
         {/* Visual Sum for 3-5 Years */}
         {problem.visualSum && (
-          <div className="my-4 flex items-center justify-center gap-3 sm:gap-4 text-3xl sm:text-4xl bg-slate-50 p-4 rounded-2xl border border-slate-100">
-            <div className="flex gap-1">
+          <div className="my-1.5 flex items-center justify-center gap-2 sm:gap-3 text-2xl sm:text-3xl bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+            <div className="flex gap-0.5">
               {Array.from({ length: problem.visualSum.count1 }).map((_, i) => (
                 <span key={i}>{problem.visualSum?.emoji1}</span>
               ))}
             </div>
-            <span className="font-black text-indigo-600 text-2xl">+</span>
-            <div className="flex gap-1">
+            <span className="font-black text-indigo-600 text-xl">+</span>
+            <div className="flex gap-0.5">
               {Array.from({ length: problem.visualSum.count2 }).map((_, i) => (
                 <span key={i}>{problem.visualSum?.emoji2}</span>
               ))}
             </div>
-            <span className="font-black text-indigo-600 text-2xl">=</span>
-            <span className="font-black text-amber-500 text-3xl">?</span>
+            <span className="font-black text-indigo-600 text-xl">=</span>
+            <span className="font-black text-amber-500 text-2xl">?</span>
           </div>
-        )}
-
-        {/* Clue/Hint text if active */}
-        {mathHintActive && (
-          <motion.div
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold max-w-md"
-          >
-            💡 <strong>Dica:</strong> {problem.hint}
-          </motion.div>
         )}
       </div>
 
-      {/* Answer Options Grid — só depois de ouvir a pergunta */}
-      <div className="w-full mt-6">
-        {showOptions ? (
-          <>
-            <div className={`grid grid-cols-3 gap-3 mx-auto mb-6 ${tvMode ? 'max-w-3xl gap-5' : 'max-w-lg'}`}>
-              {shuffledOptions.map((opt, idx) => {
-                const isCorrect = selectedMathOption === opt;
-                const isWrong = mathWrongOption === opt || disabledOptions.includes(opt);
-                const isDisabled = disabledOptions.includes(opt) && opt !== problem.answer;
-                return (
-                  <motion.button
-                    key={`${String(opt)}-${idx}`}
-                    data-tv-autofocus={idx === 0 ? true : undefined}
-                    whileHover={tvMode ? undefined : { scale: 1.02 }}
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => handleMathOptionClick(opt)}
-                    disabled={isMathCelebrating || isDisabled}
-                    className={`tv-math-option relative font-black rounded-2xl border-b-4 py-4 sm:py-5 text-2xl sm:text-3xl shadow-sm transition-all flex items-center justify-center active:border-b-0 active:translate-y-1 ${
-                      isCorrect
-                        ? 'bg-emerald-500 border-emerald-700 text-white'
-                        : isWrong
-                          ? 'bg-red-100 border-red-400 text-red-700 opacity-60'
-                          : mathHintActive && opt === problem.answer
-                            ? 'bg-amber-50 border-amber-500 text-amber-950 ring-4 ring-amber-300 animate-pulse'
-                            : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50'
-                    } ${tvMode ? 'py-8 text-4xl' : ''} disabled:cursor-not-allowed`}
-                  >
-                    {opt}
-                  </motion.button>
-                );
-              })}
-            </div>
+      {/* Answer Options Grid — 15 alternativas (5 × 3) + dica sempre visível */}
+      <div className="w-full shrink-0 pb-1">
+        <div className={`grid grid-cols-5 gap-1.5 sm:gap-2 mx-auto mb-2 w-full ${tvMode ? 'max-w-3xl gap-4' : 'max-w-lg'}`}>
+          {shuffledOptions.map((opt, idx) => {
+            const isCorrect = selectedMathOption === opt;
+            const isWrong = mathWrongOption === opt || disabledOptions.includes(opt);
+            const isDisabled = disabledOptions.includes(opt) && opt !== problem.answer;
+            return (
+              <motion.button
+                key={`${String(opt)}-${idx}`}
+                data-tv-autofocus={idx === 0 ? true : undefined}
+                whileHover={tvMode ? undefined : { scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => handleMathOptionClick(opt)}
+                disabled={isMathCelebrating || isDisabled}
+                className={`tv-math-option relative font-black rounded-xl border-b-4 py-3 sm:py-3.5 min-h-[48px] sm:min-h-[56px] text-xl sm:text-2xl shadow-sm transition-all flex items-center justify-center active:border-b-0 active:translate-y-1 ${
+                  isCorrect
+                    ? 'bg-emerald-500 border-emerald-700 text-white'
+                    : isWrong
+                      ? 'bg-red-100 border-red-400 text-red-700 opacity-60'
+                      : mathHintActive && opt === problem.answer
+                        ? 'bg-amber-50 border-amber-500 text-amber-950 ring-2 ring-amber-300 animate-pulse'
+                        : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50'
+                } ${tvMode ? 'py-6 text-3xl' : ''} disabled:cursor-not-allowed`}
+              >
+                {opt}
+              </motion.button>
+            );
+          })}
+        </div>
 
-            {wrongAttempts > 1 && mathHintLevel < 2 && (
-              <div className="flex justify-center gap-3 flex-wrap">
-                {mathHintLevel < 1 && (
-                  <button
-                    id="btn-hint-math-1"
-                    onClick={giveMathHint}
-                    disabled={isMathCelebrating}
-                    className={`tv-action-btn flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-5 text-xl' : ''}`}
-                  >
-                    <Lightbulb size={tvMode ? 26 : 20} className="fill-amber-100 text-amber-900" />
-                    <span>DICA</span>
-                  </button>
-                )}
-                {mathHintLevel === 1 && (
-                  <button
-                    id="btn-hint-math-2"
-                    onClick={giveMathHint}
-                    disabled={isMathCelebrating}
-                    className={`tv-action-btn flex items-center gap-2 bg-gradient-to-r from-orange-400 to-orange-500 text-orange-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-orange-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-5 text-xl' : ''}`}
-                  >
-                    <Lightbulb size={tvMode ? 26 : 20} className="fill-orange-100 text-orange-900" />
-                    <span>MAIS UMA DICA</span>
-                  </button>
-                )}
-              </div>
+        {mathHintLevel < 2 && (
+          <div className="flex justify-center gap-3 flex-wrap min-h-[40px]">
+            {mathHintLevel < 1 && (
+              <button
+                id="btn-hint-math-1"
+                onClick={giveMathHint}
+                disabled={isMathCelebrating}
+                className={`tv-action-btn flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-4 py-2 rounded-full font-black text-sm shadow-md border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-5 text-xl' : ''}`}
+              >
+                <Lightbulb size={tvMode ? 26 : 16} className="fill-amber-100 text-amber-900" />
+                <span>DICA</span>
+              </button>
             )}
-          </>
-        ) : (
-          <div className="flex justify-center mb-4">
-            <div className="bg-slate-100 border border-slate-200 text-slate-500 rounded-2xl px-5 py-4 text-sm font-bold text-center max-w-md">
-              As alternativas aparecem depois que você ouvir a pergunta
-            </div>
+            {mathHintLevel === 1 && (
+              <button
+                id="btn-hint-math-2"
+                onClick={giveMathHint}
+                disabled={isMathCelebrating}
+                className={`tv-action-btn flex items-center gap-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-orange-950 px-4 py-2 rounded-full font-black text-sm shadow-md border-b-4 border-orange-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-5 text-xl' : ''}`}
+              >
+                <Lightbulb size={tvMode ? 26 : 16} className="fill-orange-100 text-orange-900" />
+                <span>MAIS UMA DICA</span>
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -2496,7 +2505,7 @@ export default function EducationalApp() {
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const isOnline = useOnlineStatus();
   const { isInstallable, isInstalled, isIOS, install: installPWA } = usePWAInstall();
-  const { tvMode, toggleTvMode } = useTvMode();
+  const { tvMode } = useTvMode();
   const [showIOSPrompt, setShowIOSPrompt] = useState(false);
 
   // Audio Strategy Settings
@@ -2705,7 +2714,7 @@ export default function EducationalApp() {
   return (
     <div
       data-tv-nav
-      className={`min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans select-none pb-8 ${tvMode ? 'tv-shell pb-12' : ''}`}
+      className={`h-dvh max-h-dvh overflow-hidden bg-slate-50 text-slate-900 flex flex-col font-sans select-none ${tvMode ? 'tv-shell' : ''}`}
     >
       {/* Offline Status Toast */}
       {mounted && !isOnline && (
@@ -2726,34 +2735,19 @@ export default function EducationalApp() {
       )}
 
       {/* Top Header & Console */}
-      <header className={`sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs px-3 sm:px-6 py-2.5 ${tvMode ? 'tv-header' : ''}`}>
-        <div className={`mx-auto flex flex-col gap-2 ${tvMode ? 'max-w-6xl gap-3' : 'max-w-3xl'}`}>
+      <header className={`shrink-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs px-3 sm:px-6 py-1.5 ${tvMode ? 'tv-header' : ''}`}>
+        <div className={`mx-auto flex flex-col gap-1.5 ${tvMode ? 'max-w-6xl gap-3' : 'max-w-3xl'}`}>
           
           {/* Top Row: Brand, PWA, Stars, Controls */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xl sm:text-2xl font-black tracking-tight text-indigo-600 flex items-center gap-1.5">
-                <Sparkles className="w-6 h-6 text-amber-400 fill-amber-400" />
+              <span className="text-base sm:text-lg font-black tracking-tight text-indigo-600 flex items-center gap-1">
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 fill-amber-400" />
                 Soletrando & Calculando
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* Toggle Modo TV */}
-              <button
-                id="toggle-tv-mode-btn"
-                onClick={toggleTvMode}
-                className={`tv-nav-chip flex items-center gap-1.5 px-3 py-2 rounded-xl border font-extrabold text-xs shadow-2xs transition-all ${
-                  tvMode
-                    ? 'bg-indigo-600 border-indigo-500 text-white'
-                    : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
-                }`}
-                title={tvMode ? 'Desativar modo TV' : 'Ativar modo TV (controle remoto)'}
-              >
-                <Tv size={16} />
-                <span className="hidden sm:inline">{tvMode ? 'TV ON' : 'Modo TV'}</span>
-              </button>
-
+            <div className="flex items-center gap-1.5">
               {/* Install PWA Button if available */}
               {mounted && isInstallable && !isInstalled && (
                 <button
@@ -2782,9 +2776,9 @@ export default function EducationalApp() {
               {/* Star Counter */}
               <div 
                 id="stars-badge"
-                className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full text-amber-700 font-extrabold text-sm shadow-xs"
+                className="flex items-center gap-1 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full text-amber-700 font-extrabold text-xs shadow-xs"
               >
-                <Star className="w-4 h-4 fill-amber-400 text-amber-500 animate-pulse" />
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500 animate-pulse" />
                 <span>{stars}</span>
               </div>
 
@@ -2795,31 +2789,31 @@ export default function EducationalApp() {
                   if (soundEnabled) stopAllAudio();
                   setSoundEnabled(!soundEnabled);
                 }}
-                className={`tv-nav-chip p-2 rounded-xl border transition-colors ${
+                className={`tv-nav-chip p-1.5 rounded-lg border transition-colors ${
                   soundEnabled 
                     ? 'bg-sky-50 border-sky-200 text-sky-600 hover:bg-sky-100' 
                     : 'bg-slate-100 border-slate-200 text-slate-400'
                 }`}
                 title={soundEnabled ? 'Áudio ativado' : 'Áudio desativado'}
               >
-                {soundEnabled ? <Volume2 size={tvMode ? 24 : 18} /> : <VolumeX size={tvMode ? 24 : 18} />}
+                {soundEnabled ? <Volume2 size={tvMode ? 24 : 16} /> : <VolumeX size={tvMode ? 24 : 16} />}
               </button>
 
               {/* Parents Settings */}
               <button
                 id="open-settings-button"
                 onClick={() => setShowSettingsModal(true)}
-                className={`tv-nav-chip p-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200 transition-colors ${tvMode ? 'tv-hide-on-tv' : ''}`}
+                className={`tv-nav-chip p-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200 transition-colors ${tvMode ? 'tv-hide-on-tv' : ''}`}
                 title="Configurações dos Pais & Áudio"
               >
-                <Settings size={tvMode ? 24 : 18} />
+                <Settings size={tvMode ? 24 : 16} />
               </button>
             </div>
           </div>
 
           {/* Second Row: Age Group Segmented Selector */}
           <div className="w-full">
-            <div className="grid grid-cols-4 gap-1 sm:gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <div className="grid grid-cols-4 gap-0.5 sm:gap-1 p-0.5 bg-slate-100 rounded-xl border border-slate-200/80 shadow-2xs">
               {(['3-5', '6-8', '9-11', '12-14'] as AgeGroup[]).map((age) => {
                 const shortLabels: Record<AgeGroup, string> = {
                   '3-5': '3-5',
@@ -2851,23 +2845,18 @@ export default function EducationalApp() {
                     key={age}
                     id={`age-btn-${age}`}
                     onClick={() => handleSelectAgeGroup(age)}
-                    className={`flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 py-1.5 sm:py-2 px-1 rounded-xl transition-all duration-200 min-h-[44px] select-none ${
+                    className={`flex flex-row items-center justify-center gap-1 py-1 px-1 rounded-lg transition-all duration-200 min-h-[28px] sm:min-h-[32px] select-none ${
                       isSelected
-                        ? 'bg-indigo-600 text-white shadow-xs ring-2 ring-indigo-300 font-black'
+                        ? 'bg-indigo-600 text-white shadow-xs ring-1 ring-indigo-300 font-black'
                         : 'text-slate-600 hover:bg-white/80 hover:text-slate-900 active:bg-slate-200 font-bold'
-                    } ${tvMode ? 'tv-nav-chip min-h-[64px] text-base py-3' : ''}`}
+                    } ${tvMode ? 'tv-nav-chip min-h-[52px] text-base py-2.5' : ''}`}
                     title={`Faixa etária: ${fullLabels[age]} (${stageDesc[age]})`}
                   >
-                    <span className="text-base leading-none">{icons[age]}</span>
-                    <div className="flex flex-col items-center sm:items-start leading-none sm:leading-tight">
-                      <span className="text-[11px] sm:text-xs font-black tracking-tight whitespace-nowrap">
-                        <span className="sm:hidden">{shortLabels[age]}</span>
-                        <span className="hidden sm:inline">{fullLabels[age]}</span>
-                      </span>
-                      <span className={`text-[9px] font-semibold sm:hidden ${isSelected ? 'text-indigo-100' : 'text-slate-400'}`}>
-                        anos
-                      </span>
-                    </div>
+                    <span className="text-sm leading-none">{icons[age]}</span>
+                    <span className="text-[11px] sm:text-xs font-black tracking-tight whitespace-nowrap leading-none">
+                      <span className="sm:hidden">{shortLabels[age]}</span>
+                      <span className="hidden sm:inline">{fullLabels[age]}</span>
+                    </span>
                   </button>
                 );
               })}
@@ -2875,29 +2864,29 @@ export default function EducationalApp() {
           </div>
 
           {/* Third Row: Subject Switcher (Letras vs Matemática) */}
-          <div className={`grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-2xl ${tvMode ? 'gap-3 p-2' : ''}`}>
+          <div className={`grid grid-cols-2 gap-1.5 bg-slate-100 p-0.5 rounded-xl ${tvMode ? 'gap-3 p-2' : ''}`}>
             <button
               id="tab-letras"
               onClick={() => handleSelectSubject('letras')}
-              className={`tv-nav-chip flex items-center justify-center gap-2 py-2 rounded-xl text-sm sm:text-base font-extrabold transition-all duration-200 ${
+              className={`tv-nav-chip flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs sm:text-sm font-extrabold transition-all duration-200 ${
                 subject === 'letras'
                   ? 'bg-white text-indigo-700 shadow-sm'
                   : 'text-slate-500 hover:text-slate-800'
               } ${tvMode ? 'py-4 text-lg' : ''}`}
             >
-              <BookOpen size={tvMode ? 24 : 18} />
+              <BookOpen size={tvMode ? 24 : 15} />
               <span>Letras & Palavras</span>
             </button>
             <button
               id="tab-matematica"
               onClick={() => handleSelectSubject('matematica')}
-              className={`tv-nav-chip flex items-center justify-center gap-2 py-2 rounded-xl text-sm sm:text-base font-extrabold transition-all duration-200 ${
+              className={`tv-nav-chip flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs sm:text-sm font-extrabold transition-all duration-200 ${
                 subject === 'matematica'
                   ? 'bg-white text-emerald-700 shadow-sm'
                   : 'text-slate-500 hover:text-slate-800'
               } ${tvMode ? 'py-4 text-lg' : ''}`}
             >
-              <Calculator size={tvMode ? 24 : 18} />
+              <Calculator size={tvMode ? 24 : 15} />
               <span>Matemática</span>
             </button>
           </div>
@@ -2905,7 +2894,7 @@ export default function EducationalApp() {
       </header>
 
       {/* Main Game Stage */}
-      <main className={`flex-1 w-full mx-auto px-4 py-4 sm:py-6 flex flex-col items-center justify-between ${tvMode ? 'tv-main max-w-5xl' : 'max-w-2xl'}`}>
+      <main className={`flex-1 min-h-0 w-full mx-auto px-4 py-2 sm:py-3 flex flex-col items-center overflow-y-auto ${tvMode ? 'tv-main max-w-5xl' : 'max-w-2xl'}`}>
         {subject === 'letras' ? (
           <LettersStage
             key={`letters-${ageGroup}-${wordIndex % currentWordList.length}-${activeWordObj.word}`}
