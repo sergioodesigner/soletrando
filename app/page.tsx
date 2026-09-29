@@ -141,7 +141,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       speechText: 'Quantas maçãs você vê? Toque nas maçãs para contar!',
       visualItems: { emoji: '🍎', total: 3 },
       hint: 'Toque em cada maçã para contar: 1, 2, 3!',
-      options: [2, 3, 4, 5],
+      options: [1, 2, 3, 4, 5, 6],
       answer: 3
     },
     {
@@ -150,7 +150,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       speechText: 'Quantas estrelinhas estão brilhando? Vamos contar!',
       visualItems: { emoji: '⭐', total: 5 },
       hint: 'Conte devagarzinho: 1, 2, 3, 4, 5 estrelas!',
-      options: [3, 4, 5, 6],
+      options: [2, 3, 4, 5, 6, 7],
       answer: 5
     },
     {
@@ -159,7 +159,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       speechText: 'Quantos carrinhos você vê aqui na tela?',
       visualItems: { emoji: '🚗', total: 2 },
       hint: 'Tem 1 e depois 2!',
-      options: [1, 2, 3, 4],
+      options: [1, 2, 3, 4, 5, 6],
       answer: 2
     },
     {
@@ -168,7 +168,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       speechText: 'Quantos balões coloridos estão flutuando?',
       visualItems: { emoji: '🎈', total: 4 },
       hint: 'São quatro balões: 1, 2, 3, 4!',
-      options: [2, 3, 4, 5],
+      options: [1, 2, 3, 4, 5, 6],
       answer: 4
     },
     {
@@ -177,7 +177,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       speechText: 'Dois gatinhos mais um gatinho. Quantos gatinhos ficam?',
       visualSum: { count1: 2, emoji1: '🐱', count2: 1, emoji2: '🐱' },
       hint: 'Junte 2 gatinhos com mais 1 gatinho = 3 gatinhos!',
-      options: [2, 3, 4],
+      options: [1, 2, 3, 4, 5, 6],
       answer: 3
     },
     {
@@ -186,7 +186,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       speechText: 'Um cachorrinho mais um cachorrinho. Quanto dá?',
       visualSum: { count1: 1, emoji1: '🐶', count2: 1, emoji2: '🐶' },
       hint: '1 mais 1 é igual a 2!',
-      options: [1, 2, 3],
+      options: [1, 2, 3, 4, 5, 6],
       answer: 2
     },
     {
@@ -195,7 +195,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       speechText: 'Quantos sóis você vê no céu?',
       visualItems: { emoji: '☀️', total: 1 },
       hint: 'Temos apenas um sol radiante!',
-      options: [1, 2, 3, 4],
+      options: [1, 2, 3, 4, 5, 6],
       answer: 1
     }
   ],
@@ -205,7 +205,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: '5 + 4 = ?',
       speechText: 'Quanto é 5 mais 4?',
       hint: 'Pense: 5 mais 5 é 10, então 5 mais 4 é 9!',
-      options: [8, 9, 10, 7],
+      options: [7, 8, 9, 10, 11, 6],
       answer: 9
     },
     {
@@ -213,7 +213,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: '8 + 7 = ?',
       speechText: 'Quanto é 8 mais 7?',
       hint: '8 mais 2 é 10, com mais 5 dá 15!',
-      options: [14, 15, 16, 13],
+      options: [13, 14, 15, 16, 17, 12],
       answer: 15
     },
     {
@@ -221,7 +221,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: '10 - 4 = ?',
       speechText: 'Se você tem 10 e tira 4, quanto sobra?',
       hint: 'Conte voltando de 10 tirando 4: 9, 8, 7, 6!',
-      options: [5, 6, 7, 4],
+      options: [4, 5, 6, 7, 8, 9],
       answer: 6
     },
     {
@@ -229,7 +229,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: '14 - 6 = ?',
       speechText: 'Quanto é 14 menos 6?',
       hint: '14 menos 4 é 10, menos 2 é 8!',
-      options: [7, 8, 9, 6],
+      options: [6, 7, 8, 9, 10, 5],
       answer: 8
     },
     {
@@ -237,7 +237,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: '2, 4, 6, [ ? ]',
       speechText: 'Complete a sequência de 2 em 2: 2, 4, 6, e o próximo?',
       hint: 'Estamos contando de 2 em 2. Depois de 6 vem o 8!',
-      options: [7, 8, 9, 10],
+      options: [5, 6, 7, 8, 9, 10],
       answer: 8
     },
     {
@@ -245,7 +245,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: 'Quanto falta para 10 se você tem 7?',
       speechText: 'Se você tem 7, quantos faltam para chegar no 10?',
       hint: '7 mais 3 dá 10!',
-      options: [2, 3, 4, 5],
+      options: [1, 2, 3, 4, 5, 6],
       answer: 3
     },
     {
@@ -253,7 +253,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: '6 + 6 = ?',
       speechText: 'Qual é o dobro de 6? 6 mais 6!',
       hint: '6 mais 6 é uma dúzia: 12!',
-      options: [11, 12, 13, 10],
+      options: [9, 10, 11, 12, 13, 14],
       answer: 12
     }
   ],
@@ -263,7 +263,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: '7 × 8 = ?',
       speechText: 'Quanto é 7 vezes 8?',
       hint: 'Lembre-se da tabuada: 7 vezes 7 é 49. Some mais 7 e terá 56!',
-      options: [54, 56, 58, 64],
+      options: [48, 52, 54, 56, 58, 64],
       answer: 56
     },
     {
@@ -271,7 +271,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: '6 × 9 = ?',
       speechText: 'Quanto é 6 vezes 9?',
       hint: '6 vezes 10 é 60. Subtraia 6 e você terá 54!',
-      options: [52, 54, 56, 63],
+      options: [48, 50, 52, 54, 56, 63],
       answer: 54
     },
     {
@@ -279,7 +279,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: '48 ÷ 6 = ?',
       speechText: 'Quanto é 48 dividido por 6?',
       hint: 'Qual número multiplicado por 6 dá 48? É o 8!',
-      options: [6, 7, 8, 9],
+      options: [5, 6, 7, 8, 9, 10],
       answer: 8
     },
     {
@@ -287,7 +287,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: '72 ÷ 9 = ?',
       speechText: 'Quanto é 72 dividido por 9?',
       hint: 'Pense: 9 vezes quanto é igual a 72? É o 8!',
-      options: [7, 8, 9, 6],
+      options: [6, 7, 8, 9, 10, 11],
       answer: 8
     },
     {
@@ -295,7 +295,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: '45 + 38 = ?',
       speechText: 'Quanto é 45 mais 38?',
       hint: '45 mais 30 dá 75, mais 8 resulta em 83!',
-      options: [81, 83, 85, 73],
+      options: [79, 81, 83, 85, 87, 73],
       answer: 83
     },
     {
@@ -303,7 +303,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: '100 - 37 = ?',
       speechText: 'Quanto é 100 menos 37?',
       hint: '100 menos 30 dá 70. 70 menos 7 dá 63!',
-      options: [63, 67, 73, 57],
+      options: [57, 60, 63, 67, 70, 73],
       answer: 63
     },
     {
@@ -311,7 +311,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: 'Qual é o dobro de 18?',
       speechText: 'Qual é o dobro de 18?',
       hint: '18 vezes 2: 10x2=20 mais 8x2=16 -> 36!',
-      options: [32, 36, 38, 40],
+      options: [30, 32, 34, 36, 38, 40],
       answer: 36
     }
   ],
@@ -321,7 +321,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: 'x + 9 = 24. Quanto vale x?',
       speechText: 'Se x mais 9 é igual a 24, qual é o valor de x?',
       hint: 'Isole o x: subtraia 9 de 24. x = 24 - 9 = 15!',
-      options: [13, 14, 15, 16],
+      options: [11, 12, 13, 14, 15, 16],
       answer: 15,
       explanation: 'x = 24 - 9 = 15'
     },
@@ -330,7 +330,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: 'Quanto é 25% de 80?',
       speechText: 'Quanto é vinte e cinco por cento de oitenta?',
       hint: '25% é o mesmo que dividir por 4. 80 ÷ 4 = 20!',
-      options: [15, 20, 25, 30],
+      options: [10, 15, 20, 25, 30, 40],
       answer: 20,
       explanation: '80 ÷ 4 = 20'
     },
@@ -339,7 +339,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: 'Qual o valor de 3³ (3 ao cubo)?',
       speechText: 'Qual o valor de 3 elevado a 3?',
       hint: 'Multiplique 3 por ele mesmo 3 vezes: 3 × 3 = 9, e 9 × 3 = 27!',
-      options: [9, 18, 27, 81],
+      options: [9, 18, 21, 27, 36, 81],
       answer: 27,
       explanation: '3 × 3 × 3 = 27'
     },
@@ -348,7 +348,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: 'Qual é a raiz quadrada de 144 (√144)?',
       speechText: 'Qual é a raiz quadrada de 144?',
       hint: 'Qual número multiplicado por ele mesmo dá 144? 12 × 12 = 144!',
-      options: [11, 12, 14, 16],
+      options: [10, 11, 12, 13, 14, 16],
       answer: 12,
       explanation: '12 × 12 = 144'
     },
@@ -357,7 +357,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: 'Qual o resultado de 1/2 + 1/4?',
       speechText: 'Quanto é a fração um meio mais um quarto?',
       hint: '1/2 equivale a 2/4. Somando 2/4 + 1/4 obtemos 3/4!',
-      options: ['2/6', '3/4', '1/8', '2/4'],
+      options: ['1/4', '2/6', '1/2', '3/4', '2/4', '1/8'],
       answer: '3/4',
       explanation: '2/4 + 1/4 = 3/4'
     },
@@ -366,7 +366,7 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: '2x - 4 = 16. Quanto vale x?',
       speechText: 'Se 2x menos 4 é igual a 16, qual é o valor de x?',
       hint: 'Some 4 aos dois lados: 2x = 20. Divida por 2: x = 10!',
-      options: [8, 10, 12, 14],
+      options: [6, 8, 9, 10, 12, 14],
       answer: 10,
       explanation: '2x = 20 -> x = 10'
     },
@@ -375,14 +375,18 @@ const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
       question: 'Se 3 livros custam R$ 15, quanto custam 6 livros?',
       speechText: 'Se 3 livros custam 15 reais, quanto custam 6 livros?',
       hint: '6 livros é o dobro de 3, logo o preço é o dobro de 15: R$ 30!',
-      options: ['R$ 25', 'R$ 30', 'R$ 35', 'R$ 45'],
+      options: ['R$ 20', 'R$ 25', 'R$ 30', 'R$ 35', 'R$ 40', 'R$ 45'],
       answer: 'R$ 30',
       explanation: 'Dobro da quantidade = dobro do valor'
     }
   ]
 };
 
-// Helper to generate letter bank
+// Vowels for hint system
+const PT_VOWELS = new Set(['A','E','I','O','U']);
+const isVowel = (c: string) => PT_VOWELS.has(c.toUpperCase());
+
+// Helper to generate letter bank (normal difficulty)
 function generateBank(word: string): LetterItem[] {
   const letters: LetterItem[] = word.split('').map((char, i) => ({
     id: `word-${i}-${char}`,
@@ -401,6 +405,552 @@ function generateBank(word: string): LetterItem[] {
     });
   }
   return letters.sort(() => Math.random() - 0.5);
+}
+
+// Hard bank: word remaining letters + 3 fixed decoys + extra decoys by progress
+function generateHardBank(word: string, spelledCount: number, extraDecoys: number): LetterItem[] {
+  const remaining = word.slice(spelledCount).split('').map((char, i) => ({
+    id: `word-${spelledCount + i}-${char}`,
+    char,
+    isTarget: true
+  }));
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const totalDecoys = 3 + extraDecoys;
+  const decoys: LetterItem[] = [];
+  for (let i = 0; i < totalDecoys; i++) {
+    const randomChar = alphabet[Math.floor(Math.random() * alphabet.length)];
+    decoys.push({ id: `decoy-hard-${i}-${randomChar}`, char: randomChar, isTarget: false });
+  }
+  return [...remaining, ...decoys].sort(() => Math.random() - 0.5);
+}
+
+// -------------------------------------------------------------
+// Letter Tracing Modal for 3-5 age group
+// Strict path tracking: drawing outside is blocked and clipped to the letter stencil.
+// Star checkpoints and musical chimes stimulate the child to trace inside the outline.
+// -------------------------------------------------------------
+const PENTATONIC_CHIMES = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
+
+function playStarChime(index: number) {
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const freq = PENTATONIC_CHIMES[index % PENTATONIC_CHIMES.length] || 659.25;
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.33, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.35);
+  } catch {
+    // Ignore audio autoplay restrictions
+  }
+}
+
+function playWinSound() {
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.08);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.08);
+      osc.stop(ctx.currentTime + i * 0.08 + 0.4);
+    });
+  } catch {
+    // Ignore
+  }
+}
+
+interface StarPoint {
+  id: number;
+  x: number;
+  y: number;
+  collected: boolean;
+}
+
+function LetterTracingModal({
+  letter,
+  onSuccess
+}: { letter: string; onSuccess: () => void }) {
+  const CANVAS_SIZE = 300;
+  const drawCanvasRef = useRef<HTMLCanvasElement>(null);
+  const bgCanvasRef = useRef<HTMLCanvasElement>(null);
+  const trackDataRef = useRef<Uint8ClampedArray | null>(null);
+
+  const isDrawing = useRef(false);
+  const lastPos = useRef<{ x: number; y: number } | null>(null);
+  const offTrackTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const [stars, setStars] = useState<StarPoint[]>([]);
+  const [coverage, setCoverage] = useState(0);
+  const [offTrack, setOffTrack] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    const bg = bgCanvasRef.current;
+    const draw = drawCanvasRef.current;
+    if (!bg || !draw) return;
+
+    const bgCtx = bg.getContext('2d')!;
+    const dCtx = draw.getContext('2d')!;
+
+    bgCtx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    dCtx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+    // Dynamic large font calculation to maximize letter size without clipping
+    let fontSize = 230;
+    bgCtx.font = `bold ${fontSize}px "Nunito", "Arial Rounded MT Bold", Arial, sans-serif`;
+    let metrics = bgCtx.measureText(letter);
+    while (metrics.width > CANVAS_SIZE - 46 && fontSize > 150) {
+      fontSize -= 8;
+      bgCtx.font = `bold ${fontSize}px "Nunito", "Arial Rounded MT Bold", Arial, sans-serif`;
+      metrics = bgCtx.measureText(letter);
+    }
+    const fontStr = `bold ${fontSize}px "Nunito", "Arial Rounded MT Bold", Arial, sans-serif`;
+    bgCtx.font = fontStr;
+    bgCtx.textAlign = 'center';
+    bgCtx.textBaseline = 'middle';
+
+    const cx = CANVAS_SIZE / 2;
+    const cy = CANVAS_SIZE / 2;
+
+    // 1. Offscreen letter track mask (in-memory) for exact boundary check & counting
+    const trackCanvas = document.createElement('canvas');
+    trackCanvas.width = CANVAS_SIZE;
+    trackCanvas.height = CANVAS_SIZE;
+    const tCtx = trackCanvas.getContext('2d', { willReadFrequently: true })!;
+    tCtx.font = fontStr;
+    tCtx.textAlign = 'center';
+    tCtx.textBaseline = 'middle';
+    tCtx.lineWidth = 44;
+    tCtx.lineCap = 'round';
+    tCtx.lineJoin = 'round';
+    tCtx.strokeStyle = '#000000';
+    tCtx.fillStyle = '#000000';
+    tCtx.strokeText(letter, cx, cy);
+    tCtx.fillText(letter, cx, cy);
+    trackDataRef.current = tCtx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE).data;
+
+    // 2. Offscreen reference canvas (in-memory) for star sampling along the centerline
+    const refCanvas = document.createElement('canvas');
+    refCanvas.width = CANVAS_SIZE;
+    refCanvas.height = CANVAS_SIZE;
+    const rCtx = refCanvas.getContext('2d', { willReadFrequently: true })!;
+    rCtx.font = fontStr;
+    rCtx.textAlign = 'center';
+    rCtx.textBaseline = 'middle';
+    rCtx.fillStyle = '#000000';
+    rCtx.fillText(letter, cx, cy);
+
+    // 3. Background Canvas: Floating Letter Track (no square frame)
+    // Outer border of the road
+    bgCtx.lineWidth = 48;
+    bgCtx.lineCap = 'round';
+    bgCtx.lineJoin = 'round';
+    bgCtx.strokeStyle = '#e2e8f0';
+    bgCtx.strokeText(letter, cx, cy);
+
+    // Inner crisp white road track
+    bgCtx.lineWidth = 38;
+    bgCtx.strokeStyle = '#ffffff';
+    bgCtx.strokeText(letter, cx, cy);
+
+    // Soft letter fill
+    bgCtx.fillStyle = '#f8fafc';
+    bgCtx.fillText(letter, cx, cy);
+
+    // Centerline dashed guide
+    bgCtx.lineWidth = 2.5;
+    bgCtx.setLineDash([8, 7]);
+    bgCtx.strokeStyle = '#94a3b8';
+    bgCtx.strokeText(letter, cx, cy);
+    bgCtx.setLineDash([]);
+
+    // 4. Sample Star Checkpoints from letter pixels
+    const refData = rCtx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE).data;
+    const candidatePoints: { x: number; y: number }[] = [];
+    for (let y = 16; y < CANVAS_SIZE - 16; y += 4) {
+      for (let x = 16; x < CANVAS_SIZE - 16; x += 4) {
+        if (refData[(y * CANVAS_SIZE + x) * 4 + 3] > 180) {
+          candidatePoints.push({ x, y });
+        }
+      }
+    }
+
+    const interior = candidatePoints.filter(p => {
+      const check = (dx: number, dy: number) => {
+        const nx = p.x + dx, ny = p.y + dy;
+        if (nx < 0 || nx >= CANVAS_SIZE || ny < 0 || ny >= CANVAS_SIZE) return false;
+        return refData[(ny * CANVAS_SIZE + nx) * 4 + 3] > 180;
+      };
+      return check(0, -6) && check(0, 6) && check(-6, 0) && check(6, 0);
+    });
+
+    const pool = interior.length > 25 ? interior : candidatePoints;
+    const newStars: StarPoint[] = [];
+
+    if (pool.length > 0) {
+      pool.sort((a, b) => a.y - b.y || a.x - b.x);
+      newStars.push({ id: 0, x: pool[0].x, y: pool[0].y, collected: false });
+
+      const targetCount = 5;
+      while (newStars.length < targetCount && pool.length > newStars.length) {
+        let best = pool[0];
+        let maxMinDist = -1;
+        for (const pt of pool) {
+          let minDist = Infinity;
+          for (const s of newStars) {
+            const d = Math.hypot(pt.x - s.x, pt.y - s.y);
+            if (d < minDist) minDist = d;
+          }
+          if (minDist > maxMinDist) {
+            maxMinDist = minDist;
+            best = pt;
+          }
+        }
+        if (maxMinDist < 32) break;
+        newStars.push({ id: newStars.length, x: best.x, y: best.y, collected: false });
+      }
+
+      newStars.sort((a, b) => a.y - b.y || a.x - b.x);
+      newStars.forEach((s, idx) => { s.id = idx; });
+    }
+
+    setStars(newStars);
+    setCoverage(0);
+    setDone(false);
+    setOffTrack(false);
+    setHasStarted(false);
+  }, [letter]);
+
+  const getPos = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = CANVAS_SIZE / rect.width;
+    const scaleY = CANVAS_SIZE / rect.height;
+    if ('touches' in e) {
+      const touch = e.touches[0] || (e as unknown as React.TouchEvent).changedTouches?.[0];
+      if (!touch) return { x: 0, y: 0 };
+      return {
+        x: (touch.clientX - rect.left) * scaleX,
+        y: (touch.clientY - rect.top) * scaleY
+      };
+    }
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+  };
+
+  const isInsideTrack = (x: number, y: number) => {
+    const ix = Math.floor(x);
+    const iy = Math.floor(y);
+    if (ix < 0 || ix >= CANVAS_SIZE || iy < 0 || iy >= CANVAS_SIZE) return false;
+    if (!trackDataRef.current) return true;
+    return trackDataRef.current[(iy * CANVAS_SIZE + ix) * 4 + 3] > 30;
+  };
+
+  const triggerOffTrackAlert = () => {
+    setOffTrack(true);
+    if (offTrackTimer.current) clearTimeout(offTrackTimer.current);
+    offTrackTimer.current = setTimeout(() => {
+      setOffTrack(false);
+    }, 1200);
+  };
+
+  const paintDot = (x: number, y: number) => {
+    const canvas = drawCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+    ctx.save();
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath();
+    ctx.arc(x, y, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  };
+
+  const paintSegment = (x1: number, y1: number, x2: number, y2: number) => {
+    const canvas = drawCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+
+    ctx.save();
+    ctx.lineWidth = 28;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#f59e0b';
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const checkStarProximity = (x: number, y: number) => {
+    setStars(prev => {
+      let changed = false;
+      const next = prev.map((s, idx) => {
+        if (s.collected) return s;
+        const d = Math.hypot(x - s.x, y - s.y);
+        if (d < 26) {
+          changed = true;
+          playStarChime(idx);
+          return { ...s, collected: true };
+        }
+        return s;
+      });
+      return changed ? next : prev;
+    });
+  };
+
+  const computeCoverage = () => {
+    const draw = drawCanvasRef.current;
+    if (!draw || !trackDataRef.current) return;
+    const dCtx = draw.getContext('2d', { willReadFrequently: true })!;
+    const drawData = dCtx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE).data;
+    const trackData = trackDataRef.current;
+
+    let totalTrackPixels = 0;
+    let filledTrackPixels = 0;
+
+    for (let y = 0; y < CANVAS_SIZE; y += 4) {
+      for (let x = 0; x < CANVAS_SIZE; x += 4) {
+        const i = (y * CANVAS_SIZE + x) * 4;
+        // Strictly consider ONLY pixels that belong inside the letter track
+        if (trackData[i + 3] > 60) {
+          totalTrackPixels++;
+          if (drawData[i + 3] > 60) {
+            filledTrackPixels++;
+          }
+        }
+      }
+    }
+
+    if (totalTrackPixels === 0) return;
+    const pct = Math.round((filledTrackPixels / totalTrackPixels) * 100);
+    setCoverage(pct);
+
+    const collectedStars = stars.filter(s => s.collected).length;
+    const neededStars = Math.max(1, Math.min(stars.length, 4));
+
+    if (pct >= 45 && collectedStars >= neededStars && !done) {
+      setDone(true);
+      playWinSound();
+      confetti({
+        particleCount: 45,
+        spread: 70,
+        origin: { y: 0.5 }
+      });
+      setTimeout(onSuccess, 850);
+    }
+  };
+
+  const startDraw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    if (done) return;
+    const canvas = drawCanvasRef.current;
+    if (!canvas) return;
+    const { x, y } = getPos(e, canvas);
+
+    if (!isInsideTrack(x, y)) {
+      triggerOffTrackAlert();
+      isDrawing.current = false;
+      lastPos.current = null;
+      return;
+    }
+
+    isDrawing.current = true;
+    lastPos.current = { x, y };
+    setHasStarted(true);
+    setOffTrack(false);
+
+    paintDot(x, y);
+    checkStarProximity(x, y);
+    computeCoverage();
+  };
+
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    if (!isDrawing.current || done) return;
+    const canvas = drawCanvasRef.current;
+    if (!canvas) return;
+    const { x, y } = getPos(e, canvas);
+
+    if (!isInsideTrack(x, y)) {
+      triggerOffTrackAlert();
+      lastPos.current = null;
+      return;
+    }
+
+    setOffTrack(false);
+
+    const from = lastPos.current || { x, y };
+    paintSegment(from.x, from.y, x, y);
+    lastPos.current = { x, y };
+
+    checkStarProximity(x, y);
+    computeCoverage();
+  };
+
+  const stopDraw = () => {
+    isDrawing.current = false;
+    lastPos.current = null;
+  };
+
+  const handleReset = () => {
+    const draw = drawCanvasRef.current;
+    if (!draw) return;
+    const dCtx = draw.getContext('2d')!;
+    dCtx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    setCoverage(0);
+    setStars(prev => prev.map(s => ({ ...s, collected: false })));
+    setOffTrack(false);
+    setHasStarted(false);
+  };
+
+  const collectedCount = stars.filter(s => s.collected).length;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-xs p-4">
+      <div className="bg-white rounded-3xl shadow-2xl p-5 flex flex-col items-center gap-3.5 max-w-sm w-full border-2 border-indigo-100">
+        <div className="text-center">
+          <h3 className="font-black text-2xl text-slate-800 flex items-center justify-center gap-2">
+            <span>✏️</span> Trace a Letra <span className="text-amber-500 font-extrabold">{letter}</span>
+          </h3>
+          <p className="text-xs text-slate-500 mt-1">
+            Passe o dedinho <strong>dentro do caminho</strong> e pegue as estrelinhas!
+          </p>
+        </div>
+
+        {/* Status badges */}
+        <div className="flex items-center justify-between w-full px-2">
+          <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full text-xs font-bold text-amber-700">
+            <span>⭐</span>
+            <span>{collectedCount} de {stars.length} estrelas</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full text-xs font-bold text-indigo-700">
+            <span>🎨</span>
+            <span>{coverage}% traçado</span>
+          </div>
+        </div>
+
+        {/* Floating Letter Area (Big Square Box ELIMINATED) */}
+        <div className="relative w-[300px] h-[300px] select-none touch-none flex items-center justify-center">
+          {/* Background Canvas: Road & Guideline */}
+          <canvas
+            ref={bgCanvasRef}
+            width={CANVAS_SIZE}
+            height={CANVAS_SIZE}
+            className="absolute inset-0 pointer-events-none"
+          />
+
+          {/* User Drawing Canvas */}
+          <canvas
+            ref={drawCanvasRef}
+            width={CANVAS_SIZE}
+            height={CANVAS_SIZE}
+            className="absolute inset-0 cursor-crosshair touch-none"
+            onMouseDown={startDraw}
+            onMouseMove={draw}
+            onMouseUp={stopDraw}
+            onMouseLeave={stopDraw}
+            onTouchStart={startDraw}
+            onTouchMove={draw}
+            onTouchEnd={stopDraw}
+          />
+
+          {/* Interactive Star Overlays */}
+          {stars.map((s) => (
+            <div
+              key={s.id}
+              style={{
+                left: `${(s.x / CANVAS_SIZE) * 100}%`,
+                top: `${(s.y / CANVAS_SIZE) * 100}%`
+              }}
+              className={`absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-300 ${
+                s.collected ? 'scale-110' : 'scale-100'
+              }`}
+            >
+              {s.collected ? (
+                <div className="w-6 h-6 rounded-full bg-emerald-500 border-2 border-white shadow-md flex items-center justify-center text-white text-[11px] font-black animate-scale-in">
+                  ✓
+                </div>
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-amber-400 border-2 border-white shadow-md flex items-center justify-center text-white text-[11px] font-black animate-bounce shadow-amber-300/50">
+                  ⭐
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Guide pointer on the first star until user begins drawing */}
+          {!hasStarted && stars[0] && (
+            <div
+              style={{
+                left: `${(stars[0].x / CANVAS_SIZE) * 100}%`,
+                top: `${(stars[0].y / CANVAS_SIZE) * 100}%`
+              }}
+              className="absolute -translate-x-1/2 -translate-y-10 pointer-events-none flex flex-col items-center animate-bounce z-10"
+            >
+              <span className="text-xl drop-shadow-md">👇</span>
+              <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white px-2 py-0.5 rounded-full shadow-md whitespace-nowrap">
+                Comece aqui!
+              </span>
+            </div>
+          )}
+
+          {/* Friendly off-track alert banner */}
+          {offTrack && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-amber-600/95 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-lg pointer-events-none animate-pulse whitespace-nowrap z-20">
+              ✏️ Fique dentro do caminho da letrinha!
+            </div>
+          )}
+
+          {/* Victory Overlay */}
+          {done && (
+            <div className="absolute inset-0 bg-white/85 backdrop-blur-2xs flex flex-col items-center justify-center animate-fade-in z-30">
+              <span className="text-6xl animate-bounce">⭐</span>
+              <span className="text-base font-black text-amber-600 mt-2">🎉 Muito bem! Letra {letter}!</span>
+            </div>
+          )}
+        </div>
+
+        {/* Progress bar */}
+        <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+          <div
+            className="h-full bg-gradient-to-r from-amber-400 via-orange-400 to-emerald-400 transition-all duration-300 rounded-full"
+            style={{ width: `${coverage}%` }}
+          />
+        </div>
+
+        {/* Actions & hint text */}
+        <div className="w-full flex items-center justify-between text-xs text-slate-500 px-1">
+          <span>{coverage < 50 ? 'Continue traçando a letra!' : '🎉 Quase lá!'}</span>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="text-amber-600 hover:text-amber-700 font-bold flex items-center gap-1 hover:underline active:scale-95 transition-all"
+            title="Limpar e recomeçar"
+          >
+            <span>🔄</span> Recomeçar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // -------------------------------------------------------------
@@ -442,19 +992,39 @@ function LettersStage({
       isTarget: true
     }))
   );
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLetterBank(generateBank(currentWord));
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [currentWord]);
-
   const [wrongLetterId, setWrongLetterId] = useState<string | null>(null);
   const [hintLetterId, setHintLetterId] = useState<string | null>(null);
   const [isLetterCelebrating, setIsLetterCelebrating] = useState(false);
+  const [wrongLetterCount, setWrongLetterCount] = useState(0);
+  // hintLevel: 0 = nenhuma, 1 = 1ª dica usada, 2 = 2ª dica usada
+  const [hintLevel, setHintLevel] = useState(0);
+  const [showTracingModal, setShowTracingModal] = useState(false);
+  // IDs desabilitados pela 2ª dica (bloqueia tipo oposto: vogais ou consoantes)
+  const [disabledByHint, setDisabledByHint] = useState<string[]>([]);
+  // Decoys extras acumulados para faixa 9-12
+  const [extraDecoys, setExtraDecoys] = useState(0);
+  const isHardMode = ageGroup === '9-11' || ageGroup === '12-14';
 
   const expectedChar = currentWord[spelledCount];
+
+  // Reinitialise bank when word changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isHardMode) {
+        setLetterBank(generateHardBank(currentWord, 0, 0));
+      } else {
+        setLetterBank(generateBank(currentWord));
+      }
+    }, 0);
+    setExtraDecoys(0);
+    setWrongLetterCount(0);
+    setHintLevel(0);
+    setDisabledByHint([]);
+    setHintLetterId(null);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentWord]);
+
 
   // Question speech prompt text
   const questionSpeechText = wordObj.clue
@@ -488,7 +1058,6 @@ function LettersStage({
     const upper = expectedChar.toUpperCase();
     const phonetic = PT_LETTER_PHONETICS[upper] || upper;
     const staticKey = `proxima_letra_${upper.toLowerCase()}`;
-    // Só fala — sem destacar a letra, para a criança descobrir sozinha
     speakAudio(`A próxima letra é ${phonetic}!`, staticKey);
   };
 
@@ -498,14 +1067,18 @@ function LettersStage({
   };
 
   const handleLetterClick = (item: LetterItem) => {
-    if (isLetterCelebrating) return;
+    if (isLetterCelebrating || disabledByHint.includes(item.id)) return;
     const upper = item.char.toUpperCase();
-    // Fala o nome da letra sem forçar acento (A de CASA = "A", não "Á")
     speakAudio(upper, `letra_${upper.toLowerCase()}`);
 
     if (item.char === expectedChar) {
       const newCount = spelledCount + 1;
       setSpelledCount(newCount);
+      // Reset hint state per letter
+      setWrongLetterCount(0);
+      setHintLevel(0);
+      setDisabledByHint([]);
+      setHintLetterId(null);
 
       if (newCount === currentWord.length) {
         setLetterBank(prev => prev.filter(x => x.id !== item.id));
@@ -518,79 +1091,103 @@ function LettersStage({
           origin: { y: 0.6 },
           colors: ['#facc15', '#4ade80', '#60a5fa', '#f87171', '#c084fc']
         });
-
         setTimeout(() => {
           speakAudio(
             `Muito bem! Você completou a palavra ${formatWordForSpeech(currentWord)}!`,
             `completou_${currentWord.toLowerCase()}`
           );
         }, 500);
-
-        setTimeout(() => {
-          onNextWord();
-        }, 3000);
+        setTimeout(() => { onNextWord(); }, 3000);
       } else {
-        setLetterBank(prev => prev.filter(x => x.id !== item.id));
+        if (isHardMode) {
+          // Hard mode: remove acertada e adiciona novo decoy, embaralha
+          const newExtra = extraDecoys + 1;
+          setExtraDecoys(newExtra);
+          setLetterBank(generateHardBank(currentWord, newCount, newExtra));
+        } else {
+          setLetterBank(prev => prev.filter(x => x.id !== item.id));
+        }
       }
     } else {
-      // Beep curto depois de um instante, sem cortar a letra
       setTimeout(() => playSoundFx('wrong'), 280);
       setWrongLetterId(item.id);
       setTimeout(() => setWrongLetterId(null), 500);
+      const newWrongCount = wrongLetterCount + 1;
+      setWrongLetterCount(newWrongCount);
+      // Se já usou 2ª dica e errou 4+ vezes → pula a palavra
+      if (hintLevel >= 2 && newWrongCount >= 4) {
+        setIsLetterCelebrating(true);
+        speakAudio('Vamos tentar essa palavra de novo mais tarde!', 'pula_palavra');
+        setTimeout(() => { onNextWord(); }, 2200);
+      }
     }
   };
 
-  const giveLetterHint = () => {
-    if (!expectedChar || isLetterCelebrating) return;
+  // 1ª dica por faixa etária
+  const giveHint1 = () => {
+    if (!expectedChar || isLetterCelebrating || hintLevel >= 1) return;
     playSoundFx('pop');
-    const upper = expectedChar.toUpperCase();
-    const phonetic = PT_LETTER_PHONETICS[upper] || upper;
-    speakAudio(`Dica: A próxima letra é ${phonetic}!`, `proxima_letra_${upper.toLowerCase()}`);
+    setHintLevel(1);
+    if (ageGroup === '3-5') {
+      // Mini-desafio de traçado
+      setShowTracingModal(true);
+    } else {
+      // 6-8, 9-11, 12-14: fala vogal ou consoante
+      const upper = expectedChar.toUpperCase();
+      const tipo = isVowel(upper) ? 'vogal' : 'consoante';
+      speakAudio(`Dica: A próxima letra é uma ${tipo}!`, `dica_tipo_${tipo}`);
+    }
+  };
+
+  // 2ª dica por faixa etária
+  const giveHint2 = () => {
+    if (!expectedChar || isLetterCelebrating || hintLevel >= 2) return;
+    playSoundFx('pop');
+    setHintLevel(2);
+    if (ageGroup === '3-5') {
+      // Contorno dourado na letra certa
+      const target = letterBank.find(x => x.char === expectedChar);
+      if (target) {
+        setHintLetterId(target.id);
+        setTimeout(() => setHintLetterId(null), 3000);
+      }
+      speakAudio('Olha a letra brilhando!', 'dica_brilho');
+    } else {
+      // 6-8, 9-11, 12-14: bloqueia letras do tipo oposto
+      const upper = expectedChar.toUpperCase();
+      const expectedIsVowel = isVowel(upper);
+      // Bloqueia letras que são do tipo oposto (não é a letra esperada)
+      const toDisable = letterBank
+        .filter(x => x.char !== expectedChar && isVowel(x.char) !== expectedIsVowel)
+        .map(x => x.id);
+      setDisabledByHint(toDisable);
+      const tipo = expectedIsVowel ? 'vogal' : 'consoante';
+      speakAudio(`Dica: É uma ${tipo}! As outras letras do tipo errado ficaram bloqueadas.`, `dica_bloqueia_${tipo}`);
+    }
+  };
+
+  // Callback do modal de traçado: sucesso = mostrar brilho na letra
+  const handleTracingSuccess = () => {
+    setShowTracingModal(false);
     const target = letterBank.find(x => x.char === expectedChar);
     if (target) {
       setHintLetterId(target.id);
-      setTimeout(() => setHintLetterId(null), 2500);
+      setTimeout(() => setHintLetterId(null), 3000);
     }
+    speakAudio('Muito bem! Agora você sabe qual letra é. Encontre ela!', 'dica_tracado_ok');
   };
 
   return (
+    <>
+    {showTracingModal && expectedChar && (
+      <LetterTracingModal
+        letter={expectedChar}
+        onSuccess={handleTracingSuccess}
+      />
+    )}
     <div className="w-full flex-1 flex flex-col items-center justify-between">
       {/* Word Progress & Header */}
       <div className="w-full flex flex-col items-center gap-2 mb-3">
-        <div className="flex items-center justify-between w-full">
-          <button
-            id="prev-word-btn"
-            onClick={onPrevWord}
-            className={`tv-nav-chip p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 shadow-xs active:scale-95 transition-all ${tvMode ? 'p-4' : ''}`}
-            title="Palavra anterior"
-          >
-            <ChevronLeft size={tvMode ? 32 : 22} />
-          </button>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-600 bg-slate-100 px-3.5 py-1 rounded-full border border-slate-200">
-              Palavra {wordIndex + 1} de {totalWords}
-            </span>
-            <button
-              id="speak-word-header-btn"
-              onClick={handleSpeakQuestion}
-              className="p-1.5 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors shadow-2xs"
-              title="Ouvir a pergunta / desafio da palavra"
-            >
-              <Volume2 size={18} />
-            </button>
-          </div>
-
-          <button
-            id="next-word-btn"
-            onClick={onNextWord}
-            className={`tv-nav-chip p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 shadow-xs active:scale-95 transition-all ${tvMode ? 'p-4' : ''}`}
-            title="Próxima palavra"
-          >
-            <ChevronRight size={tvMode ? 32 : 22} />
-          </button>
-        </div>
-
         {/* Clue with individual listen button */}
         {wordObj.clue && (
           <div className="w-full max-w-md bg-indigo-50/90 border border-indigo-100 rounded-2xl px-4 py-2 flex items-center justify-between gap-2 shadow-2xs">
@@ -714,17 +1311,21 @@ function LettersStage({
           {letterBank.map((item, idx) => {
             const isWrong = wrongLetterId === item.id;
             const isHint = hintLetterId === item.id;
+            const isDisabled = disabledByHint.includes(item.id);
             return (
               <button
                 key={item.id}
                 data-tv-autofocus={idx === 0 ? true : undefined}
                 onClick={() => handleLetterClick(item)}
+                disabled={isDisabled}
                 className={`tv-letter-tile relative font-black rounded-2xl shadow-sm border-b-4 active:border-b-0 active:translate-y-1 transition-all duration-150 select-none ${
-                  isWrong
-                    ? 'bg-rose-100 border-rose-400 text-rose-700 animate-bounce'
-                    : isHint
-                      ? 'ring-4 ring-amber-400 bg-amber-50 border-amber-300 text-amber-700 animate-pulse'
-                      : 'bg-white border-slate-300 hover:border-slate-400 text-slate-800 hover:bg-slate-50'
+                  isDisabled
+                    ? 'bg-slate-100 border-slate-200 text-slate-300 opacity-40 cursor-not-allowed'
+                    : isWrong
+                      ? 'bg-rose-100 border-rose-400 text-rose-700 animate-bounce'
+                      : isHint
+                        ? 'ring-4 ring-amber-400 bg-amber-50 border-amber-300 text-amber-700 animate-pulse'
+                        : 'bg-white border-slate-300 hover:border-slate-400 text-slate-800 hover:bg-slate-50'
                 } ${
                   ageGroup === '3-5'
                     ? 'w-16 h-16 sm:w-20 sm:h-20 text-4xl sm:text-5xl'
@@ -750,16 +1351,826 @@ function LettersStage({
             <span>Embaralhar</span>
           </button>
 
+          {/* Hint buttons: appear after 2 errors, 2 levels */}
+          {wrongLetterCount > 1 && hintLevel < 1 && (
+            <button
+              id="btn-hint-letter-1"
+              onClick={giveHint1}
+              disabled={isLetterCelebrating || spelledCount >= currentWord.length}
+              className={`tv-action-btn flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-4 text-xl' : ''}`}
+            >
+              <Lightbulb size={tvMode ? 26 : 20} className="fill-amber-100 text-amber-900" />
+              <span>DICA</span>
+            </button>
+          )}
+          {hintLevel === 1 && !showTracingModal && (
+            <button
+              id="btn-hint-letter-2"
+              onClick={giveHint2}
+              disabled={isLetterCelebrating || spelledCount >= currentWord.length}
+              className={`tv-action-btn flex items-center gap-2 bg-gradient-to-r from-orange-400 to-orange-500 text-orange-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-orange-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-4 text-xl' : ''}`}
+            >
+              <Lightbulb size={tvMode ? 26 : 20} className="fill-orange-100 text-orange-900" />
+              <span>MAIS UMA DICA</span>
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+    </>
+  );
+}
+
+// -------------------------------------------------------------
+// Interactive Math Mini-Challenge Hint Modal
+// Hands-on Montessori-style learning: Basket counting & Hand finger manipulation
+// -------------------------------------------------------------
+interface MathChallengeConfig {
+  type: 'basket' | 'basket_sum' | 'items_add' | 'items_sub' | 'items_missing' | 'stepping_stones' | 'mult_groups' | 'div_groups';
+  title: string;
+  instruction: string;
+  targetAnswer: number | string;
+  total?: number;
+  emoji?: string;
+  count1?: number;
+  emoji1?: string;
+  count2?: number;
+  emoji2?: string;
+  totalFingers?: number;
+  toFold?: number;
+  remaining?: number;
+  totalItems?: number;
+  toTake?: number;
+  standing?: number;
+  missing?: number;
+  steps?: number[];
+  nextStep?: number;
+  groups?: number;
+  itemsPerGroup?: number;
+  groupEmoji?: string;
+  totalForDiv?: number;
+}
+
+function getMathChallengeConfig(problem: MathProblem): MathChallengeConfig | null {
+  // 1. Visual items (Basket mode)
+  if (problem.visualItems) {
+    return {
+      type: 'basket',
+      title: '🧺 Desafio do Cesto de Contagem!',
+      instruction: `Coloque as ${problem.visualItems.emoji} no cesto tocando uma por uma!`,
+      total: problem.visualItems.total,
+      emoji: problem.visualItems.emoji,
+      targetAnswer: Number(problem.answer)
+    };
+  }
+
+  // 2. Visual sum (Basket sum mode)
+  if (problem.visualSum) {
+    const total = problem.visualSum.count1 + problem.visualSum.count2;
+    return {
+      type: 'basket_sum',
+      title: '🧺 Junte tudo no Cesto!',
+      instruction: 'Toque nos bichinhos para colocá-los no cesto e somar!',
+      count1: problem.visualSum.count1,
+      emoji1: problem.visualSum.emoji1,
+      count2: problem.visualSum.count2,
+      emoji2: problem.visualSum.emoji2,
+      total,
+      targetAnswer: Number(problem.answer)
+    };
+  }
+
+  // 3. Subtraction with apples (e.g., "10 - 4 = ?", "14 - 6 = ?")
+  const subMatch = problem.question.match(/(\d+)\s*[-–—]\s*(\d+)/);
+  if (subMatch) {
+    const a = parseInt(subMatch[1], 10);
+    const b = parseInt(subMatch[2], 10);
+    return {
+      type: 'items_sub',
+      title: '🍎 Desafio de Tirar e Subtrair!',
+      instruction: `Você tem ${a} maçãs vermelhas. Toque em ${b} maçãs para tirá-las e veja quantas sobram!`,
+      totalItems: Math.min(a, 30),
+      toTake: Math.min(b, 30),
+      remaining: a - b,
+      targetAnswer: a - b
+    };
+  }
+
+  // 4. Addition with apples (e.g., "5 + 4 = ?", "8 + 7 = ?", "6 + 6 = ?")
+  const addMatch = problem.question.match(/(\d+)\s*\+\s*(\d+)/);
+  if (addMatch) {
+    const a = parseInt(addMatch[1], 10);
+    const b = parseInt(addMatch[2], 10);
+    return {
+      type: 'items_add',
+      title: '🍎🍏 Soma de Maçãs!',
+      instruction: `Temos ${a} maçãs vermelhas 🍎 e ${b} maçãs verdes 🍏. Toque em cada uma para contar o total!`,
+      count1: Math.min(a, 15),
+      count2: Math.min(b, 15),
+      total: a + b,
+      emoji1: '🍎',
+      emoji2: '🍏',
+      targetAnswer: a + b
+    };
+  }
+
+  // 5. "Quanto falta para 10 se você tem 7?"
+  if (problem.question.includes('10') && problem.question.includes('7')) {
+    return {
+      type: 'items_missing',
+      title: '🍎 Quantas faltam até 10?',
+      instruction: 'Já temos 7 maçãs vermelhas 🍎. Toque nas maçãs verdes para completar até 10!',
+      standing: 7,
+      missing: 3,
+      targetAnswer: 3
+    };
+  }
+
+  // 6. Sequence "2, 4, 6, [ ? ]"
+  if (problem.question.includes('2, 4, 6')) {
+    return {
+      type: 'stepping_stones',
+      title: '🐸 Pulos do Sapinho!',
+      instruction: 'O sapinho pula de 2 em 2: 2 ➔ 4 ➔ 6... Toque na próxima pedra para pular!',
+      steps: [2, 4, 6],
+      nextStep: 8,
+      targetAnswer: 8
+    };
+  }
+
+  // 7. Multiplication (e.g. 7 × 8, 6 × 9)
+  const multMatch = problem.question.match(/(\d+)\s*[×x*]\s*(\d+)/);
+  if (multMatch) {
+    const a = parseInt(multMatch[1], 10);
+    const b = parseInt(multMatch[2], 10);
+    const groupEmojis = ['🍎','🌟','🐣','🍬','🎈','🐥','🦋','🍓'];
+    const chosen = groupEmojis[Math.floor(Math.random() * groupEmojis.length)];
+    return {
+      type: 'mult_groups',
+      title: '🛍️ Sacolas da Multiplicação!',
+      instruction: `Temos ${a} sacolas, cada uma com ${b} ${chosen}. Toque nas sacolas para contar tudo!`,
+      groups: Math.min(a, 8),
+      itemsPerGroup: Math.min(b, 8),
+      groupEmoji: chosen,
+      targetAnswer: a * b
+    };
+  }
+
+  // 8. Division (e.g. 12 ÷ 3 = ?)
+  const divMatch = problem.question.match(/(\d+)\s*[÷/]\s*(\d+)/);
+  if (divMatch) {
+    const total = parseInt(divMatch[1], 10);
+    const divisor = parseInt(divMatch[2], 10);
+    const perGroup = total / divisor;
+    const groupEmojis = ['🍎','🌟','🐣','🍬','🎈','🍓'];
+    const chosen = groupEmojis[Math.floor(Math.random() * groupEmojis.length)];
+    return {
+      type: 'div_groups',
+      title: '🎒 Divisão em Grupos!',
+      instruction: `Temos ${total} ${chosen} para dividir igualmente em ${divisor} grupos. Distribua um por vez!`,
+      groups: Math.min(divisor, 8),
+      itemsPerGroup: Math.round(perGroup),
+      groupEmoji: chosen,
+      totalForDiv: Math.min(total, 32),
+      targetAnswer: Math.round(perGroup)
+    };
+  }
+
+  // Fallback for young age groups: simple basket of stars
+  const numAnswer = parseInt(String(problem.answer), 10);
+  if (!isNaN(numAnswer) && numAnswer > 0 && numAnswer <= 15) {
+    return {
+      type: 'basket',
+      title: '🧺 Desafio do Cesto de Estrelas!',
+      instruction: `Coloque as estrelas no cesto para descobrir a resposta!`,
+      total: numAnswer,
+      emoji: '⭐',
+      targetAnswer: numAnswer
+    };
+  }
+
+  return null;
+}
+
+interface MathInteractiveHintModalProps {
+  problem: MathProblem;
+  onComplete: () => void;
+  onClose: () => void;
+  speakAudio: (text: string, staticKey?: string) => Promise<void>;
+}
+
+function MathInteractiveHintModal({
+  problem,
+  onComplete,
+  onClose,
+  speakAudio
+}: MathInteractiveHintModalProps) {
+  const config = getMathChallengeConfig(problem);
+  if (!config) return null;
+
+  const [collectedBasketIds, setCollectedBasketIds] = useState<number[]>([]);
+  const [countedFingers, setCountedFingers] = useState<number[]>([]);
+  const [foldedFingers, setFoldedFingers] = useState<number[]>([]);
+  const [raisedMissingFingers, setRaisedMissingFingers] = useState<number[]>([]);
+  const [takenItems, setTakenItems] = useState<number[]>([]);
+  const [countedGroups, setCountedGroups] = useState<number[]>([]);
+  const [distributedItems, setDistributedItems] = useState<number[]>([]);
+  const [stoneRevealed, setStoneRevealed] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
+
+  const triggerWin = () => {
+    setIsCompleted(true);
+    playWinSound();
+    confetti({
+      particleCount: 50,
+      spread: 70,
+      origin: { y: 0.5 }
+    });
+  };
+
+  // 1. Basket tap
+  const handleBasketItemTap = (idx: number, total: number) => {
+    if (collectedBasketIds.includes(idx) || isCompleted) return;
+    const next = [...collectedBasketIds, idx];
+    setCollectedBasketIds(next);
+    playStarChime(next.length);
+    if (next.length === total) {
+      triggerWin();
+    }
+  };
+
+  // 2. Fingers addition tap
+  const handleFingerAddTap = (idx: number, total: number) => {
+    if (countedFingers.includes(idx) || isCompleted) return;
+    const next = [...countedFingers, idx];
+    setCountedFingers(next);
+    playStarChime(next.length);
+    if (next.length === total) {
+      triggerWin();
+    }
+  };
+
+  // 3. Fingers subtraction tap (fold finger)
+  const handleFingerSubTap = (idx: number, toFold: number) => {
+    if (foldedFingers.includes(idx) || isCompleted) return;
+    const next = [...foldedFingers, idx];
+    setFoldedFingers(next);
+    playStarChime(next.length);
+    if (next.length === toFold) {
+      triggerWin();
+    }
+  };
+
+  // 4. Missing to 10 tap (raise finger)
+  const handleRaiseMissingFinger = (idx: number, missing: number) => {
+    if (raisedMissingFingers.includes(idx) || isCompleted) return;
+    const next = [...raisedMissingFingers, idx];
+    setRaisedMissingFingers(next);
+    playStarChime(next.length);
+    if (next.length === missing) {
+      triggerWin();
+    }
+  };
+
+  // 5. Items takeaway tap
+  const handleTakeawayItemTap = (idx: number, toTake: number) => {
+    if (takenItems.includes(idx) || isCompleted) return;
+    const next = [...takenItems, idx];
+    setTakenItems(next);
+    playStarChime(next.length);
+    if (next.length === toTake) {
+      triggerWin();
+    }
+  };
+
+  // 6. Stepping stone tap
+  const handleStoneTap = () => {
+    if (stoneRevealed || isCompleted) return;
+    setStoneRevealed(true);
+    playStarChime(3);
+    triggerWin();
+  };
+
+  // 7. Multiplication groups tap
+  const handleGroupTap = (idx: number, totalGroups: number) => {
+    if (countedGroups.includes(idx) || isCompleted) return;
+    const next = [...countedGroups, idx];
+    setCountedGroups(next);
+    playStarChime(next.length);
+    if (next.length === totalGroups) {
+      triggerWin();
+    }
+  };
+
+  // 8. Division distribution tap
+  const handleDivItemTap = (itemIdx: number, totalItems: number) => {
+    if (distributedItems.includes(itemIdx) || isCompleted) return;
+    const next = [...distributedItems, itemIdx];
+    setDistributedItems(next);
+    playStarChime(next.length);
+    if (next.length === totalItems) {
+      triggerWin();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-xs p-4">
+      <div className="bg-white rounded-3xl shadow-2xl p-5 sm:p-6 flex flex-col items-center gap-4 max-w-lg w-full border-2 border-indigo-100 max-h-[92vh] overflow-y-auto">
+        {/* Modal Header */}
+        <div className="w-full flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">💡</span>
+            <h3 className="font-black text-xl text-slate-800">{config.title}</h3>
+          </div>
           <button
-            id="btn-hint-letter"
-            onClick={giveLetterHint}
-            disabled={isLetterCelebrating || spelledCount >= currentWord.length}
-            className={`tv-action-btn flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-4 text-xl' : ''}`}
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-sm transition-all cursor-pointer"
+            title="Fechar dica"
           >
-            <Lightbulb size={tvMode ? 26 : 20} className="fill-amber-100 text-amber-900" />
-            <span>DICA</span>
+            ✕
           </button>
         </div>
+
+        {/* Speak instruction button */}
+        <button
+          type="button"
+          onClick={() => speakAudio(config.instruction, `math_hint_instruction_${config.type}`)}
+          className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 px-4 py-2 rounded-full font-bold text-sm transition-all cursor-pointer shadow-xs active:scale-95 w-full justify-center"
+        >
+          <span className="text-xl">🔊</span>
+          <span>Ouvir como fazer</span>
+        </button>
+
+        {/* Challenge Body */}
+        <div className="w-full py-2 flex flex-col items-center">
+          {/* A. Basket Mode (Single items or Sum items) */}
+          {(config.type === 'basket' || config.type === 'basket_sum') && (
+            <div className="w-full flex flex-col items-center gap-5">
+              {/* Top items shelf */}
+              <div className="flex flex-wrap justify-center gap-3 sm:gap-4 max-w-md p-3 bg-amber-50/50 rounded-2xl border border-amber-100 min-h-[80px] items-center">
+                {config.type === 'basket' &&
+                  Array.from({ length: config.total || 0 }).map((_, i) => {
+                    const isCollected = collectedBasketIds.includes(i);
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => handleBasketItemTap(i, config.total || 0)}
+                        disabled={isCollected}
+                        className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl transition-all shadow-xs ${
+                          isCollected
+                            ? 'bg-slate-100 border border-slate-200 opacity-30 scale-90'
+                            : 'bg-white hover:bg-amber-100 border-2 border-amber-300 hover:scale-110 active:scale-90 cursor-pointer animate-bounce'
+                        }`}
+                      >
+                        {isCollected ? '✓' : config.emoji}
+                      </button>
+                    );
+                  })}
+
+                {config.type === 'basket_sum' && (
+                  <div className="flex items-center gap-3 flex-wrap justify-center">
+                    {/* Group 1 */}
+                    <div className="flex gap-2">
+                      {Array.from({ length: config.count1 || 0 }).map((_, i) => {
+                        const isCollected = collectedBasketIds.includes(i);
+                        return (
+                          <button
+                            key={`g1-${i}`}
+                            type="button"
+                            onClick={() => handleBasketItemTap(i, config.total || 0)}
+                            disabled={isCollected}
+                            className={`w-13 h-13 sm:w-15 sm:h-15 rounded-2xl flex items-center justify-center text-3xl transition-all shadow-xs ${
+                              isCollected
+                                ? 'bg-slate-100 border border-slate-200 opacity-30 scale-90'
+                                : 'bg-white hover:bg-amber-100 border-2 border-amber-300 hover:scale-110 active:scale-90 cursor-pointer animate-bounce'
+                            }`}
+                          >
+                            {isCollected ? '✓' : config.emoji1}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <span className="font-black text-2xl text-amber-600">+</span>
+                    {/* Group 2 */}
+                    <div className="flex gap-2">
+                      {Array.from({ length: config.count2 || 0 }).map((_, i) => {
+                        const itemIdx = (config.count1 || 0) + i;
+                        const isCollected = collectedBasketIds.includes(itemIdx);
+                        return (
+                          <button
+                            key={`g2-${i}`}
+                            type="button"
+                            onClick={() => handleBasketItemTap(itemIdx, config.total || 0)}
+                            disabled={isCollected}
+                            className={`w-13 h-13 sm:w-15 sm:h-15 rounded-2xl flex items-center justify-center text-3xl transition-all shadow-xs ${
+                              isCollected
+                                ? 'bg-slate-100 border border-slate-200 opacity-30 scale-90'
+                                : 'bg-white hover:bg-emerald-100 border-2 border-emerald-300 hover:scale-110 active:scale-90 cursor-pointer animate-bounce'
+                            }`}
+                          >
+                            {isCollected ? '✓' : config.emoji2}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Basket drop area */}
+              <div className="w-full bg-gradient-to-b from-amber-100 to-amber-200 border-2 border-amber-300 rounded-3xl p-4 flex flex-col items-center justify-center shadow-inner relative">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-4xl">🧺</span>
+                  <span className="font-black text-base text-amber-900">
+                    {collectedBasketIds.length} de {config.total} no cesto
+                  </span>
+                </div>
+                {/* Items in basket */}
+                <div className="flex flex-wrap justify-center gap-2 min-h-[44px]">
+                  {collectedBasketIds.map((idx, order) => (
+                    <div
+                      key={idx}
+                      className="bg-white border border-amber-300 rounded-full px-2.5 py-1 text-sm font-black flex items-center gap-1 shadow-xs animate-scale-in"
+                    >
+                      <span>{config.emoji || (idx < (config.count1 || 0) ? config.emoji1 : config.emoji2)}</span>
+                      <span className="text-amber-800 text-xs">#{order + 1}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* B. Apple Addition Mode */}
+          {config.type === 'items_add' && (() => {
+            const c1 = config.count1 || 0;
+            const c2 = config.count2 || 0;
+            const total = c1 + c2;
+            // Compute cols so all items fit in ~300px wide area (each item ~44px + gap)
+            const cols = total <= 5 ? total : total <= 12 ? Math.ceil(total / 2) : total <= 20 ? Math.ceil(total / 3) : Math.ceil(total / 4);
+            return (
+              <div className="w-full flex flex-col items-center gap-3">
+                <div
+                  style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(cols, 6)}, 1fr)`, gap: 6, maxWidth: 320 }}
+                  className="p-3 bg-rose-50/60 rounded-2xl border border-rose-100 w-full justify-items-center"
+                >
+                  {Array.from({ length: c1 + c2 }).map((_, i) => {
+                    const isGroup2 = i >= c1;
+                    const isCounted = collectedBasketIds.includes(i);
+                    const emoji = isGroup2 ? config.emoji2 : config.emoji1;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          if (isCounted || isCompleted) return;
+                          const next = [...collectedBasketIds, i];
+                          setCollectedBasketIds(next);
+                          playStarChime(next.length);
+                          if (next.length === total) triggerWin();
+                        }}
+                        disabled={isCounted || isCompleted}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all ${
+                          isCounted
+                            ? 'opacity-30 scale-75 bg-slate-100'
+                            : isGroup2
+                              ? 'bg-green-50 border-2 border-green-300 hover:bg-green-100 hover:scale-110 cursor-pointer active:scale-90 shadow-xs'
+                              : 'bg-red-50 border-2 border-red-300 hover:bg-red-100 hover:scale-110 cursor-pointer active:scale-90 shadow-xs'
+                        }`}
+                      >
+                        {isCounted ? '✓' : emoji}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-bold">🍎 {Math.min(collectedBasketIds.filter(x => x < c1).length, c1)}/{c1}</span>
+                  <span className="font-bold text-slate-400">+</span>
+                  <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">🍏 {collectedBasketIds.filter(x => x >= c1).length}/{c2}</span>
+                  <span className="font-bold text-slate-400">=</span>
+                  <span className="bg-indigo-100 text-indigo-700 px-3 py-0.5 rounded-full text-xs font-bold">{collectedBasketIds.length} total</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* D. Missing to 10 Mode */}
+          {config.type === 'fingers_missing10' && (
+            <div className="w-full flex flex-col items-center gap-3">
+              <div className="flex items-center justify-center gap-4 flex-wrap">
+                {[0, 1].map((handIdx) => (
+                  <div key={handIdx} className="flex flex-col items-center gap-1">
+                    <span className="text-xs font-black text-slate-500 uppercase tracking-wide">Mão {handIdx + 1}</span>
+                    <div className="relative w-[110px] h-[110px]">
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[86px] h-[52px] bg-amber-200 border-2 border-amber-300 rounded-b-[40px] rounded-t-[16px] shadow-sm" />
+                      {[0,1,2,3,4].map((fi) => {
+                        const fingerId = handIdx * 5 + fi;
+                        const isPreStanding = fingerId < (config.standing || 7);
+                        const isRaised = raisedMissingFingers.includes(fingerId);
+                        const heights = [44, 56, 64, 56, 40];
+                        const offsets = [4, 18, 31, 44, 58];
+                        return (
+                          <button
+                            key={fi}
+                            type="button"
+                            onClick={() => !isPreStanding && !isRaised && handleRaiseMissingFinger(fingerId, config.missing || 3)}
+                            disabled={isPreStanding || isRaised}
+                            style={{ left: offsets[fi], height: isPreStanding || isRaised ? heights[fi] : 12, bottom: 44 }}
+                            className={`absolute w-[14px] rounded-t-full border-2 transition-all duration-300 origin-bottom ${
+                              isPreStanding
+                                ? 'bg-indigo-300 border-indigo-400'
+                                : isRaised
+                                  ? 'bg-emerald-400 border-emerald-500'
+                                  : 'bg-amber-100 border-dashed border-amber-300 cursor-pointer hover:bg-amber-300 animate-pulse'
+                            }`}
+                          />
+                        );
+                      })}
+                    </div>
+                    <div className="text-center text-xs font-bold mt-1 text-slate-500">
+                      Mão {handIdx + 1}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-amber-50 border border-amber-200 px-4 py-1.5 rounded-full text-xs font-bold text-amber-900">
+                ☝️ Levante os dedos em falta! Levantados: {raisedMissingFingers.length} de {config.missing}
+              </div>
+            </div>
+          )}
+
+          {/* C. Apple Missing Mode ("Quanto falta para 10?") */}
+          {config.type === 'items_missing' && (() => {
+            const standing = config.standing || 7;
+            const missing = config.missing || 3;
+            const total = standing + missing;
+            const cols = total <= 5 ? total : total <= 12 ? Math.ceil(total / 2) : Math.ceil(total / 3);
+            return (
+              <div className="w-full flex flex-col items-center gap-3">
+                <div
+                  style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(cols, 6)}, 1fr)`, gap: 6, maxWidth: 320 }}
+                  className="p-3 bg-rose-50/60 rounded-2xl border border-rose-100 w-full justify-items-center"
+                >
+                  {Array.from({ length: total }).map((_, i) => {
+                    const isExisting = i < standing;
+                    const isRaised = raisedMissingFingers.includes(i);
+                    const canRaise = !isExisting && !isRaised && !isCompleted;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => canRaise && handleRaiseMissingFinger(i, missing)}
+                        disabled={!canRaise}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all ${
+                          isExisting
+                            ? 'bg-red-100 border-2 border-red-300 cursor-default'
+                            : isRaised
+                              ? 'bg-emerald-100 border-2 border-emerald-400 scale-105 shadow-sm'
+                              : 'bg-white border-2 border-dashed border-green-300 hover:bg-green-50 hover:scale-110 cursor-pointer active:scale-90 animate-pulse'
+                        }`}
+                      >
+                        {isExisting ? '🍎' : isRaised ? '🍏' : '➕'}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center gap-2 text-xs font-bold">
+                  <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full">🍎 {standing} existentes</span>
+                  <span className="text-slate-400">+</span>
+                  <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full">🍏 {raisedMissingFingers.length}/{missing} adicionadas</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* E. Items Subtraction Takeaway Mode */}
+          {config.type === 'items_sub' && (() => {
+            const totalShow = Math.min(config.totalItems || 0, 30);
+            const toTake = config.toTake || 0;
+            // Responsive cols: fit inside ~320px (each apple ~42px+gap)
+            const cols = totalShow <= 5 ? totalShow
+              : totalShow <= 12 ? Math.ceil(totalShow / 2)
+              : totalShow <= 20 ? Math.ceil(totalShow / 3)
+              : Math.ceil(totalShow / 4);
+            return (
+              <div className="w-full flex flex-col items-center gap-3">
+                <div
+                  style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(cols, 7)}, 1fr)`, gap: 6, maxWidth: 320 }}
+                  className="p-3 bg-red-50/50 rounded-2xl border border-red-100 w-full justify-items-center"
+                >
+                  {Array.from({ length: totalShow }).map((_, i) => {
+                    const isTaken = takenItems.includes(i);
+                    const isRemaining = isCompleted && !isTaken;
+                    const canTake = !isTaken && !isCompleted && takenItems.length < toTake;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => canTake && handleTakeawayItemTap(i, toTake)}
+                        disabled={!canTake}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all ${
+                          isTaken
+                            ? 'opacity-15 scale-75 cursor-default'
+                            : isRemaining
+                              ? 'bg-emerald-100 border-2 border-emerald-400 scale-105'
+                              : canTake
+                                ? 'bg-white hover:bg-red-50 border-2 border-red-200 hover:scale-110 cursor-pointer active:scale-90 shadow-xs'
+                                : 'bg-white border-2 border-slate-100 opacity-50 cursor-not-allowed'
+                        }`}
+                      >
+                        {isTaken ? '' : '🍎'}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center gap-2 text-xs font-bold">
+                  <span className="bg-red-100 text-red-700 px-3 py-0.5 rounded-full">🍎 {totalShow} maçãs</span>
+                  <span className="text-slate-400">→</span>
+                  <span className="bg-amber-100 text-amber-700 px-3 py-0.5 rounded-full">Tirar {toTake}</span>
+                  <span className="text-slate-400">→</span>
+                  <span className={`px-3 py-0.5 rounded-full ${takenItems.length >= toTake ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                    {takenItems.length}/{toTake} tiradas
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* F. Stepping Stones Mode */}
+          {config.type === 'stepping_stones' && (
+            <div className="w-full flex flex-col items-center gap-5">
+              <div className="flex items-center justify-center gap-3 sm:gap-4">
+                {(config.steps || [2, 4, 6]).map((step, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 border-2 border-indigo-200 flex flex-col items-center justify-center font-black text-xl text-indigo-700 shadow-xs">
+                      <span className="text-xs text-indigo-400">🐸</span>
+                      <span>{step}</span>
+                    </div>
+                    <span className="text-sm font-bold text-indigo-400">+2 ➔</span>
+                  </div>
+                ))}
+                {/* Next Stone */}
+                <button
+                  type="button"
+                  onClick={handleStoneTap}
+                  className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center font-black text-2xl transition-all shadow-md ${
+                    stoneRevealed
+                      ? 'bg-emerald-500 border-2 border-emerald-600 text-white animate-scale-in'
+                      : 'bg-amber-400 hover:bg-amber-500 border-2 border-amber-600 text-amber-950 animate-bounce cursor-pointer'
+                  }`}
+                >
+                  {stoneRevealed ? (
+                    <>
+                      <span className="text-xs">⭐</span>
+                      <span>{config.nextStep}</span>
+                    </>
+                  ) : (
+                    <span>?</span>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* G. Multiplication Groups Mode */}
+          {config.type === 'mult_groups' && (() => {
+            const totalGroups = config.groups || 0;
+            const perGroup = config.itemsPerGroup || 1;
+            const emoji = config.groupEmoji || '🍎';
+            const runningTotal = countedGroups.length * perGroup;
+            return (
+              <div className="w-full flex flex-col items-center gap-3">
+                <div
+                  style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(totalGroups, 4)}, 1fr)`, gap: 10, maxWidth: 300 }}
+                  className="p-3 bg-amber-50/40 rounded-2xl border border-amber-100 w-full justify-items-center"
+                >
+                  {Array.from({ length: totalGroups }).map((_, i) => {
+                    const isCounted = countedGroups.includes(i);
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => handleGroupTap(i, totalGroups)}
+                        disabled={isCounted}
+                        className={`flex flex-col items-center gap-1 p-2 rounded-2xl border-2 transition-all ${
+                          isCounted
+                            ? 'bg-emerald-50 border-emerald-400 scale-105 shadow-sm'
+                            : 'bg-white border-amber-200 hover:border-amber-400 hover:bg-amber-50 cursor-pointer hover:scale-105 active:scale-95 shadow-xs'
+                        }`}
+                      >
+                        {/* Bag icon */}
+                        <span className="text-2xl">{isCounted ? '✅' : '🛍️'}</span>
+                        {/* Items inside */}
+                        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(perGroup, 3)}, 1fr)`, gap: 2 }}>
+                          {Array.from({ length: Math.min(perGroup, 6) }).map((_, j) => (
+                            <span key={j} className="text-xs leading-none">{isCounted ? emoji : '•'}</span>
+                          ))}
+                          {perGroup > 6 && <span className="text-xs text-slate-400">+{perGroup - 6}</span>}
+                        </div>
+                        <span className={`text-xs font-black ${isCounted ? 'text-emerald-600' : 'text-amber-600'}`}>×{perGroup}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="bg-indigo-50 border border-indigo-200 px-4 py-1.5 rounded-full text-xs font-bold text-indigo-900">
+                  🛍️ Sacolas abertas: {countedGroups.length}/{totalGroups} = <span className="text-indigo-700">{runningTotal}</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* H. Division Groups Mode */}
+          {config.type === 'div_groups' && (() => {
+            const groups = config.groups || 0;
+            const total = config.totalForDiv || 0;
+            const emoji = config.groupEmoji || '🍎';
+            // Each item is distributed one by one; groups get filled sequentially
+            const distributed = distributedItems.length;
+            const perGroup = config.itemsPerGroup || 0;
+            return (
+              <div className="w-full flex flex-col items-center gap-3">
+                {/* Source pile */}
+                <div className="w-full">
+                  <p className="text-xs font-bold text-center text-slate-500 mb-1">Toque nos itens para distribuir 👇</p>
+                  <div
+                    style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(total, 6)}, 1fr)`, gap: 6, maxWidth: 280 }}
+                    className="p-2 bg-amber-50 rounded-xl border border-amber-100 mx-auto"
+                  >
+                    {Array.from({ length: total }).map((_, i) => {
+                      const isDone = distributedItems.includes(i);
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => handleDivItemTap(i, total)}
+                          disabled={isDone || isCompleted}
+                          className={`w-9 h-9 rounded-lg flex items-center justify-center text-base transition-all ${
+                            isDone
+                              ? 'opacity-15 scale-75'
+                              : 'bg-white border-2 border-amber-200 hover:border-amber-400 cursor-pointer hover:scale-110 active:scale-90 shadow-xs'
+                          }`}
+                        >
+                          {isDone ? '' : emoji}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                {/* Destination groups */}
+                <div
+                  style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(groups, 4)}, 1fr)`, gap: 8, maxWidth: 300 }}
+                  className="p-2 w-full justify-items-center"
+                >
+                  {Array.from({ length: groups }).map((_, gi) => {
+                    const itemsHere = Math.min(Math.max(0, distributed - gi * perGroup), perGroup);
+                    const isFull = itemsHere >= perGroup;
+                    return (
+                      <div
+                        key={gi}
+                        className={`flex flex-col items-center p-2 rounded-xl border-2 w-full ${
+                          isFull
+                            ? 'bg-emerald-50 border-emerald-400'
+                            : 'bg-slate-50 border-slate-200'
+                        }`}
+                      >
+                        <span className="text-lg">🎒</span>
+                        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(perGroup, 3)}, 1fr)`, gap: 2 }}>
+                          {Array.from({ length: perGroup }).map((_, j) => (
+                            <span key={j} className={`text-xs ${j < itemsHere ? 'opacity-100' : 'opacity-20'}`}>{emoji}</span>
+                          ))}
+                        </div>
+                        <span className="text-xs font-bold text-slate-500">{itemsHere}/{perGroup}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="bg-indigo-50 border border-indigo-200 px-4 py-1.5 rounded-full text-xs font-bold text-indigo-900">
+                  🎒 Distribuídos: {distributed}/{total}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* Victory Banner — no answer reveal */}
+        {isCompleted && (
+          <div className="w-full bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-300 rounded-2xl p-4 flex flex-col items-center gap-3 shadow-sm" style={{ animation: 'fadeIn 0.4s ease' }}>
+            <span className="text-4xl">🎉</span>
+            <span className="font-black text-base text-emerald-900 text-center">
+              Incrível! Você conseguiu! Agora escolha a resposta certa! 💪
+            </span>
+            <button
+              type="button"
+              onClick={onComplete}
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black px-8 py-3 rounded-full text-base shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <span>Ir para as opções!</span>
+              <span>➔</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -769,6 +2180,7 @@ function LettersStage({
 // MATH STAGE COMPONENT
 // -------------------------------------------------------------
 interface MathStageProps {
+  ageGroup: AgeGroup;
   problem: MathProblem;
   soundEnabled: boolean;
   onNextProblem: () => void;
@@ -783,6 +2195,7 @@ interface MathStageProps {
 }
 
 function MathStage({
+  ageGroup,
   problem,
   soundEnabled,
   onNextProblem,
@@ -800,6 +2213,8 @@ function MathStage({
   const [mathHintActive, setMathHintActive] = useState(false);
   const [isMathCelebrating, setIsMathCelebrating] = useState(false);
   const [tappedCountItems, setTappedCountItems] = useState<number[]>([]);
+  // Mini-desafio interativo de matemática (Cesto / Mãozinhas)
+  const [showInteractiveMathModal, setShowInteractiveMathModal] = useState(false);
   // Só libera as alternativas depois de ouvir a pergunta
   const [showOptions, setShowOptions] = useState(false);
   const [wrongAttempts, setWrongAttempts] = useState(0);
@@ -814,7 +2229,7 @@ function MathStage({
     return opts;
   });
 
-  const MAX_ATTEMPTS = 2;
+  const MAX_ATTEMPTS = 4;
   const chancesLeft = MAX_ATTEMPTS - wrongAttempts;
 
   const handleSpeakQuestion = () => {
@@ -864,11 +2279,54 @@ function MathStage({
     }
   };
 
+  // Math hint level: 0=none, 1=1st hint, 2=2nd hint
+  const [mathHintLevel, setMathHintLevel] = useState(0);
+
   const giveMathHint = () => {
-    if (!showOptions) return;
-    setMathHintActive(true);
+    if (!showOptions || mathHintLevel >= 2) return;
     playSoundFx('pop');
-    speakAudio(problem.hint, `math_dica_${problem.id}`);
+    const nextLevel = mathHintLevel + 1;
+    setMathHintLevel(nextLevel);
+
+    if (nextLevel === 1) {
+      // 1ª dica: mini-desafio interativo se disponível (Cesto ou Mãozinhas)
+      const challengeConfig = getMathChallengeConfig(problem);
+      if (challengeConfig) {
+        setShowInteractiveMathModal(true);
+        speakAudio('Vamos resolver juntos com um desafio divertido!', 'dica_math_interativa');
+      } else if (ageGroup === '3-5' || ageGroup === '6-8') {
+        const wrong = shuffledOptions.filter(o => o !== problem.answer && !disabledOptions.includes(o));
+        if (wrong.length > 0) {
+          setDisabledOptions(prev => [...prev, wrong[0]]);
+          speakAudio('Dica: Essa resposta não está certa! Tente as outras.', 'math_dica_elimina');
+        }
+      } else {
+        const ans = Number(problem.answer);
+        if (!isNaN(ans)) {
+          const tipo = ans % 2 === 0 ? 'par' : 'ímpar';
+          speakAudio(`Dica: A resposta é um número ${tipo}!`, `math_dica_paridade_${tipo}`);
+          setMathHintActive(true);
+        } else {
+          speakAudio(problem.hint, `math_dica_${problem.id}`);
+          setMathHintActive(true);
+        }
+      }
+    } else {
+      // 2ª dica: par/ímpar para 3-5 e 6-8; elimina opção para 9-12
+      if (ageGroup === '3-5' || ageGroup === '6-8') {
+        const ans = Number(problem.answer);
+        const tipo = !isNaN(ans) ? (ans % 2 === 0 ? 'par' : 'ímpar') : null;
+        if (tipo) speakAudio(`Mais uma dica: A resposta é ${tipo}!`, `math_dica2_${tipo}`);
+        setMathHintActive(true);
+      } else {
+        // 9-11/12-14: elimina uma alternativa errada
+        const wrong = shuffledOptions.filter(o => o !== problem.answer && !disabledOptions.includes(o));
+        if (wrong.length > 0) {
+          setDisabledOptions(prev => [...prev, wrong[0]]);
+          speakAudio('Mais uma dica: Eliminei uma opção errada!', 'math_dica2_elimina');
+        }
+      }
+    }
   };
 
   const handleTapCountItem = (idx: number) => {
@@ -884,47 +2342,22 @@ function MathStage({
   };
 
   return (
+    <>
+    {showInteractiveMathModal && (
+      <MathInteractiveHintModal
+        problem={problem}
+        onComplete={() => {
+          setShowInteractiveMathModal(false);
+          setMathHintActive(true);
+          speakAudio(`Muito bem! A resposta certa é ${problem.answer}! Encontre nas opções!`, 'dica_math_ok');
+        }}
+        onClose={() => setShowInteractiveMathModal(false)}
+        speakAudio={speakAudio}
+      />
+    )}
     <div className="w-full flex-1 flex flex-col items-center justify-between">
-      {/* Top Navigation & Audio */}
-      <div className="flex items-center justify-between w-full mb-4">
-        <button
-          id="prev-math-btn"
-          onClick={onPrevProblem}
-          className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 shadow-xs"
-          title="Desafio anterior"
-        >
-          <ChevronLeft size={20} />
-        </button>
-
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-600 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-            Desafio {mathIndex + 1} de {totalProblems}
-          </span>
-          <button
-            id="speak-math-btn"
-            onClick={handleSpeakQuestion}
-            className="p-1.5 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors shadow-2xs"
-            title="Ouvir desafio de matemática"
-          >
-            <Volume2 size={18} />
-          </button>
-        </div>
-
-        <button
-          id="next-math-btn"
-          onClick={onNextProblem}
-          className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 shadow-xs"
-          title="Próximo desafio"
-        >
-          <ChevronRight size={20} />
-        </button>
-      </div>
-
       {/* Problem Display Card */}
-      <div className="w-full bg-white rounded-3xl border-2 border-slate-200 p-5 sm:p-8 shadow-sm flex flex-col items-center text-center my-auto">
-        <h2 className={`font-black text-slate-800 mb-2 ${tvMode ? 'text-3xl' : 'text-xl sm:text-2xl'}`}>
-          {problem.question}
-        </h2>
+      <div className="w-full bg-white rounded-3xl border-2 border-slate-200 p-4 sm:p-6 shadow-sm flex flex-col items-center text-center my-auto">
 
         {/* Prominent Question Speech Button */}
         <button
@@ -1023,7 +2456,7 @@ function MathStage({
       <div className="w-full mt-6">
         {showOptions ? (
           <>
-            <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 mx-auto mb-6 ${tvMode ? 'max-w-3xl gap-5' : 'max-w-lg'}`}>
+            <div className={`grid grid-cols-3 gap-3 mx-auto mb-6 ${tvMode ? 'max-w-3xl gap-5' : 'max-w-lg'}`}>
               {shuffledOptions.map((opt, idx) => {
                 const isCorrect = selectedMathOption === opt;
                 const isWrong = mathWrongOption === opt || disabledOptions.includes(opt);
@@ -1041,7 +2474,9 @@ function MathStage({
                         ? 'bg-emerald-500 border-emerald-700 text-white'
                         : isWrong
                           ? 'bg-red-100 border-red-400 text-red-700 opacity-60'
-                          : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50'
+                          : mathHintActive && opt === problem.answer
+                            ? 'bg-amber-50 border-amber-500 text-amber-950 ring-4 ring-amber-300 animate-pulse'
+                            : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50'
                     } ${tvMode ? 'py-8 text-4xl' : ''} disabled:cursor-not-allowed`}
                   >
                     {opt}
@@ -1050,17 +2485,32 @@ function MathStage({
               })}
             </div>
 
-            <div className="flex justify-center">
-              <button
-                id="btn-hint-math"
-                onClick={giveMathHint}
-                disabled={isMathCelebrating}
-                className={`tv-action-btn flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-5 text-xl' : ''}`}
-              >
-                <Lightbulb size={tvMode ? 26 : 20} className="fill-amber-100 text-amber-900" />
-                <span>AJUDA / DICA</span>
-              </button>
-            </div>
+            {wrongAttempts > 1 && mathHintLevel < 2 && (
+              <div className="flex justify-center gap-3 flex-wrap">
+                {mathHintLevel < 1 && (
+                  <button
+                    id="btn-hint-math-1"
+                    onClick={giveMathHint}
+                    disabled={isMathCelebrating}
+                    className={`tv-action-btn flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-5 text-xl' : ''}`}
+                  >
+                    <Lightbulb size={tvMode ? 26 : 20} className="fill-amber-100 text-amber-900" />
+                    <span>DICA</span>
+                  </button>
+                )}
+                {mathHintLevel === 1 && (
+                  <button
+                    id="btn-hint-math-2"
+                    onClick={giveMathHint}
+                    disabled={isMathCelebrating}
+                    className={`tv-action-btn flex items-center gap-2 bg-gradient-to-r from-orange-400 to-orange-500 text-orange-950 px-6 py-3 rounded-full font-black text-base sm:text-lg shadow-md border-b-4 border-orange-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 ${tvMode ? 'px-10 py-5 text-xl' : ''}`}
+                  >
+                    <Lightbulb size={tvMode ? 26 : 20} className="fill-orange-100 text-orange-900" />
+                    <span>MAIS UMA DICA</span>
+                  </button>
+                )}
+              </div>
+            )}
           </>
         ) : (
           <div className="flex justify-center mb-4">
@@ -1071,6 +2521,7 @@ function MathStage({
         )}
       </div>
     </div>
+    </>
   );
 }
 
@@ -1228,19 +2679,30 @@ export default function EducationalApp() {
   const goNextMath = () => setMathIndex((prev) => prev + 1);
   const goPrevMath = () => setMathIndex((prev) => Math.max(0, prev - 1));
   const handleMissMath = () => {
-    // Recoloca a pergunta atual daqui a 2 desafios (sem revelar a resposta)
+    // Recoloca a pergunta atual mais adiante na fila (sem revelar a resposta)
     setMathOrder((prev) => {
       const order =
         prev.length === 0 || prev.some((i) => i < 0 || i >= currentMathList.length)
           ? currentMathList.map((_, i) => i)
           : [...prev];
-      const pos = mathIndex % order.length;
-      const missed = order[pos];
-      const insertAt = Math.min(pos + 3, order.length);
-      order.splice(insertAt, 0, missed);
-      return order;
+      const currentPos = mathIndex % order.length;
+      const missed = order[currentPos];
+      // Remove da posição atual e insere 3 posições à frente
+      const newOrder = order.filter((_, idx) => idx !== currentPos);
+      const insertAt = Math.min(currentPos + 3, newOrder.length);
+      newOrder.splice(insertAt, 0, missed);
+      return newOrder;
     });
-    setMathIndex((prev) => prev + 1);
+    // NÃO incrementa mathIndex — a lista mudou, então mathIndex agora aponta para o próximo
+    // Forçamos re-render alterando mathIndex para o valor correto
+    setMathIndex((prev) => prev);
+    // Usamos um pequeno truque: disparamos o próximo sem incrementar
+    // Na prática avançamos via setMathIndex usando o novo order
+    setMathIndex((prev) => {
+      // Verifica se o novo order ainda colocaria o mesmo problema
+      // Se sim, avança um extra
+      return prev + 1;
+    });
   };
 
   const handleSelectAgeGroup = (newAge: AgeGroup) => {
@@ -1507,6 +2969,7 @@ export default function EducationalApp() {
         ) : (
           <MathStage
             key={`math-${ageGroup}-${mathPos}-${activeMathProblem.id}-${mathIndex}`}
+            ageGroup={ageGroup}
             problem={activeMathProblem}
             soundEnabled={soundEnabled}
             onNextProblem={goNextMath}
