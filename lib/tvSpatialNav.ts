@@ -191,6 +191,23 @@ function ensureTvModeClass() {
   }
 }
 
+/** TV Android/Google TV: o browser desenha uma "bolinha" de mouse; tenta travar o ponteiro. */
+function isAndroidTvLike(): boolean {
+  const ua = navigator.userAgent || '';
+  return /Android|Tizen|Web0S|WebOS|SmartTV|GoogleTV|AFT[A-Z]|VIDAA|Hisense/i.test(ua);
+}
+
+function tryHidePointer() {
+  if (!isAndroidTvLike()) return;
+  if (document.pointerLockElement) return;
+  try {
+    const req = document.documentElement.requestPointerLock?.() as Promise<void> | undefined;
+    req?.catch?.(() => {});
+  } catch {
+    // ignore
+  }
+}
+
 function activateFocused() {
   const active = document.activeElement as HTMLElement | null;
   if (!active) return false;
@@ -238,6 +255,7 @@ export function initTvSpatialNavigation(): () => void {
     lastDir = dir || 'ok';
 
     ensureTvModeClass();
+    tryHidePointer();
 
     if (confirm) {
       ke.preventDefault();
@@ -255,11 +273,41 @@ export function initTvSpatialNavigation(): () => void {
     }
   };
 
+  // Bloqueia também keyup/keypress das setas: alguns browsers de TV movem a bolinha nesses eventos
+  const onKeyOther = (e: Event) => {
+    const ke = e as KeyboardEvent;
+    const tag = (document.activeElement as HTMLElement | null)?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (readDpadDirection(ke)) {
+      ke.preventDefault();
+      ke.stopPropagation();
+    }
+  };
+
+  // Se a bolinha ainda aparecer, o botão sob ela vira o foco (setas e ponteiro ficam em sincronia)
+  const onMouseOver = (e: Event) => {
+    if (!document.documentElement.classList.contains('tv-mode')) return;
+    const target = (e.target as HTMLElement | null)?.closest(FOCUSABLE) as HTMLElement | null | undefined;
+    if (target && isVisible(target) && target !== document.activeElement) {
+      try {
+        target.focus({ preventScroll: true });
+      } catch {
+        // ignore
+      }
+    }
+  };
+
   window.addEventListener('keydown', onKeyDown, true);
+  window.addEventListener('keyup', onKeyOther, true);
+  window.addEventListener('keypress', onKeyOther, true);
+  document.addEventListener('mouseover', onMouseOver, true);
 
   window.setTimeout(() => focusFirstTvControl(), 350);
 
   return () => {
     window.removeEventListener('keydown', onKeyDown, true);
+    window.removeEventListener('keyup', onKeyOther, true);
+    window.removeEventListener('keypress', onKeyOther, true);
+    document.removeEventListener('mouseover', onMouseOver, true);
   };
 }
