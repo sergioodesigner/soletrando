@@ -2563,6 +2563,17 @@ export default function EducationalApp() {
     };
   }, [subject, ageGroup]);
 
+  // Botão Voltar do controle da TV fecha o painel de configurações
+  useEffect(() => {
+    if (!showSettingsModal) return;
+    const onBack = (ev: Event) => {
+      (ev as CustomEvent<{ handled: boolean }>).detail.handled = true;
+      setShowSettingsModal(false);
+    };
+    window.addEventListener('aprender:tv-back', onBack);
+    return () => window.removeEventListener('aprender:tv-back', onBack);
+  }, [showSettingsModal]);
+
   // Load custom words and audio mode from localStorage
   useEffect(() => {
     const timer = setTimeout(() => {

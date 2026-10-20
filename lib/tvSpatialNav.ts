@@ -106,12 +106,45 @@ function collectFocusables(root?: ParentNode | null): HTMLElement[] {
     });
 }
 
+/** Última posição focada — usada para reencontrar o foco quando o botão some (ex.: letra acertada). */
+let lastFocusCenter: { x: number; y: number } | null = null;
+
+function isUsable(el: HTMLElement | null): el is HTMLElement {
+  if (!el || el === document.body || !el.isConnected) return false;
+  if ((el as HTMLButtonElement).disabled) return false;
+  return isVisible(el);
+}
+
+function nearestTo(candidates: HTMLElement[], point: { x: number; y: number }): HTMLElement {
+  let best = candidates[0];
+  let bestDist = Infinity;
+  for (const el of candidates) {
+    const c = center(el.getBoundingClientRect());
+    const d = (c.x - point.x) ** 2 + (c.y - point.y) ** 2;
+    if (d < bestDist) {
+      bestDist = d;
+      best = el;
+    }
+  }
+  return best;
+}
+
+/** Se o elemento focado sumiu/desabilitou, devolve o foco ao controle mais próximo. */
+function restoreFocusIfLost() {
+  if (isUsable(document.activeElement as HTMLElement | null)) return;
+  const navRoot = document.querySelector('[data-tv-nav]') || document;
+  const candidates = collectFocusables(navRoot);
+  if (candidates.length === 0) return;
+  focusEl(lastFocusCenter ? nearestTo(candidates, lastFocusCenter) : candidates[0]);
+}
+
 function focusEl(el: HTMLElement) {
   try {
     el.focus({ preventScroll: false });
   } catch {
     el.focus();
   }
+  lastFocusCenter = center(el.getBoundingClientRect());
   el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
 }
 
@@ -133,9 +166,9 @@ function moveFocus(dir: Dir): boolean {
   const active = document.activeElement as HTMLElement | null;
   let currentIndex = active ? candidates.indexOf(active) : -1;
 
-  // Se nada focado (comum na TV), começa no primeiro e só move na próxima seta
+  // Foco perdido (botão removido/desabilitado) ou nada focado: volta ao mais próximo da última posição
   if (currentIndex < 0) {
-    focusEl(candidates[0]);
+    focusEl(lastFocusCenter ? nearestTo(candidates, lastFocusCenter) : candidates[0]);
     return true;
   }
 
@@ -178,6 +211,22 @@ function moveFocus(dir: Dir): boolean {
   return true;
 }
 
+/** Botão Voltar do controle: Tizen 10009, webOS 461, Android 4, ou Escape/BrowserBack. */
+export function isBackKey(e: KeyboardEvent): boolean {
+  const key = e.key || '';
+  const keyCode = e.keyCode || (e as KeyboardEvent & { which?: number }).which || 0;
+  return (
+    key === 'Escape' ||
+    key === 'BrowserBack' ||
+    key === 'GoBack' ||
+    key === 'XF86Back' ||
+    keyCode === 27 ||
+    keyCode === 10009 ||
+    keyCode === 461 ||
+    keyCode === 4
+  );
+}
+
 function ensureTvModeClass() {
   if (!document.documentElement.classList.contains('tv-mode')) {
     document.documentElement.classList.add('tv-mode');
@@ -216,6 +265,18 @@ export function initTvSpatialNavigation(): () => void {
     const tag = (document.activeElement as HTMLElement | null)?.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
+    if (isBackKey(ke)) {
+      // A página responde (ex.: fechar modal) e marca handled; senão a TV trata o Voltar normalmente.
+      const detail = { handled: false };
+      window.dispatchEvent(new CustomEvent('aprender:tv-back', { detail }));
+      if (detail.handled) {
+        ke.preventDefault();
+        ke.stopPropagation();
+        window.setTimeout(restoreFocusIfLost, 120);
+      }
+      return;
+    }
+
     const dir = readDpadDirection(ke);
     const confirm = isConfirmKey(ke);
 
@@ -244,6 +305,10 @@ export function initTvSpatialNavigation(): () => void {
       ke.stopPropagation();
       if (!activateFocused()) {
         focusFirstTvControl();
+      } else {
+        // O clique pode remover/desabilitar o botão; reavalia depois do re-render
+        window.setTimeout(restoreFocusIfLost, 120);
+        window.setTimeout(restoreFocusIfLost, 600);
       }
       return;
     }
