@@ -75,7 +75,7 @@ interface ProfileProps {
 export function ProfileScreen({ onCreate, onBack }: ProfileProps) {
   const [step, setStep] = useState<'who' | 'voice'>('who');
   const [name, setName] = useState('');
-  const [age, setAge] = useState<AgeId>('6-8');
+  const [age, setAge] = useState<AgeId>('3-5');
   const piper = usePiperState();
   const supported = typeof window !== 'undefined' && isPiperSupported();
   const busy = piper.status === 'downloading' || piper.status === 'loading';
@@ -110,7 +110,8 @@ export function ProfileScreen({ onCreate, onBack }: ProfileProps) {
                   className={`px-btn px-notch text-[16px] ${age === a.id ? 'px-btn-green' : 'px-btn-plain'}`}
                 >
                   <span className="mr-1">{a.icon}</span>
-                  {a.label}
+                  {a.level}
+                  <span className="block text-[12px] opacity-70 leading-none">{a.label}</span>
                 </button>
               ))}
             </div>

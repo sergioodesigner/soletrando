@@ -95,7 +95,8 @@ export function AgeChip({ profile, onChange }: { profile: Profile; onChange: (a:
               }}
               className={`px-btn px-notch text-[15px] text-left ${a.id === profile.age ? 'px-btn-green' : 'px-btn-plain'}`}
             >
-              {a.icon} {a.label}
+              {a.icon} {a.level}
+              <span className="block text-[11px] opacity-70 leading-none">{a.label}</span>
             </button>
           ))}
         </div>

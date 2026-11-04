@@ -1,6 +1,6 @@
 'use client';
 
-import { MASCOTS } from '@/lib/game/types';
+import { speakerOf } from '@/lib/game/types';
 import type { DialogueApi } from '@/lib/game/dialogue';
 
 export interface Choice {
@@ -21,7 +21,7 @@ interface Props {
 /** Balão de fala pixel: o texto aparece "digitando" na medida em que a voz fala. Toque para ler tudo de uma vez. */
 export function DialogueBox({ dialogue, idleHint, choices, className = '', ...rest }: Props) {
   const { line, shown, status, skip } = dialogue;
-  const who = line ? MASCOTS[line.mascot] : null;
+  const who = line ? speakerOf(line.mascot) : null;
   const text = line?.text ?? idleHint ?? '';
   const visible = line ? text.slice(0, shown) : text;
   const hidden = line ? text.slice(shown) : '';

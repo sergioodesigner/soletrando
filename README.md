@@ -35,6 +35,11 @@ Fluxo: **Título → Perfil (nome + idade) → Introdução → Mapa-múndi → 
 - **Diálogo:** o mascote fala (voz Faber) e o texto aparece **digitando no ritmo da voz** (`lib/game/dialogue.ts`). Toque no balão para ler tudo de uma vez.
 - **Primeira vez:** todo botão novo é explicado pelo mascote com destaque na tela (`lib/game/coach.ts`). Para adicionar um tutorial novo, crie um passo com id novo.
 - **Arte:** `public/game/` — `fox/` e `owl/` (9 poses cada), `maps/` (mapa-múndi e um mapa vertical por mundo), `ui/` (estrela, moeda, pin, cadeado…), `items/` e `stickers/` (figurinhas). Os pins ficam em `lib/game/worlds.ts`: `x`/`y` em % da imagem do mapa, na ponta do pin. Para trocar um mapa, troque o JPG e reposicione os 8 pins.
+- **Nível Aprendiz (3 a 5 anos):** conteúdo próprio por fase em `lib/game/content.ts` — palavras do tema do lugar + uma "palavra que vale a pena", todas com pista; na Grécia, contas contextualizadas (barcos, ânforas, estrelas…). As outras idades usam as listas gerais por enquanto.
+- **História:** cada fase tem um personagem com um problema (cena de abertura) e um agradecimento (cena de fechamento) — `lib/game/story.ts`. As cenas só aparecem na 1ª vez. Retratos dos personagens: `/game/npcs/<id>.png` (enquanto não existe, usa um emoji).
+- **Chefes:** barra de vida (cada acerto tira um pedaço). Ao vencer, o chefe pede desculpas e **vira aliado**: anda ao lado do mascote no mapa e aparece no álbum.
+- **Momento Treino:** 3 desafios com as palavras em que a criança mais errou + palavras "que valem a pena"; bônus de moedas (cheio na 1ª vez perfeita). **Jogo da Memória** nas duas categorias (figura ↔ palavra; número ↔ quantidade; conta ↔ resultado), também com bônus. Ambos aparecem no resultado da fase e nas fases já vencidas.
+- **Combo:** a cada 3 acertos seguidos, +1 moeda.
 - **Modo clássico** (sem mapa) em Configurações; o modo TV usa a interface clássica por enquanto e será reformulado.
 
 ## Voz Faber no navegador (Piper)

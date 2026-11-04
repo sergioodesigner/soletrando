@@ -43,7 +43,8 @@ import {
   RECORDED_AUDIO_MAP
 } from '@/lib/audioEngine';
 import { askBrain, readBrainEnabled, writeBrainEnabled, testBrain, BRAIN_REASON_LABEL, type BrainRequest, type BrainTestResult } from '@/lib/brain';
-import { GameRoot, type StageCtx } from '@/components/game/GameRoot';
+import { GameRoot, type StageCtx, type StartCtx } from '@/components/game/GameRoot';
+import { CONTENT_SPEECH } from '@/lib/game/content';
 import { setClassicMode, resetCoach, useGameData } from '@/lib/game/store';
 import { installAudioUnlock, testPiperVoice } from '@/lib/audioEngine';
 import type { WorldDef, PinDef } from '@/lib/game/types';
@@ -81,6 +82,7 @@ const formatWordForSpeech = (w: string): string => {
   if (!w) return '';
   const upper = w.trim().toUpperCase();
   if (SPEECH_WORD_FORMS[upper]) return SPEECH_WORD_FORMS[upper];
+  if (CONTENT_SPEECH[upper]) return CONTENT_SPEECH[upper];
   const clean = w.trim();
   return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
 };
@@ -1138,7 +1140,13 @@ function LettersStage({
   // Modo RPG: ao começar cada palavra o mascote já diz qual é (e o texto aparece no balão)
   useEffect(() => {
     if (!autoAsk) return;
-    const t = setTimeout(() => speakAudio(`Palavra: ${formatWordForSpeech(currentWord)}!`, `palavra_${currentWord.toLowerCase()}`), 600);
+    const t = setTimeout(
+      () =>
+        wordObj.clue
+          ? speakAudio(`Soletre ${formatWordForSpeech(currentWord)}! Pista: ${wordObj.clue}.`)
+          : speakAudio(`Palavra: ${formatWordForSpeech(currentWord)}!`, `palavra_${currentWord.toLowerCase()}`),
+      600
+    );
     return () => clearTimeout(t);
     // uma vez por palavra (o estágio é remontado a cada palavra)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2618,6 +2626,9 @@ export default function EducationalApp() {
 
   // Indices
   const [wordIndex, setWordIndex] = useState(0);
+  // Conteúdo curado da fase atual do RPG (Nível Aprendiz). null = listas gerais.
+  const [gameWords, setGameWords] = useState<WordChallenge[] | null>(null);
+  const [gameMath, setGameMath] = useState<MathProblem[] | null>(null);
   const [mathIndex, setMathIndex] = useState(0);
   // Fila de índices das perguntas — erros voltam mais tarde na fila
   const [mathOrder, setMathOrder] = useState<number[]>(() =>
@@ -2743,20 +2754,37 @@ export default function EducationalApp() {
   // O modo TV ainda usa a interface clássica (será reformulado depois).
   const gameMode = !tvMode && !(gameData.ready && gameData.classic);
 
-  const handleGameStartPin = (world: WorldDef, pin: PinDef) => {
+  const handleGameStartPin = (world: WorldDef, pin: PinDef, ctx: StartCtx) => {
     const base = pin.index * 5;
     if (world.subject === 'letras') {
       setSubject('letras');
-      setWordIndex(base);
+      setGameMath(null);
+      if (ctx.words && ctx.words.length > 0) {
+        setGameWords(ctx.words.map((w) => ({ word: w.word, clue: w.clue })));
+        setWordIndex(0);
+      } else {
+        setGameWords(null);
+        setWordIndex(ctx.training ? Math.floor(Math.random() * 6) : base);
+      }
     } else if (world.subject === 'matematica') {
       setSubject('matematica');
-      setMathOrder(MATH_PROBLEMS[ageGroup].map((_, i) => i));
-      setMathIndex(base);
+      setGameWords(null);
+      if (ctx.math && ctx.math.length > 0) {
+        setGameMath(ctx.math);
+        setMathOrder(ctx.math.map((_, i) => i));
+        setMathIndex(0);
+      } else {
+        setGameMath(null);
+        setMathOrder(MATH_PROBLEMS[ctx.age].map((_, i) => i));
+        setMathIndex(ctx.training ? Math.floor(Math.random() * 6) : base);
+      }
     }
   };
 
   const handleGameAge = (a: AgeGroup) => {
     setAgeGroup(a);
+    setGameWords(null);
+    setGameMath(null);
     setWordIndex(0);
     setMathIndex(0);
     setMathOrder(MATH_PROBLEMS[a].map((_, i) => i));
@@ -2773,10 +2801,10 @@ export default function EducationalApp() {
         onPrevWord={() => setWordIndex(prev => (prev - 1 + currentWordList.length) % currentWordList.length)}
         wordIndex={wordIndex % currentWordList.length}
         totalWords={currentWordList.length}
-        onWinStar={ctx.onWin}
+        onWinStar={() => ctx.onWin(activeWordObj.word)}
         speakAudio={ctx.speak}
         askTutor={ctx.askTutor}
-        onMistake={ctx.onMistake}
+        onMistake={() => ctx.onMistake(activeWordObj.word)}
         onGiveUp={ctx.onGiveUp}
         autoAsk
         isAudioLoading={false}
@@ -2792,10 +2820,10 @@ export default function EducationalApp() {
         onMissProblem={handleMissMath}
         mathIndex={mathPos}
         totalProblems={currentMathList.length}
-        onWinStar={ctx.onWin}
+        onWinStar={() => ctx.onWin()}
         speakAudio={ctx.speak}
         askTutor={ctx.askTutor}
-        onMistake={ctx.onMistake}
+        onMistake={() => ctx.onMistake()}
         onGiveUp={ctx.onGiveUp}
         autoAsk
         isAudioLoading={false}
@@ -2842,9 +2870,9 @@ export default function EducationalApp() {
     setCachedAudioCount(count);
   };
 
-  const currentWordList = ageGroup === '3-5' ? customWords : INITIAL_WORDS[ageGroup];
+  const currentWordList = gameWords ?? (ageGroup === '3-5' ? customWords : INITIAL_WORDS[ageGroup]);
   const activeWordObj = currentWordList[wordIndex % currentWordList.length] || { word: 'BOLA' };
-  const currentMathList = MATH_PROBLEMS[ageGroup];
+  const currentMathList = gameMath ?? MATH_PROBLEMS[ageGroup];
 
   // Palavras personalizadas (sem áudio gravado) ganham pista + frase de exemplo geradas pelo Gemini
   const clueWord = activeWordObj.word;

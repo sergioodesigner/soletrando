@@ -142,6 +142,51 @@ export function completePin(
   return { firstClear, improved, newItem, coinsGained };
 }
 
+export function addCoins(profileId: string, n: number) {
+  if (n > 0) updateProfile(profileId, (p) => ({ ...p, coins: p.coins + n }));
+}
+
+/** Registra uma palavra em que a criança errou (volta no Momento Treino). */
+export function noteWeak(profileId: string, word: string) {
+  updateProfile(profileId, (p) => {
+    const weak = { ...(p.weak ?? {}) };
+    weak[word] = Math.min(5, (weak[word] ?? 0) + 1);
+    return { ...p, weak };
+  });
+}
+
+/** Acertou a palavra no treino: ela perde peso e some da lista quando chega a 0. */
+export function relieveWeak(profileId: string, word: string) {
+  updateProfile(profileId, (p) => {
+    if (!p.weak?.[word]) return p;
+    const weak = { ...p.weak };
+    weak[word] -= 1;
+    if (weak[word] <= 0) delete weak[word];
+    return { ...p, weak };
+  });
+}
+
+export function addAlly(profileId: string, ally: string) {
+  updateProfile(profileId, (p) => (p.allies?.includes(ally) ? p : { ...p, allies: [...(p.allies ?? []), ally] }));
+}
+
+/**
+ * Dá moedas de bônus. Na 1ª vez de cada atividade (chave) vale o valor cheio; depois só `again`
+ * (para não dar para "fazer fazenda" de moedas repetindo).
+ */
+export function claimBonus(profileId: string, key: string, full: number, again = 2): number {
+  const p = data.profiles.find((x) => x.id === profileId);
+  if (!p) return 0;
+  const times = p.bonus?.[key] ?? 0;
+  const coins = times === 0 ? full : again;
+  updateProfile(profileId, (pp) => ({
+    ...pp,
+    coins: pp.coins + coins,
+    bonus: { ...(pp.bonus ?? {}), [key]: times + 1 },
+  }));
+  return coins;
+}
+
 // ---- tutoriais "primeira vez" ----
 export function markCoachSeen(id: string) {
   if (data.coachSeen[id]) return;

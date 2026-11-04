@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Mascot, type MascotMood } from './Mascot';
+import { Portrait } from './Scenes';
 import { DialogueBox, type Choice } from './DialogueBox';
 import { AgeChip, IconBtn, SoundSettings, Stats } from './Hud';
 import { itemName, itemSrc } from '@/lib/game/items';
 import { BOSS_MIN_STARS, WORLDS, WORLD_MAP, pinUnlocked } from '@/lib/game/worlds';
 import { pinStars } from '@/lib/game/store';
 import type { DialogueApi } from '@/lib/game/dialogue';
-import type { AgeId, PinDef, Profile, WorldDef } from '@/lib/game/types';
+import { speakerOf, type AgeId, type PinDef, type Profile, type WorldDef } from '@/lib/game/types';
 
 const PARK = { backgroundImage: 'url(/game/park.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' } as const;
 
@@ -123,6 +124,11 @@ interface WorldMapProps extends TopProps {
   onSheetOpen: (open: boolean) => void;
   onHowToPlay: () => void;
   onFact: () => Promise<string>;
+  onTrain: () => void;
+  onMemory: () => void;
+  /** Aliado deste mundo (chefe que virou amigo), se já conquistado. */
+  ally: string | null;
+  onAlly: () => void;
 }
 
 export function WorldMap({
@@ -137,6 +143,10 @@ export function WorldMap({
   onSheetOpen,
   onHowToPlay,
   onFact,
+  onTrain,
+  onMemory,
+  ally,
+  onAlly,
   ...top
 }: WorldMapProps) {
   const stars = useMemo(() => pinStars(profile, world.id), [profile, world.id]);
@@ -241,6 +251,20 @@ export function WorldMap({
             );
           })}
 
+          {/* aliado (chefe que virou amigo) acompanha o mascote */}
+          {ally && (
+            <button
+              type="button"
+              data-coach="ally"
+              onClick={onAlly}
+              aria-label={`Falar com ${speakerOf(ally).name}`}
+              className="absolute z-10 px-float"
+              style={{ left: `${atPin.x > 50 ? atPin.x - 30 : atPin.x + 30}%`, top: `${atPin.y}%`, transform: 'translate(-50%, -85%)' }}
+            >
+              <Portrait who={ally} size={64} />
+            </button>
+          )}
+
           {/* mascote ao lado do pin atual */}
           <div
             className="absolute z-10 transition-[left,top] duration-700 ease-steps"
@@ -273,6 +297,8 @@ export function WorldMap({
                 total={total}
                 dialogue={dialogue}
                 onStart={() => onStart(pin)}
+                onTrain={onTrain}
+                onMemory={onMemory}
                 onClose={() => {
                   setSel(null);
                   dialogue.stop();
@@ -292,10 +318,10 @@ export function WorldMap({
 }
 
 function PinSheet({
-  world, pin, stars, total, dialogue, onStart, onClose, profile,
+  world, pin, stars, total, dialogue, onStart, onClose, profile, onTrain, onMemory,
 }: {
   world: WorldDef; pin: PinDef; stars: number[]; total: number; dialogue: DialogueApi;
-  onStart: () => void; onClose: () => void; profile: Profile;
+  onStart: () => void; onClose: () => void; profile: Profile; onTrain: () => void; onMemory: () => void;
 }) {
   const unlocked = pinUnlocked(stars, pin);
   const got = stars[pin.index] ?? 0;
@@ -339,6 +365,16 @@ function PinSheet({
       >
         {got > 0 ? 'Jogar de novo ▶' : 'Começar ▶'}
       </button>
+      {got > 0 && (
+        <div className="flex gap-2 mt-2">
+          <button type="button" onClick={onTrain} className="px-btn px-btn-blue px-notch flex-1 text-[15px]">
+            💪 Treino
+          </button>
+          <button type="button" onClick={onMemory} className="px-btn px-btn-blue px-notch flex-1 text-[15px]">
+            🃏 Memória
+          </button>
+        </div>
+      )}
       <span className="hidden">{world.id}</span>
     </>
   );
@@ -348,7 +384,18 @@ function PinSheet({
 
 interface ResultProps {
   world: WorldDef;
-  pin: PinDef;
+  /** null no Treino e na Memória (não são fases do mapa). */
+  pin: PinDef | null;
+  /** Título (padrão: FASE CUMPRIDA!). */
+  title?: string;
+  /** Fala do mascote (padrão: baseada nas estrelas). */
+  speech?: string;
+  /** Linhas de bônus mostradas no quadro (ex.: "Bônus do treino +10"). */
+  bonusLines?: string[];
+  /** Aliado que acabou de entrar para o time. */
+  ally?: { id: string; name: string; text: string } | null;
+  onTrain?: () => void;
+  onMemory?: () => void;
   stars: number;
   coins: number;
   newItem: number | null;
@@ -359,7 +406,7 @@ interface ResultProps {
   onRetry: () => void;
 }
 
-export function ResultScreen({ world, pin, stars, coins, newItem, dialogue, hasNext, onNext, onMap, onRetry }: ResultProps) {
+export function ResultScreen({ world, pin, title, speech, bonusLines, ally, onTrain, onMemory, stars, coins, newItem, dialogue, hasNext, onNext, onMap, onRetry }: ResultProps) {
   const [shown, setShown] = useState(0);
   const mascot = world.mascot ?? 'fox';
 
@@ -370,7 +417,8 @@ export function ResultScreen({ world, pin, stars, coins, newItem, dialogue, hasN
         : stars === 2
           ? 'Muito bem! Quase perfeito!'
           : 'Você conseguiu! Que tal tentar de novo para ganhar mais estrelas?';
-    void dialogue.say(`${line}${newItem !== null ? ` Olha só, você ganhou: ${itemName(newItem)}!` : ''}`, { mascot });
+    const base = speech ?? `${line}${newItem !== null ? ` Olha só, você ganhou: ${itemName(newItem)}!` : ''}`;
+    void dialogue.say(ally ? `${base} ${ally.text}` : base, { mascot });
     const timers = [1, 2, 3].map((n) => setTimeout(() => setShown((s) => Math.max(s, n)), 500 * n));
     return () => timers.forEach(clearTimeout);
     // só ao entrar
@@ -382,7 +430,7 @@ export function ResultScreen({ world, pin, stars, coins, newItem, dialogue, hasN
       <div className="absolute inset-0 bg-[#1a1033]/65" />
       <div className="relative z-10 w-full max-w-md px-3 pt-4 pb-3 flex flex-col items-center gap-3">
         <p className="px-title text-[#facc15] text-[13px] [text-shadow:3px_3px_0_#3b2a1a] text-center">
-          {pin.kind === 'boss' ? 'CHEFE DERROTADO!' : 'FASE CUMPRIDA!'}
+          {title ?? (pin?.kind === 'boss' ? 'CHEFE AMIGO!' : 'FASE CUMPRIDA!')}
         </p>
         <div className="flex gap-2" aria-label={`${stars} estrelas`}>
           {[1, 2, 3].map((n) => (
@@ -403,6 +451,22 @@ export function ResultScreen({ world, pin, stars, coins, newItem, dialogue, hasN
             </span>
           )}
         </div>
+        {bonusLines && bonusLines.length > 0 && (
+          <div className="px-panel px-notch w-full px-3 py-2 text-[16px] font-bold text-[#92400e]">
+            {bonusLines.map((b) => (
+              <p key={b}>✨ {b}</p>
+            ))}
+          </div>
+        )}
+        {ally && (
+          <div className="px-panel px-notch w-full p-2 flex items-center gap-3 border-[#6cc24a]">
+            <Portrait who={ally.id} size={70} />
+            <div className="text-[16px] leading-snug">
+              <p className="px-title text-[9px] text-[#2f7d17]">NOVO ALIADO!</p>
+              <p className="font-bold">{ally.name}</p>
+            </div>
+          </div>
+        )}
         <div className="flex items-end gap-2 w-full">
           <Mascot id={mascot} size={120} mood={stars === 3 ? 'trophy' : 'happy'} flip={mascot === 'owl'} className="shrink-0" />
           <DialogueBox dialogue={dialogue} className="flex-1" />
@@ -412,6 +476,22 @@ export function ResultScreen({ world, pin, stars, coins, newItem, dialogue, hasN
             <button type="button" onClick={onNext} className="px-btn px-btn-green px-notch text-[19px]">
               Próxima fase ▶
             </button>
+          )}
+          {(onTrain || onMemory) && (
+            <div className="flex gap-2">
+              {onTrain && (
+                <button type="button" data-coach="btn-training" onClick={onTrain} className="px-btn px-btn-blue px-notch flex-1 text-[15px] leading-tight">
+                  💪 Momento Treino
+                  <span className="block text-[11px] opacity-80">ganhe bônus</span>
+                </button>
+              )}
+              {onMemory && (
+                <button type="button" data-coach="btn-memory" onClick={onMemory} className="px-btn px-btn-blue px-notch flex-1 text-[15px] leading-tight">
+                  🃏 Jogo da Memória
+                  <span className="block text-[11px] opacity-80">ganhe bônus</span>
+                </button>
+              )}
+            </div>
           )}
           <div className="flex gap-2">
             <button type="button" onClick={onRetry} className="px-btn px-btn-plain px-notch flex-1 text-[16px]">
@@ -446,6 +526,23 @@ export function AlbumScreen({ profile, onBack }: { profile: Profile; onBack: () 
       </div>
       <div className="relative z-10 flex-1 min-h-0 overflow-y-auto px-3 pb-4">
         <div className="mx-auto max-w-md flex flex-col gap-3">
+          <div className="px-panel px-notch p-3">
+            <p className="px-title text-[11px] mb-2">Meus aliados</p>
+            <div className="flex gap-3">
+              {(['borrao', 'hidra'] as const).map((id) => {
+                const has = profile.allies?.includes(id);
+                return (
+                  <div key={id} className="flex flex-col items-center text-center w-24">
+                    <div className={has ? '' : 'opacity-25'} style={has ? undefined : { filter: 'brightness(0)' }}>
+                      <Portrait who={id} size={72} />
+                    </div>
+                    <span className="text-[13px] mt-1 leading-tight">{has ? speakerOf(id).name : '???'}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[12px] opacity-70 mt-1">Vença os chefes para fazer novos amigos!</p>
+          </div>
           {WORLDS.map((w) => (
             <div key={w.id} className="px-panel px-notch p-3">
               <p className="px-title text-[11px] mb-2">{w.name}</p>

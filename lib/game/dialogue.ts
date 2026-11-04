@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { playSmartAudio, stopAllAudio } from '@/lib/audioEngine';
-import { MASCOTS, type MascotId } from './types';
+import { speakerOf, type SpeakerId } from './types';
 
 export interface DialogueLine {
   id: number;
-  mascot: MascotId;
+  mascot: SpeakerId;
   text: string;
 }
 
 export type DialogueStatus = 'idle' | 'waiting' | 'typing' | 'done';
 
 export interface SayOptions {
-  mascot: MascotId;
+  /** Quem fala (mascote, chefe ou NPC) — define o nome no balão e o tom da voz. */
+  mascot: SpeakerId;
   /** Chave de áudio gravado (se houver). */
   staticKey?: string;
   /** Frase única (ex.: gerada pelo Gemini): não usa o cache local. */
@@ -159,7 +160,7 @@ export function useDialogue(config: Config): DialogueApi {
           soundEnabled: true,
           useKoreApi: false,
           preferPiper: cfg.current.preferPiper,
-          voiceRate: MASCOTS[opts.mascot].voiceRate,
+          voiceRate: speakerOf(opts.mascot).voiceRate,
           onPlaybackStart: (info) => {
             if (!isCurrent()) return;
             audioStarted = true;

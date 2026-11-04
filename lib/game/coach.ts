@@ -8,7 +8,7 @@ import type { MascotId } from './types';
 export interface CoachStep {
   /** Identificador salvo em "já visto". Mudar o id faz o tutorial reaparecer (botão novo em atualização). */
   id: string;
-  screen: 'worlds' | 'map' | 'play-letras' | 'play-matematica' | 'play';
+  screen: 'worlds' | 'map' | 'result' | 'memory' | 'play-letras' | 'play-matematica' | 'play';
   /** Seletor CSS do elemento a destacar. */
   target: string;
   mascot: MascotId;
@@ -38,7 +38,22 @@ export const COACH_STEPS: CoachStep[] = [
   { id: 'map.worlds.v1', screen: 'map', target: '[data-coach="worlds"]', mascot: 'fox', mode: 'ok',
     text: 'Quer visitar outro mundo? Toque aqui para voltar ao mapa-múndi.' },
 
+  { id: 'map.ally.v1', screen: 'map', target: '[data-coach="ally"]', mascot: 'fox', mode: 'tap',
+    text: 'Olha! O chefe virou seu amigo e agora anda com a gente. Toque nele para conversar!' },
+
+  // ---- resultado ----
+  { id: 'result.training.v1', screen: 'result', target: '[data-coach="btn-training"]', mascot: 'fox', mode: 'ok',
+    text: 'O Momento Treino repete as palavras em que você mais precisa treinar. Se acertar tudo, ganha moedas de bônus!' },
+  { id: 'result.memory.v1', screen: 'result', target: '[data-coach="btn-memory"]', mascot: 'fox', mode: 'ok',
+    text: 'O Jogo da Memória também dá bônus. Vire duas cartas e ache os pares!' },
+
+  // ---- jogo da memória ----
+  { id: 'memory.cards.v1', screen: 'memory', target: '[data-coach="memory-grid"]', mascot: 'fox', mode: 'ok',
+    text: 'Toque numa carta para virar. Vire outra: se combinarem, ficam abertas. Se não, elas se escondem de novo!' },
+
   // ---- dentro da fase (geral) ----
+  { id: 'play.boss.v1', screen: 'play', target: '[data-coach="boss-bar"]', mascot: 'fox', mode: 'ok',
+    text: 'Este é o chefe! Cada resposta certa tira um pedaço da barra de vida dele. Quando acabar, você vence!' },
   { id: 'play.bubble.v1', screen: 'play', target: '[data-coach="bubble"]', mascot: 'fox', mode: 'tap',
     text: 'O que eu falo também aparece aqui, escrevendo devagarzinho. Toque no balão para ler mais rápido!' },
   { id: 'play.back.v1', screen: 'play', target: '[data-coach="back"]', mascot: 'fox', mode: 'ok',
