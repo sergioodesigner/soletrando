@@ -3,8 +3,9 @@ import type { WorldDef, PinDef, AgeId } from './types';
 const KINDS: PinDef['kind'][] = ['normal', 'normal', 'normal', 'mini', 'normal', 'normal', 'normal', 'boss'];
 const CHALLENGES = [5, 5, 5, 6, 5, 5, 6, 8];
 
-function pins(names: string[], spots: [number, number][], rewards: number[], intros: string[]): PinDef[] {
+function pins(names: string[], spots: [number, number][], rewards: number[], intros: string[], scenes: string[] = []): PinDef[] {
   return names.map((name, i) => ({
+    scene: scenes[i],
     index: i,
     name,
     kind: KINDS[i],
@@ -51,7 +52,8 @@ export const WORLDS: WorldDef[] = [
         'Hmm, deixa eu ver... Na taverna a gente precisa ouvir bem!',
         'Shhh... a torre guarda as palavras mais difíceis.',
         'O Dragão Borrão embaralhou tudo! Soletre para vencê-lo!',
-      ]
+      ],
+      ['fazenda', 'padaria', 'moinho', 'ponte', 'mercado', 'taverna', 'torre', 'castelo']
     ),
   },
   {

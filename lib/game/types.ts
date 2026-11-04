@@ -80,6 +80,8 @@ export interface PinDef {
   rewardItem: number;
   /** Frase do mascote ao abrir a fase. */
   intro: string;
+  /** Nome do cenário da fase: /game/scenes/<scene>.jpg (se não existir, usa o parque). */
+  scene?: string;
 }
 
 export interface WorldDef {

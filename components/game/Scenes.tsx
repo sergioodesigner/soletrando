@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Mascot, type MascotMood } from './Mascot';
 import { DialogueBox } from './DialogueBox';
 import { IconBtn, SoundSettings } from './Hud';
-import { fillName, type Line } from '@/lib/game/story';
+import { fillName, sceneBg, type Line } from '@/lib/game/story';
 import { memoryDeck, memoryPairs, type MemoryCard } from '@/lib/game/content';
 import { speakerOf, type AgeId, type MascotId, type SpeakerId } from '@/lib/game/types';
 import type { DialogueApi } from '@/lib/game/dialogue';
@@ -69,6 +69,8 @@ export function Portrait({
 
 interface SceneProps {
   title: string;
+  /** Cenário da fase (nome do arquivo em /game/scenes). */
+  scene?: string;
   /** Falas da cena, em ordem. */
   lines: Line[];
   npc: SpeakerId;
@@ -83,7 +85,7 @@ interface SceneProps {
 }
 
 /** Cena curta antes/depois da fase: o personagem conta o problema (ou agradece) e o mascote responde. */
-export function SceneScreen({ title, lines, npc, mascot, playerName, dialogue, onDone, doneLabel, ...top }: SceneProps) {
+export function SceneScreen({ title, scene, lines, npc, mascot, playerName, dialogue, onDone, doneLabel, ...top }: SceneProps) {
   const [i, setI] = useState(0);
   const [done, setDone] = useState(false);
   const cast = useMemo(() => {
@@ -115,7 +117,7 @@ export function SceneScreen({ title, lines, npc, mascot, playerName, dialogue, o
   const talking = dialogue.status === 'typing';
 
   return (
-    <div className="game-root relative flex-1 min-h-0 overflow-hidden flex flex-col" style={PARK}>
+    <div className="game-root relative flex-1 min-h-0 overflow-hidden flex flex-col" style={sceneBg(scene)}>
       <div className="absolute inset-0 bg-gradient-to-b from-[#1a1033]/50 via-transparent to-[#1a1033]/70" />
       <div className="relative z-10 flex items-center gap-1.5 p-2">
         <p className="px-title text-[#fff4d6] text-[10px] [text-shadow:2px_2px_0_#3b2a1a] flex-1 pl-1">{title.toUpperCase()}</p>

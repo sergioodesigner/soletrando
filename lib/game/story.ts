@@ -140,4 +140,11 @@ export const ALLY_LINES: Record<string, string[]> = {
   ],
 };
 
+/** Fundo de uma fase: cenário próprio por cima, parque ao pôr do sol por baixo (se o arquivo ainda não existir). */
+export const sceneBg = (scene?: string) => ({
+  backgroundImage: scene ? `url(/game/scenes/${scene}.jpg), url(/game/park.jpg)` : 'url(/game/park.jpg)',
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+});
+
 export const fillName = (text: string, name: string) => text.replaceAll('{nome}', name);

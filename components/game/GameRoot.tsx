@@ -16,7 +16,7 @@ import {
   markIntroSeen, noteWeak, pinStars, relieveWeak, resetCoachIds, setActiveProfile, setProfileAge, useGameData,
 } from '@/lib/game/store';
 import { pinMath, pinWords, trainingMath, trainingWords, type MathItem, type WordItem } from '@/lib/game/content';
-import { ALLY_LINES, BOSS_OF, STORIES } from '@/lib/game/story';
+import { ALLY_LINES, BOSS_OF, STORIES, sceneBg } from '@/lib/game/story';
 import type { AgeId, PinDef, WorldDef } from '@/lib/game/types';
 import { pinUnlocked, starsFor, WORLDS } from '@/lib/game/worlds';
 import { askBrain, FALLBACK_FACTS, type BrainRequest } from '@/lib/brain';
@@ -516,6 +516,7 @@ export function GameRoot({
       <SceneScreen
         key={phase}
         title={pin.name}
+        scene={pin.scene}
         lines={closing ? story.close : story.open}
         npc={story.npc}
         mascot={world.mascot ?? 'fox'}
@@ -577,8 +578,8 @@ export function GameRoot({
     );
   } else if (phase === 'play' && profile && world && pin) {
     body = (
-      <div className="game-root relative flex-1 min-h-0 flex flex-col" style={{ backgroundImage: 'url(/game/park.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        <div className="absolute inset-0 bg-[#1a1033]/55" />
+      <div className="game-root relative flex-1 min-h-0 flex flex-col" style={sceneBg(training ? undefined : pin.scene)}>
+        <div className="absolute inset-0 bg-[#1a1033]/60" />
         {/* barra de cima */}
         <div className="relative z-10 flex items-center gap-1.5 p-2">
           <span data-coach="back">
