@@ -29,7 +29,7 @@ export function TitleScreen({ profiles, active, onPlay, onNewPlayer, onPick }: T
       </div>
 
       <div className="relative z-10 flex-1 min-h-0 w-full flex items-end justify-center gap-3 px-4">
-        <Mascot id="fox" size={190} mood="idle" className="mb-2" />
+        <Mascot id="fox" size={190} mood="wave" className="mb-2" />
         <Mascot id="owl" size={170} mood="idle" flip className="mb-2" />
       </div>
 
@@ -88,7 +88,7 @@ export function ProfileScreen({ onCreate, onBack }: ProfileProps) {
         {step === 'who' ? (
           <>
             <div className="flex items-end gap-3 mb-3">
-              <Mascot id="fox" size={84} mood="idle" />
+              <Mascot id="fox" size={84} mood="wave" />
               <p className="text-[18px] leading-snug pb-1">Oi! Eu sou o <b>Rufo</b>. Qual é o seu nome?</p>
             </div>
             <input
@@ -231,7 +231,7 @@ export function IntroScreen({ profile, dialogue, onFinish }: IntroProps) {
         Pular ▶▶
       </button>
       <div className="relative z-10 flex-1 min-h-0 flex items-end justify-center gap-2 px-4">
-        <Mascot id="fox" size={210} mood={speaker === 'fox' && talking ? 'talk' : 'idle'} dim={speaker !== 'fox'} />
+        <Mascot id="fox" size={210} mood={speaker === 'fox' && talking ? 'talk' : i === 0 && speaker === 'fox' ? 'wave' : 'idle'} dim={speaker !== 'fox'} />
         <Mascot id="owl" size={190} flip mood={speaker === 'owl' && talking ? 'talk' : 'idle'} dim={speaker !== 'owl'} />
       </div>
       <div className="relative z-10 px-3 pb-4 pt-2 mx-auto w-full max-w-md">

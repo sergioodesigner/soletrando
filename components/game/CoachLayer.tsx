@@ -94,7 +94,7 @@ export function CoachLayer({ step, dialogue, onDone }: Props) {
 
       <div className={`fixed z-[63] left-0 right-0 px-3 ${bubbleAtTop ? 'top-3' : 'bottom-3'}`}>
         <div className="mx-auto max-w-md flex items-end gap-2">
-          {!targetIsBubble && <Mascot id={step.mascot} size={72} mood={dialogue.status === 'typing' ? 'talk' : 'idle'} className="shrink-0" />}
+          {!targetIsBubble && <Mascot id={step.mascot} size={72} mood={dialogue.status === 'typing' ? 'talk' : 'point'} className="shrink-0" />}
           {targetIsBubble ? (
             <button type="button" onClick={onDone} className="px-btn px-btn-green px-notch ml-auto">
               Entendi!

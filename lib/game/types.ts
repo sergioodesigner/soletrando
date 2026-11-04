@@ -19,8 +19,8 @@ export interface MascotDef {
 }
 
 export const MASCOTS: Record<MascotId, MascotDef> = {
-  fox: { id: 'fox', name: 'Rufo', title: 'o Raposo Letrado', img: '/game/fox.png', voiceRate: 1.06 },
-  owl: { id: 'owl', name: 'Sofia', title: 'a Coruja', img: '/game/owl.png', voiceRate: 0.92 },
+  fox: { id: 'fox', name: 'Rufo', title: 'o Raposo Letrado', img: '/game/fox/idle.png', voiceRate: 1.06 },
+  owl: { id: 'owl', name: 'Sofia', title: 'a Coruja', img: '/game/owl/idle.png', voiceRate: 0.92 },
 };
 
 export type PinKind = 'normal' | 'mini' | 'boss';

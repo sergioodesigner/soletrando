@@ -193,13 +193,14 @@ export function GameRoot({
     async (req: BrainRequest) => {
       if (!brainActive) return false;
       const seq = speakSeq.current;
+      flash('think', 3000); // o mascote "pensa" enquanto o Gemini escreve a dica
       const reply = await askBrain(req);
       if (!reply?.text || seq !== speakSeq.current) return false;
       speakSeq.current++;
       void dialogue.say(reply.text, { mascot: mascotId, ephemeral: true });
       return true;
     },
-    [brainActive, dialogue, mascotId]
+    [brainActive, dialogue, mascotId, flash]
   );
 
   const fetchFact = useCallback(async () => {

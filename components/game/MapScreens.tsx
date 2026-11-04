@@ -411,7 +411,7 @@ export function ResultScreen({ world, pin, stars, coins, newItem, dialogue, hasN
           )}
         </div>
         <div className="flex items-end gap-2 w-full">
-          <Mascot id={mascot} size={110} mood="happy" flip={mascot === 'owl'} className="shrink-0" />
+          <Mascot id={mascot} size={120} mood={stars === 3 ? 'trophy' : 'happy'} flip={mascot === 'owl'} className="shrink-0" />
           <DialogueBox dialogue={dialogue} className="flex-1" />
         </div>
         <div className="w-full flex flex-col gap-2">
