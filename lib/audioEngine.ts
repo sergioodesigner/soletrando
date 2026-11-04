@@ -3,7 +3,7 @@
 
 import { getCachedAudio, saveCachedAudio, getCachedAudioCount, clearCachedAudios } from './audioStorage';
 import recordedManifest from './recordedAudioManifest.json';
-import { isPiperReady, synthesizePiper } from './piperTts';
+import { isPiperReady, synthesizePiperPcm, pcmToWavBlob, type PiperStats } from './piperTts';
 
 // Nomes das letras para TTS do aparelho (soletrar).
 // Evitar Á/É/Ó — o sintetizador exagera o acento agudo (ex.: A de CASA virava “Á”).
@@ -96,6 +96,99 @@ function getFxAudioContext(): AudioContext | null {
     sharedAudioCtx.resume().catch(() => {});
   }
   return sharedAudioCtx;
+}
+
+/**
+ * Desbloqueia o áudio no primeiro toque/tecla. iOS/Safari só deixam tocar som dentro de um gesto
+ * do usuário — e a voz Piper chega DEPOIS de uma espera assíncrona (síntese), então um `new Audio()`
+ * criado nessa hora seria bloqueado ("ativa, mas sem som"). Um AudioContext já desbloqueado toca
+ * a qualquer momento.
+ */
+let unlockInstalled = false;
+export function installAudioUnlock(): void {
+  if (typeof window === 'undefined' || unlockInstalled) return;
+  unlockInstalled = true;
+  const unlock = () => {
+    const ctx = getFxAudioContext();
+    if (!ctx) return;
+    try {
+      const src = ctx.createBufferSource();
+      src.buffer = ctx.createBuffer(1, 1, 22050);
+      src.connect(ctx.destination);
+      src.start(0);
+    } catch {
+      // ignore
+    }
+    ctx.resume().catch(() => {});
+  };
+  const events = ['pointerdown', 'touchend', 'click', 'keydown'] as const;
+  events.forEach((ev) => window.addEventListener(ev, unlock, { passive: true }));
+}
+
+export interface PlaybackInfo {
+  /** Duração real do áudio em ms (quando conhecida) — usada para sincronizar o texto digitando. */
+  durationMs?: number;
+}
+
+let activePcmSource: AudioBufferSourceNode | null = null;
+
+function stopPcm() {
+  if (activePcmSource) {
+    try {
+      activePcmSource.onended = null;
+      activePcmSource.stop();
+    } catch {
+      // ignore
+    }
+    activePcmSource = null;
+  }
+}
+
+/** Toca PCM Int16 mono via Web Audio. Devolve false se o contexto estiver bloqueado (use o fallback). */
+async function playPcm(
+  pcm: Int16Array,
+  sampleRate: number,
+  opts: { rate?: number; onStart?: (info: PlaybackInfo) => void; onEnd?: () => void } = {}
+): Promise<boolean> {
+  const ctx = getFxAudioContext();
+  if (!ctx) return false;
+  if (ctx.state !== 'running') {
+    await Promise.race([ctx.resume().catch(() => {}), new Promise((r) => setTimeout(r, 250))]);
+    if ((ctx.state as AudioContextState) !== 'running') return false;
+  }
+  const rate = opts.rate && opts.rate > 0 ? opts.rate : 1;
+  const buffer = ctx.createBuffer(1, pcm.length, sampleRate);
+  const ch = buffer.getChannelData(0);
+  for (let i = 0; i < pcm.length; i++) ch[i] = pcm[i] / 32768;
+
+  stopPcm();
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.playbackRate.value = rate; // rate != 1 muda o tom (usado para dar voz própria a cada mascote)
+  src.connect(ctx.destination);
+  src.onended = () => {
+    if (activePcmSource === src) activePcmSource = null;
+    opts.onEnd?.();
+  };
+  activePcmSource = src;
+  src.start();
+  opts.onStart?.({ durationMs: Math.round((buffer.duration / rate) * 1000) });
+  return true;
+}
+
+/** Fala de teste da voz Faber (botão "Testar" nas configurações). Devolve métricas ou lança erro. */
+export async function testPiperVoice(
+  text = 'Olá! Eu sou o Raposo. Vamos soletrar juntos?'
+): Promise<PiperStats & { played: boolean }> {
+  stopAllAudio();
+  const r = await synthesizePiperPcm(text);
+  const played = await playPcm(r.pcm, r.sampleRate);
+  if (!played) {
+    const audio = new Audio(URL.createObjectURL(pcmToWavBlob(r.pcm, r.sampleRate)));
+    activeAudioElement = audio;
+    await audio.play();
+  }
+  return { ...r.stats, played };
 }
 
 const PENTATONIC_CHIMES = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
@@ -261,7 +354,7 @@ export function getFriendlyPhoneticText(text: string): string {
 export function speakTunedLocal(
   text: string,
   enabled: boolean = true,
-  opts: { slowerForLetter?: boolean } = {}
+  opts: { slowerForLetter?: boolean; onStart?: (info: PlaybackInfo) => void; onEnd?: () => void } = {}
 ) {
   if (!enabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
   try {
@@ -275,6 +368,9 @@ export function speakTunedLocal(
     if (voice) {
       utterance.voice = voice;
     }
+    // Duração desconhecida (a API não informa): o texto digitando usa uma estimativa por caractere
+    utterance.onstart = () => opts.onStart?.({});
+    utterance.onend = () => opts.onEnd?.();
 
     // cancel() + speak() imediato causa eco/duplicação no Chrome/Safari
     window.speechSynthesis.cancel();
@@ -302,6 +398,7 @@ export function speakTunedLocal(
 // Stop any active audio
 export function stopAllAudio() {
   if (typeof window !== 'undefined') {
+    stopPcm();
     if (speakLocalTimer) {
       clearTimeout(speakLocalTimer);
       speakLocalTimer = null;
@@ -341,6 +438,14 @@ export interface PlayAudioOptions {
   soundEnabled?: boolean;
   /** Texto único (ex.: gerado pelo tutor): não lê nem grava o cache local (IndexedDB). */
   ephemeral?: boolean;
+  /** Quando a voz Faber estiver pronta, usa ela mesmo havendo MP3 gravado (exceto letras isoladas). */
+  preferPiper?: boolean;
+  /** Tom/velocidade da voz do personagem (1 = normal; <1 grave, >1 agudo). Só afeta a voz Faber. */
+  voiceRate?: number;
+  /** Chamado quando o som realmente começa (com a duração real, se conhecida). */
+  onPlaybackStart?: (info: PlaybackInfo) => void;
+  /** Chamado quando o som termina. */
+  onPlaybackEnd?: () => void;
   onLoadingChange?: (loading: boolean) => void;
   onVoiceTypeUsed?: (
     type: 'kore_static' | 'kore_cached' | 'kore_api' | 'piper_local' | 'local_fallback' | 'local_letter'
@@ -367,6 +472,10 @@ export async function playSmartAudio(
     useKoreApi = true,
     soundEnabled = true,
     ephemeral = false,
+    preferPiper = false,
+    voiceRate = 1,
+    onPlaybackStart,
+    onPlaybackEnd,
     onLoadingChange,
     onVoiceTypeUsed
   } = options;
@@ -407,15 +516,24 @@ export async function playSmartAudio(
   // Dedup preserving order
   const uniqueKeys = [...new Set(candidateKeys)];
 
+  // Voz dos personagens: com a Faber pronta, ela fala tudo (menos letras isoladas, que têm MP3 instantâneo)
+  const piperFirst = preferPiper && isPiperReady() && !inferredLetterKey;
+
   let playedRecorded = false;
   for (const key of uniqueKeys) {
+    if (piperFirst) break;
     if (generation !== playGeneration) return;
     const audioUrl = RECORDED_AUDIO_MAP[key];
     if (!audioUrl) continue;
 
-    const played = await playRecordedUrl(audioUrl, generation, () => {
-      onVoiceTypeUsed?.('kore_static');
-    });
+    const played = await playRecordedUrl(
+      audioUrl,
+      generation,
+      () => {
+        onVoiceTypeUsed?.('kore_static');
+      },
+      { onPlaybackStart, onPlaybackEnd }
+    );
     if (played) {
       playedRecorded = true;
       if (generation !== playGeneration) return;
@@ -443,6 +561,11 @@ export async function playSmartAudio(
     if (cachedDataUrl) {
       const audio = new Audio(cachedDataUrl);
       audio.volume = 1;
+      if (voiceRate !== 1) {
+        audio.preservesPitch = false;
+        audio.playbackRate = voiceRate;
+      }
+      wireMediaEvents(audio, voiceRate, { onPlaybackStart, onPlaybackEnd });
       activeAudioElement = audio;
       onVoiceTypeUsed?.('kore_cached');
       await audio.play();
@@ -463,25 +586,41 @@ export async function playSmartAudio(
       onLoadingChange?.(true);
       const letter = inferredLetterKey ? inferredLetterKey.slice(-1).toUpperCase() : undefined;
       const spoken = letter && PT_LETTER_PHONETICS[letter] ? PT_LETTER_PHONETICS[letter] : cleanText;
-      const wav = await synthesizePiper(spoken, { slow: Boolean(letter) });
+      const r = await synthesizePiperPcm(spoken, { slow: Boolean(letter) });
       onLoadingChange?.(false);
       if (generation !== playGeneration) return;
 
-      const dataUrl = await blobToDataUrl(wav);
-      if (generation !== playGeneration) return;
-      // Guarda no IndexedDB: da próxima vez toca na hora pelo TIER 2, sem sintetizar de novo
-      if (!ephemeral) saveCachedAudio(slugKey, cleanText, dataUrl).catch(() => {});
+      // Guarda no IndexedDB (WAV): da próxima vez toca na hora pelo TIER 2, sem sintetizar de novo
+      if (!ephemeral) {
+        blobToDataUrl(pcmToWavBlob(r.pcm, r.sampleRate))
+          .then((dataUrl) => saveCachedAudio(slugKey, cleanText, dataUrl))
+          .catch(() => {});
+      }
 
-      const audio = new Audio(dataUrl);
-      audio.volume = 1;
-      activeAudioElement = audio;
       onVoiceTypeUsed?.('piper_local');
+      // Web Audio (já desbloqueado no gesto): toca mesmo depois da espera da síntese, inclusive no iOS
+      const played = await playPcm(r.pcm, r.sampleRate, {
+        rate: voiceRate,
+        onStart: onPlaybackStart,
+        onEnd: onPlaybackEnd,
+      });
+      if (played) return;
+
+      // Contexto bloqueado: tenta um <audio> comum
+      const audio = new Audio(URL.createObjectURL(pcmToWavBlob(r.pcm, r.sampleRate)));
+      audio.volume = 1;
+      if (voiceRate !== 1) {
+        audio.preservesPitch = false;
+        audio.playbackRate = voiceRate;
+      }
+      wireMediaEvents(audio, voiceRate, { onPlaybackStart, onPlaybackEnd });
+      activeAudioElement = audio;
       await audio.play();
       return;
     } catch {
       onLoadingChange?.(false);
       if (generation !== playGeneration) return;
-      // Falhou/expirou: segue para os próximos tiers
+      // Falhou/expirou/bloqueado: segue para os próximos tiers
     }
   }
 
@@ -489,7 +628,7 @@ export async function playSmartAudio(
   if (useDeviceLetterVoice) {
     if (generation !== playGeneration) return;
     onVoiceTypeUsed?.('local_letter');
-    speakTunedLocal(cleanText, soundEnabled, { slowerForLetter: true });
+    speakTunedLocal(cleanText, soundEnabled, { slowerForLetter: true, onStart: onPlaybackStart, onEnd: onPlaybackEnd });
     return;
   }
 
@@ -530,6 +669,7 @@ export async function playSmartAudio(
 
           const audio = new Audio(dataUrl);
           audio.volume = 1;
+          wireMediaEvents(audio, 1, { onPlaybackStart, onPlaybackEnd });
           activeAudioElement = audio;
           onVoiceTypeUsed?.('kore_api');
           await audio.play();
@@ -545,7 +685,23 @@ export async function playSmartAudio(
   // 5. TIER 5: Local Optimized Web Speech Synthesis Fallback (Instant & 100% Offline)
   if (generation !== playGeneration) return;
   onVoiceTypeUsed?.('local_fallback');
-  speakTunedLocal(cleanText, soundEnabled);
+  speakTunedLocal(cleanText, soundEnabled, { onStart: onPlaybackStart, onEnd: onPlaybackEnd });
+}
+
+/** Liga os eventos de início/fim de um <audio> aos callbacks (com a duração real quando disponível). */
+function wireMediaEvents(
+  audio: HTMLAudioElement,
+  rate: number,
+  events: { onPlaybackStart?: (info: PlaybackInfo) => void; onPlaybackEnd?: () => void }
+) {
+  let started = false;
+  audio.addEventListener('playing', () => {
+    if (started) return;
+    started = true;
+    const d = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : undefined;
+    events.onPlaybackStart?.({ durationMs: d ? Math.round((d / rate) * 1000) : undefined });
+  });
+  audio.addEventListener('ended', () => events.onPlaybackEnd?.());
 }
 
 function blobToDataUrl(blob: Blob): Promise<string> {
@@ -561,7 +717,8 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 function playRecordedUrl(
   audioUrl: string,
   generation: number,
-  onStart?: () => void
+  onStart?: () => void,
+  events?: { onPlaybackStart?: (info: PlaybackInfo) => void; onPlaybackEnd?: () => void }
 ): Promise<boolean> {
   return new Promise((resolve) => {
     if (generation !== playGeneration) {
@@ -596,6 +753,7 @@ function playRecordedUrl(
       ? audioUrl
       : `${audioUrl}?v=${encodeURIComponent(AUDIO_CACHE_VERSION)}`;
     audio.src = bust;
+    if (events) wireMediaEvents(audio, 1, events);
     activeAudioElement = audio;
     onStart?.();
 

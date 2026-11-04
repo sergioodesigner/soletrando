@@ -40,6 +40,23 @@ export interface PiperState {
   /** 0..1 durante o download. */
   progress: number;
   error: string | null;
+  /** Métricas da última fala (diagnóstico na tela de configurações). */
+  lastStats: PiperStats | null;
+}
+
+export interface PiperStats {
+  /** Tempo de síntese em ms. */
+  ms: number;
+  /** Duração do áudio gerado em ms. */
+  audioMs: number;
+  /** Pico bruto da saída do modelo (antes de normalizar). */
+  peak: number;
+}
+
+export interface PiperPcm {
+  pcm: Int16Array;
+  sampleRate: number;
+  stats: PiperStats;
 }
 
 const SERVER_STATE: PiperState = {
@@ -48,6 +65,7 @@ const SERVER_STATE: PiperState = {
   modelCached: false,
   progress: 0,
   error: null,
+  lastStats: null,
 };
 
 let state: PiperState = SERVER_STATE;
@@ -93,7 +111,7 @@ export function isPiperReady(): boolean {
 // ---------------------------------------------------------------------------
 
 interface Pending {
-  resolve: (v: { pcm: Int16Array; sampleRate: number }) => void;
+  resolve: (v: { pcm: Int16Array; sampleRate: number; peak: number; ms: number }) => void;
   reject: (e: Error & { code?: string }) => void;
 }
 
@@ -146,7 +164,7 @@ function getWorker(): Worker {
       case 'done': {
         const p = synthPending.get(m.id);
         synthPending.delete(m.id);
-        p?.resolve({ pcm: m.pcm, sampleRate: m.sampleRate });
+        p?.resolve({ pcm: m.pcm, sampleRate: m.sampleRate, peak: m.peak ?? 0, ms: m.ms ?? 0 });
         break;
       }
       case 'error': {
@@ -300,35 +318,52 @@ export async function removePiperModel(): Promise<void> {
 }
 
 /**
- * Sintetiza `text` com a voz Faber e devolve um WAV. Rejeita (code 'NOT_READY') se a voz não
- * estiver pronta — quem chama deve cair no próximo tier de áudio.
+ * Sintetiza `text` com a voz Faber e devolve o PCM (Int16 mono). Rejeita (code 'NOT_READY') se a
+ * voz não estiver pronta — quem chama deve cair no próximo tier de áudio.
  */
-export async function synthesizePiper(
+export async function synthesizePiperPcm(
   text: string,
   opts: { slow?: boolean; timeoutMs?: number } = {}
-): Promise<Blob> {
+): Promise<PiperPcm> {
   if (!isPiperReady() || !worker) throw makeError('Voz Faber não está pronta.', 'NOT_READY');
 
   const id = nextId++;
   const w = worker;
-  const result = await new Promise<{ pcm: Int16Array; sampleRate: number }>((resolve, reject) => {
-    const timer = setTimeout(() => {
-      if (synthPending.delete(id)) reject(makeError('Tempo esgotado na voz Faber.', 'TIMEOUT'));
-    }, opts.timeoutMs ?? 12_000);
-    synthPending.set(id, {
-      resolve: (v) => {
-        clearTimeout(timer);
-        resolve(v);
-      },
-      reject: (e) => {
-        clearTimeout(timer);
-        reject(e);
-      },
-    });
-    w.postMessage({ type: 'synth', id, text, slow: Boolean(opts.slow) });
-  });
+  const result = await new Promise<{ pcm: Int16Array; sampleRate: number; peak: number; ms: number }>(
+    (resolve, reject) => {
+      const timer = setTimeout(() => {
+        if (synthPending.delete(id)) reject(makeError('Tempo esgotado na voz Faber.', 'TIMEOUT'));
+      }, opts.timeoutMs ?? 25_000);
+      synthPending.set(id, {
+        resolve: (v) => {
+          clearTimeout(timer);
+          resolve(v);
+        },
+        reject: (e) => {
+          clearTimeout(timer);
+          reject(e);
+        },
+      });
+      w.postMessage({ type: 'synth', id, text, slow: Boolean(opts.slow) });
+    }
+  );
 
-  return pcmToWavBlob(result.pcm, result.sampleRate);
+  const stats: PiperStats = {
+    ms: result.ms,
+    audioMs: Math.round((result.pcm.length / result.sampleRate) * 1000),
+    peak: result.peak,
+  };
+  setState({ lastStats: stats });
+  return { pcm: result.pcm, sampleRate: result.sampleRate, stats };
+}
+
+/** Igual a synthesizePiperPcm, mas devolve um WAV (para guardar no cache / tocar num <audio>). */
+export async function synthesizePiper(
+  text: string,
+  opts: { slow?: boolean; timeoutMs?: number } = {}
+): Promise<Blob> {
+  const r = await synthesizePiperPcm(text, opts);
+  return pcmToWavBlob(r.pcm, r.sampleRate);
 }
 
 export function pcmToWavBlob(pcm: Int16Array, sampleRate: number): Blob {

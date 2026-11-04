@@ -88,3 +88,48 @@ export async function askBrain(req: BrainRequest, timeoutMs = 6000): Promise<Bra
     clearTimeout(timer);
   }
 }
+
+export interface BrainTestResult {
+  ok: boolean;
+  text?: string;
+  /** no_api_key | quota | model_error | rate_limited | rejected | bad_json | network ... */
+  reason?: string;
+  detail?: string;
+  ms: number;
+}
+
+/** Diagnóstico para a tela de configurações: chama o tutor de verdade e mostra o motivo se falhar. */
+export async function testBrain(): Promise<BrainTestResult> {
+  const t0 = Date.now();
+  try {
+    const res = await fetch('/api/brain', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        task: 'explain_error',
+        subject: 'letras',
+        ageGroup: '6-8',
+        word: 'CASA',
+        spelled: 'CA',
+        picked: 'T',
+      }),
+    });
+    const ms = Date.now() - t0;
+    if (!res.ok) return { ok: false, reason: `http_${res.status}`, ms };
+    const data = await res.json();
+    if (data.success) return { ok: true, text: data.text, ms };
+    return { ok: false, reason: data.reason || 'unknown', detail: data.detail, ms };
+  } catch (e) {
+    return { ok: false, reason: 'network', detail: (e as Error).message, ms: Date.now() - t0 };
+  }
+}
+
+export const BRAIN_REASON_LABEL: Record<string, string> = {
+  no_api_key: 'GEMINI_API_KEY não está configurada no servidor (Vercel → Settings → Environment Variables).',
+  quota: 'Cota do Gemini esgotada — tente em 1 minuto.',
+  model_error: 'O Gemini recusou o pedido (modelo ou chave).',
+  rate_limited: 'Muitos pedidos seguidos — aguarde um pouco.',
+  rejected: 'O texto gerado foi barrado pelo filtro de segurança — tente de novo.',
+  bad_json: 'O modelo devolveu um formato inesperado.',
+  network: 'Sem conexão com o servidor.',
+};

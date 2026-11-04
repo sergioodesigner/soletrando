@@ -127,6 +127,12 @@ async function doInit(id, config) {
     executionProviders: ['wasm'],
     graphOptimizationLevel: 'all',
   });
+
+  try {
+    await synthesize('oi', false); // aquecimento: a 1ª inferência é bem mais lenta
+  } catch (e) {
+    console.warn('[piper] aquecimento falhou (segue mesmo assim):', e);
+  }
 }
 
 function ensureInit(id, config) {
@@ -229,16 +235,28 @@ async function synthesize(text, slow) {
     total += pcm.length;
   }
 
+  // O Piper oficial normaliza o pico do áudio (audio_float_to_int16). A saída crua do VITS costuma
+  // ter pico baixo (~0.1–0.4): sem normalizar, a voz sai MUITO baixa. Aqui normalizamos para 0.95.
+  var peak = 0;
+  for (var q = 0; q < parts.length; q++) {
+    var pp = parts[q];
+    for (var m = 0; m < pp.length; m++) {
+      var a = pp[m] < 0 ? -pp[m] : pp[m];
+      if (a > peak) peak = a;
+    }
+  }
+  var gain = 0.95 / Math.max(0.01, peak);
+
   var out = new Int16Array(total);
   var o = 0;
   for (var p = 0; p < parts.length; p++) {
     var part = parts[p];
     for (var k = 0; k < part.length; k++) {
-      var s = part[k];
+      var s = part[k] * gain;
       out[o++] = s >= 1 ? 32767 : s <= -1 ? -32768 : (s * 32767) | 0;
     }
   }
-  return { pcm: out, sampleRate: sampleRate };
+  return { pcm: out, sampleRate: sampleRate, peak: peak };
 }
 
 async function drain() {
@@ -250,8 +268,12 @@ async function drain() {
       pending = null;
       try {
         if (!session) throw Object.assign(new Error('Voz ainda não carregada.'), { code: 'NOT_READY' });
+        var t0 = Date.now();
         var r = await synthesize(job.text, job.slow);
-        post({ type: 'done', id: job.id, pcm: r.pcm, sampleRate: r.sampleRate }, [r.pcm.buffer]);
+        post(
+          { type: 'done', id: job.id, pcm: r.pcm, sampleRate: r.sampleRate, peak: r.peak, ms: Date.now() - t0 },
+          [r.pcm.buffer]
+        );
       } catch (err) {
         fail(job.id, err);
       }
