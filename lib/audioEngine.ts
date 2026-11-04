@@ -339,6 +339,8 @@ export interface PlayAudioOptions {
   staticKey?: string;
   useKoreApi?: boolean;
   soundEnabled?: boolean;
+  /** Texto único (ex.: gerado pelo tutor): não lê nem grava o cache local (IndexedDB). */
+  ephemeral?: boolean;
   onLoadingChange?: (loading: boolean) => void;
   onVoiceTypeUsed?: (
     type: 'kore_static' | 'kore_cached' | 'kore_api' | 'piper_local' | 'local_fallback' | 'local_letter'
@@ -364,6 +366,7 @@ export async function playSmartAudio(
     staticKey,
     useKoreApi = true,
     soundEnabled = true,
+    ephemeral = false,
     onLoadingChange,
     onVoiceTypeUsed
   } = options;
@@ -434,6 +437,7 @@ export async function playSmartAudio(
 
   // 2. TIER 2: Check IndexedDB Persistent Cache
   try {
+    if (ephemeral) throw new Error('skip-cache');
     if (generation !== playGeneration) return;
     const cachedDataUrl = await getCachedAudio(slugKey);
     if (cachedDataUrl) {
@@ -466,7 +470,7 @@ export async function playSmartAudio(
       const dataUrl = await blobToDataUrl(wav);
       if (generation !== playGeneration) return;
       // Guarda no IndexedDB: da próxima vez toca na hora pelo TIER 2, sem sintetizar de novo
-      saveCachedAudio(slugKey, cleanText, dataUrl).catch(() => {});
+      if (!ephemeral) saveCachedAudio(slugKey, cleanText, dataUrl).catch(() => {});
 
       const audio = new Audio(dataUrl);
       audio.volume = 1;

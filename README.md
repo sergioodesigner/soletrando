@@ -35,6 +35,15 @@ O app pode falar com a voz neural **Piper `pt_BR-faber-medium`** (a mesma do [tt
 - Como funciona: `public/piper/piper-worker.js` (Web Worker) → espeak-ng WASM (fonemas) + ONNX Runtime Web (modelo VITS). Cliente em `lib/piperTts.ts`.
 - O modelo vem do repositório oficial `rhasspy/piper-voices` (Hugging Face) e o runtime WASM do jsDelivr (versões fixadas). Para self-host, defina `NEXT_PUBLIC_PIPER_MODEL_BASE`, `NEXT_PUBLIC_PIPER_ORT_BASE` e `NEXT_PUBLIC_PIPER_PHONEMIZE_BASE` (veja `.env.example`).
 
+## Tutor inteligente (cérebro de texto + voz)
+
+O **Gemini escreve o texto** (`/api/brain`) e o app entrega esse texto à voz (**Piper Faber** no navegador, ou a voz do aparelho se o Piper não estiver ativo) — o modelo de texto nunca gera áudio.
+
+- **Tutor de erros:** a cada 2 erros seguidos em letras, e do 2º erro em diante em matemática, o Gemini escreve uma dica curta **sem revelar a resposta** (a rota rejeita textos que vazem o valor/palavra) e a voz fala. Se o texto não vier, o jogo usa as falas padrão.
+- **Pista + frase de exemplo** para palavras personalizadas (as que não têm áudio gravado); ficam salvas com a palavra e a frase é falada ao completá-la.
+- Só funciona online e no Modo Híbrido; pode ser desligado em Configurações → Tutor Inteligente. Só a palavra/pergunta é enviada.
+- Requer `GEMINI_API_KEY`. Modelo de texto padrão `gemini-2.5-flash` (troque com `GEMINI_TEXT_MODEL`).
+
 ## Regenerar falas (ElevenLabs)
 
 ```bash

@@ -39,8 +39,10 @@ import {
   getCachedAudioCount, 
   clearCachedAudios, 
   stopAllAudio,
-  isTtsQuotaExhausted
+  isTtsQuotaExhausted,
+  RECORDED_AUDIO_MAP
 } from '@/lib/audioEngine';
+import { askBrain, readBrainEnabled, writeBrainEnabled, type BrainRequest } from '@/lib/brain';
 import {
   usePiperState,
   bootPiper,
@@ -92,6 +94,8 @@ interface LetterItem {
 interface WordChallenge {
   word: string;
   clue?: string;
+  /** Frase de exemplo (gerada pelo cérebro de texto) falada ao completar a palavra. */
+  sentence?: string;
 }
 
 interface MathProblem {
@@ -1030,6 +1034,8 @@ interface LettersStageProps {
   totalWords: number;
   onWinStar: () => void;
   speakAudio: (text: string, staticKey?: string) => Promise<void>;
+  /** Tutor (texto do Gemini falado pelo Piper). Retorna true se falou algo. */
+  askTutor: (req: BrainRequest) => Promise<boolean>;
   isAudioLoading: boolean;
   tvMode?: boolean;
 }
@@ -1044,6 +1050,7 @@ function LettersStage({
   totalWords,
   onWinStar,
   speakAudio,
+  askTutor,
   isAudioLoading,
   tvMode = false
 }: LettersStageProps) {
@@ -1152,11 +1159,11 @@ function LettersStage({
         });
         setTimeout(() => {
           speakAudio(
-            `Muito bem! Você completou a palavra ${formatWordForSpeech(currentWord)}!`,
+            `Muito bem! Você completou a palavra ${formatWordForSpeech(currentWord)}!${wordObj.sentence ? ` ${wordObj.sentence}` : ''}`,
             `completou_${currentWord.toLowerCase()}`
           );
         }, 500);
-        setTimeout(() => { onNextWord(); }, 3000);
+        setTimeout(() => { onNextWord(); }, wordObj.sentence ? 6500 : 3000);
       } else {
         if (isHardMode) {
           // Hard mode: remove acertada e adiciona novo decoy, embaralha
@@ -1178,6 +1185,16 @@ function LettersStage({
         setIsLetterCelebrating(true);
         speakAudio('Vamos tentar essa palavra de novo mais tarde!', 'pula_palavra');
         setTimeout(() => { onNextWord(); }, 2200);
+      } else if (newWrongCount >= 2 && newWrongCount % 2 === 0) {
+        // A cada 2 erros seguidos: o Gemini escreve uma dica e o Piper fala (sem revelar a letra)
+        void askTutor({
+          task: 'explain_error',
+          subject: 'letras',
+          ageGroup,
+          word: currentWord,
+          spelled: currentWord.slice(0, spelledCount),
+          picked: item.char
+        });
       }
     }
   };
@@ -2199,6 +2216,7 @@ interface MathStageProps {
   totalProblems: number;
   onWinStar: () => void;
   speakAudio: (text: string, staticKey?: string) => Promise<void>;
+  askTutor: (req: BrainRequest) => Promise<boolean>;
   isAudioLoading: boolean;
   tvMode?: boolean;
 }
@@ -2214,6 +2232,7 @@ function MathStage({
   totalProblems,
   onWinStar,
   speakAudio,
+  askTutor,
   isAudioLoading,
   tvMode = false
 }: MathStageProps) {
@@ -2275,7 +2294,23 @@ function MathStage({
         onMissProblem();
       }, 2200);
     } else {
-      speakAudio('Tente de novo! Você tem mais uma chance!', 'tente_de_novo');
+      const canned = () => speakAudio('Tente de novo! Você tem mais uma chance!', 'tente_de_novo');
+      if (nextAttempts >= 2) {
+        // Do 2º erro em diante: explicação do tutor (Gemini escreve, Piper fala); se não vier, fala o padrão
+        void askTutor({
+          task: 'explain_error',
+          subject: 'matematica',
+          ageGroup,
+          question: problem.question,
+          chosen: opt,
+          answer: problem.answer,
+          explanation: problem.explanation || problem.hint
+        }).then((spoke) => {
+          if (!spoke) canned();
+        });
+      } else {
+        canned();
+      }
       setTimeout(() => setMathWrongOption(null), 700);
     }
   };
@@ -2526,6 +2561,10 @@ export default function EducationalApp() {
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>('');
   const [lastVoiceUsedType, setLastVoiceUsedType] = useState<string>('kore_static');
   const piper = usePiperState();
+  // Cérebro de texto (Gemini): escreve dicas/explicações que o Piper fala
+  const [brainEnabled, setBrainEnabled] = useState(true);
+  const speakSeq = useRef(0);
+  const brainTried = useRef<Set<string>>(new Set());
 
   // Custom Words for spelling
   const [customWords, setCustomWords] = useState<WordChallenge[]>(INITIAL_WORDS['3-5']);
@@ -2590,6 +2629,7 @@ export default function EducationalApp() {
         if (savedMode === 'hybrid' || savedMode === 'offline_only') {
           setAudioMode(savedMode);
         }
+        setBrainEnabled(readBrainEnabled());
       } catch {
         // Fallback
       }
@@ -2614,6 +2654,7 @@ export default function EducationalApp() {
   // Unified speech caller
   const handleSpeak = async (text: string, staticKey?: string) => {
     if (!soundEnabled || !text) return;
+    speakSeq.current++;
     await playSmartAudio(text, {
       staticKey,
       useKoreApi: audioMode === 'hybrid' && isOnline,
@@ -2623,6 +2664,31 @@ export default function EducationalApp() {
         setLastVoiceUsedType(type);
       }
     });
+  };
+
+  // Tutor ativo só online e no modo híbrido (o modo 100% offline nunca chama a rede)
+  const brainActive = brainEnabled && audioMode === 'hybrid' && isOnline;
+
+  // Gemini escreve o texto -> Piper (ou voz do aparelho) fala. Descarta se o jogo já seguiu em frente.
+  const askTutor = async (req: BrainRequest): Promise<boolean> => {
+    if (!brainActive || !soundEnabled) return false;
+    const seq = speakSeq.current;
+    const reply = await askBrain(req);
+    if (!reply?.text || seq !== speakSeq.current) return false;
+    speakSeq.current++;
+    await playSmartAudio(reply.text, {
+      soundEnabled,
+      ephemeral: true, // frase única: não polui o cache local
+      useKoreApi: false, // não gasta a cota do Gemini TTS: Piper -> voz do aparelho
+      onLoadingChange: setIsAudioLoading,
+      onVoiceTypeUsed: (type) => setLastVoiceUsedType(type)
+    });
+    return true;
+  };
+
+  const handleToggleBrain = (on: boolean) => {
+    setBrainEnabled(on);
+    writeBrainEnabled(on);
   };
 
   const handleVoiceChange = (voiceName: string) => {
@@ -2644,6 +2710,25 @@ export default function EducationalApp() {
   const currentWordList = ageGroup === '3-5' ? customWords : INITIAL_WORDS[ageGroup];
   const activeWordObj = currentWordList[wordIndex % currentWordList.length] || { word: 'BOLA' };
   const currentMathList = MATH_PROBLEMS[ageGroup];
+
+  // Palavras personalizadas (sem áudio gravado) ganham pista + frase de exemplo geradas pelo Gemini
+  const clueWord = activeWordObj.word;
+  const clueMissing = !activeWordObj.clue && !activeWordObj.sentence;
+  useEffect(() => {
+    if (!brainActive || subject !== 'letras' || ageGroup !== '3-5' || !clueMissing) return;
+    const slug = clueWord.toLowerCase();
+    if (RECORDED_AUDIO_MAP[`desafio_${slug}`] || RECORDED_AUDIO_MAP[`palavra_${slug}`]) return;
+    if (brainTried.current.has(slug)) return;
+    brainTried.current.add(slug);
+    askBrain({ task: 'clue', ageGroup, word: clueWord }).then((reply) => {
+      if (!reply?.clue) return;
+      setCustomWords((prev) =>
+        prev.map((w) =>
+          w.word === clueWord && !w.clue ? { ...w, clue: reply.clue, sentence: reply.sentence } : w
+        )
+      );
+    });
+  }, [brainActive, subject, ageGroup, clueWord, clueMissing]);
   const mathOrderSafe =
     mathOrder.length === 0 || mathOrder.some((i) => i < 0 || i >= currentMathList.length)
       ? currentMathList.map((_, i) => i)
@@ -2919,6 +3004,7 @@ export default function EducationalApp() {
             totalWords={currentWordList.length}
             onWinStar={() => setStars(s => s + 1)}
             speakAudio={handleSpeak}
+            askTutor={askTutor}
             isAudioLoading={isAudioLoading}
             tvMode={tvMode}
           />
@@ -2935,6 +3021,7 @@ export default function EducationalApp() {
             totalProblems={currentMathList.length}
             onWinStar={() => setStars(s => s + 1)}
             speakAudio={handleSpeak}
+            askTutor={askTutor}
             isAudioLoading={isAudioLoading}
             tvMode={tvMode}
           />
@@ -3203,6 +3290,47 @@ export default function EducationalApp() {
                       O download acontece uma única vez (use Wi-Fi). Nenhum áudio seu sai do aparelho.
                     </p>
                   )}
+                </div>
+
+                {/* Cérebro de texto: Gemini escreve, a voz fala */}
+                <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-black text-amber-950 uppercase tracking-wide flex items-center gap-1.5">
+                      <Lightbulb size={15} className="text-amber-600" />
+                      Tutor Inteligente (Gemini)
+                    </span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={brainEnabled}
+                      aria-label="Ligar tutor inteligente"
+                      onClick={() => handleToggleBrain(!brainEnabled)}
+                      className={`relative w-10 h-6 rounded-full transition-colors shrink-0 ${
+                        brainEnabled ? 'bg-amber-500' : 'bg-slate-300'
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-xs transition-all ${
+                          brainEnabled ? 'left-[18px]' : 'left-0.5'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <p className="text-xs text-amber-900/90 leading-relaxed">
+                    Quando a criança erra, o <strong>Gemini escreve uma dica curta</strong> (sem entregar a resposta) e a voz fala. Também cria <strong>pista e frase de exemplo</strong> para as palavras personalizadas.
+                  </p>
+                  <p className="text-[10px] text-amber-800/80">
+                    {!brainEnabled
+                      ? 'Desligado.'
+                      : audioMode !== 'hybrid'
+                        ? 'Pausado no Modo 100% Offline.'
+                        : !isOnline
+                          ? 'Aguardando internet.'
+                          : piper.status === 'ready'
+                            ? 'Ativo — a voz Faber fala os textos.'
+                            : 'Ativo — fala com a voz do aparelho (ative a voz Faber acima para usar o Piper).'}
+                    {' '}Só a palavra ou a pergunta é enviada; nada da criança é gravado.
+                  </p>
                 </div>
 
                 {/* Local Device Voice Selection */}
