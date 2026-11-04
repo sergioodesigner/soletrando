@@ -106,7 +106,10 @@ self.addEventListener('fetch', (event) => {
     url.pathname.endsWith('.js') ||
     url.pathname.endsWith('.css') ||
     url.pathname.endsWith('.svg') ||
-    url.pathname.endsWith('.png')
+    url.pathname.endsWith('.png') ||
+    url.pathname.endsWith('.jpg') ||
+    url.pathname.endsWith('.webp') ||
+    url.pathname.endsWith('.woff2')
   ) {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {

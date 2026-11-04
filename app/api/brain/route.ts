@@ -75,6 +75,20 @@ function buildPrompt(body: Record<string, unknown>, ageGroup: AgeGroup): { promp
     };
   }
 
+  if (task === "fun_fact") {
+    const topic =
+      body.world === "matematica"
+        ? "matemática e a Grécia Antiga (números, geometria, Pitágoras, Arquimedes, Olimpíadas, a coruja de Atena)"
+        : "a língua portuguesa, palavras, letras, livros e histórias";
+    return {
+      kind: "text",
+      prompt:
+        `Conte UMA curiosidade curta, verdadeira e divertida sobre ${topic}, adequada à idade da criança. ` +
+        `Comece de forma animada e, se couber, termine com uma pergunta curiosa.\n` +
+        `Responda só em JSON: {"text": "..."}`,
+    };
+  }
+
   if (task === "explain_error" && body.subject === "letras") {
     const word = onlyLetters(body.word);
     const spelled = onlyLetters(body.spelled);

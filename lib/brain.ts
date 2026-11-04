@@ -24,7 +24,8 @@ export type BrainRequest =
       answer: string | number;
       explanation?: string;
     }
-  | { task: 'clue'; ageGroup: AgeGroupId; word: string };
+  | { task: 'clue'; ageGroup: AgeGroupId; word: string }
+  | { task: 'fun_fact'; ageGroup: AgeGroupId; world: 'letras' | 'matematica'; /** muda a chave do cache para variar */ n?: number };
 
 export interface BrainReply {
   text?: string;
@@ -132,4 +133,20 @@ export const BRAIN_REASON_LABEL: Record<string, string> = {
   rejected: 'O texto gerado foi barrado pelo filtro de segurança — tente de novo.',
   bad_json: 'O modelo devolveu um formato inesperado.',
   network: 'Sem conexão com o servidor.',
+};
+
+/** Curiosidades de reserva (sem internet / sem chave): o mascote nunca fica sem o que dizer. */
+export const FALLBACK_FACTS: Record<'letras' | 'matematica', string[]> = {
+  letras: [
+    'Sabia que "borboleta" tem 9 letras e todas as vogais, menos a letra U? Procure só para conferir!',
+    'A palavra "ônibus" é uma das poucas que começam com vogal acentuada. Que tal procurar outras?',
+    'O alfabeto da língua portuguesa tem 26 letras. Dá para formar milhões de palavras com elas!',
+    'Os livros mais antigos eram escritos à mão, com penas de ave e tinta. Dava um trabalhão!',
+  ],
+  matematica: [
+    'Na Grécia Antiga, os números eram escritos com letras. Os gregos também inventaram muita geometria!',
+    'Pitágoras descobriu uma regra especial para os triângulos que têm um canto reto. Ela é usada até hoje!',
+    'A coruja era a companheira de Atena, a deusa da sabedoria. Por isso eu sou tão esperta!',
+    'As Olimpíadas nasceram na Grécia, há quase 3 mil anos. Os atletas competiam em Olímpia!',
+  ],
 };

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-const STORAGE_KEY = 'aprender_tv_mode_v1';
+// v2: o v1 era gravado automaticamente em notebooks/desktops (detecção por tamanho de tela) e prenderia o jogador no modo TV
+const STORAGE_KEY = 'aprender_tv_mode_v2';
 
 function readQueryTvFlag(): boolean | null {
   if (typeof window === 'undefined') return null;
@@ -20,12 +21,6 @@ function detectSmartTvUa(): boolean {
   );
 }
 
-/** Telas grandes em paisagem — provável TV / monitor com controle */
-function detectLikelyTvScreen(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.innerWidth >= 1100 && window.innerHeight >= 600 && window.innerWidth > window.innerHeight;
-}
-
 function initialTvMode(): boolean {
   const query = readQueryTvFlag();
   if (query !== null) return query;
@@ -36,12 +31,13 @@ function initialTvMode(): boolean {
   } catch {
     // ignore
   }
-  return detectSmartTvUa() || detectLikelyTvScreen();
+  // Telas grandes (notebook/desktop) NÃO ligam o modo TV sozinhas: o RPG funciona em qualquer tela.
+  return detectSmartTvUa();
 }
 
 /**
  * Modo TV: foco grande + navegação por setas/OK do controle remoto.
- * Ative com ?tv=1, UA de Smart TV, tela grande, ou toggle manual.
+ * Ative com ?tv=1, UA de Smart TV ou toggle manual. (Será reformulado: celular como teclado/controle.)
  */
 export function useTvMode() {
   const [tvMode, setTvModeState] = useState(false);
@@ -73,6 +69,8 @@ export function useTvMode() {
   // Spatial nav pode ligar o modo TV na 1ª seta
   useEffect(() => {
     const onAuto = (ev: Event) => {
+      // No RPG as setas do teclado não trocam para o modo TV
+      if ((window as unknown as { __soletrandoGameActive?: boolean }).__soletrandoGameActive) return;
       const detail = (ev as CustomEvent).detail;
       if (detail) setTvModeState(true);
     };

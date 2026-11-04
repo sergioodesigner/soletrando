@@ -111,3 +111,96 @@ html.tv-mode main.tv-main {
     filter: none;
   }
 }
+
+/* ==================================================
+   RPG / tema pixel (jogo) — .game-root
+================================================== */
+@font-face {
+  font-family: 'Pixelify';
+  src: url('/fonts/pixelify-sans-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pixelify';
+  src: url('/fonts/pixelify-sans-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PressStart';
+  src: url('/fonts/press-start-2p-latin-400-normal.woff2') format('woff2');
+  font-display: swap;
+}
+
+.game-root {
+  font-family: 'Pixelify', ui-rounded, system-ui, sans-serif;
+  color: #3b2a1a;
+  -webkit-tap-highlight-color: transparent;
+}
+.game-root .px-title { font-family: 'PressStart', 'Pixelify', monospace; line-height: 1.5; }
+.game-root img.px-img { image-rendering: pixelated; }
+
+/* cantos "escada" de pixel art */
+.px-notch {
+  clip-path: polygon(
+    0 6px, 3px 6px, 3px 3px, 6px 3px, 6px 0,
+    calc(100% - 6px) 0, calc(100% - 6px) 3px, calc(100% - 3px) 3px, calc(100% - 3px) 6px, 100% 6px,
+    100% calc(100% - 6px), calc(100% - 3px) calc(100% - 6px), calc(100% - 3px) calc(100% - 3px), calc(100% - 6px) calc(100% - 3px), calc(100% - 6px) 100%,
+    6px 100%, 6px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 6px), 0 calc(100% - 6px)
+  );
+}
+.px-panel {
+  background: #fff4d6;
+  border: 4px solid #3b2a1a;
+  box-shadow: inset -4px -4px 0 #e6cf9c, inset 4px 4px 0 #fffbea;
+}
+.px-panel-dark {
+  background: #2d2140;
+  color: #fff4d6;
+  border: 4px solid #140c1f;
+  box-shadow: inset -4px -4px 0 #1d1430, inset 4px 4px 0 #4a3a66;
+}
+.px-btn {
+  --btn: #f59e0b;
+  background: var(--btn);
+  color: #2a1a08;
+  border: 4px solid #3b2a1a;
+  box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.28), inset 0 4px 0 rgba(255, 255, 255, 0.4);
+  font-weight: 700;
+  min-height: 44px;
+  padding: 6px 14px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 60ms steps(2);
+}
+.px-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.28), inset 0 4px 0 rgba(255, 255, 255, 0.4); }
+.px-btn:disabled { filter: grayscale(0.7) brightness(0.9); cursor: not-allowed; }
+.px-btn-green { --btn: #6cc24a; }
+.px-btn-blue { --btn: #4aa8e0; }
+.px-btn-red { --btn: #e8624a; }
+.px-btn-plain { --btn: #fff4d6; }
+
+/* animações dos mascotes e do mapa (em "passos" para parecer pixel art) */
+@keyframes px-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes px-talk { 0%, 100% { transform: translateY(0) scaleY(1); } 50% { transform: translateY(-5px) scaleY(1.03); } }
+@keyframes px-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-18px); } 60% { transform: translateY(-18px); } }
+@keyframes px-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+@keyframes px-tilt { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-5deg); } }
+@keyframes px-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes px-pulse { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.14); } }
+@keyframes px-finger { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+@keyframes px-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.mascot-idle { animation: px-bob 1.6s steps(4) infinite; }
+.mascot-talk { animation: px-talk 0.36s steps(2) infinite; }
+.mascot-happy { animation: px-hop 0.7s steps(6) infinite; }
+.mascot-sad { animation: px-shake 0.5s steps(4) 2; }
+.mascot-think { animation: px-tilt 1.2s steps(4) infinite; }
+.px-caret { animation: px-blink 0.8s steps(1) infinite; }
+.px-pin-available { animation: px-pulse 1.1s steps(4) infinite; }
+.px-finger { animation: px-finger 0.7s steps(3) infinite; }
+.px-float { animation: px-float 2.4s steps(6) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-idle, .mascot-talk, .mascot-happy, .mascot-think, .px-pin-available, .px-finger, .px-float { animation: none; }
+}

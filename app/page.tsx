@@ -42,7 +42,11 @@ import {
   isTtsQuotaExhausted,
   RECORDED_AUDIO_MAP
 } from '@/lib/audioEngine';
-import { askBrain, readBrainEnabled, writeBrainEnabled, type BrainRequest } from '@/lib/brain';
+import { askBrain, readBrainEnabled, writeBrainEnabled, testBrain, BRAIN_REASON_LABEL, type BrainRequest, type BrainTestResult } from '@/lib/brain';
+import { GameRoot, type StageCtx } from '@/components/game/GameRoot';
+import { setClassicMode, resetCoach, useGameData } from '@/lib/game/store';
+import { installAudioUnlock, testPiperVoice } from '@/lib/audioEngine';
+import type { WorldDef, PinDef } from '@/lib/game/types';
 import {
   usePiperState,
   bootPiper,
@@ -1036,6 +1040,11 @@ interface LettersStageProps {
   speakAudio: (text: string, staticKey?: string) => Promise<void>;
   /** Tutor (texto do Gemini falado pelo Piper). Retorna true se falou algo. */
   askTutor: (req: BrainRequest) => Promise<boolean>;
+  /** Modo RPG: cada toque errado / desistência (para calcular as estrelas da fase). */
+  onMistake?: () => void;
+  onGiveUp?: () => void;
+  /** Modo RPG: o mascote lê a pergunta sozinho ao começar o desafio. */
+  autoAsk?: boolean;
   isAudioLoading: boolean;
   tvMode?: boolean;
 }
@@ -1051,6 +1060,9 @@ function LettersStage({
   onWinStar,
   speakAudio,
   askTutor,
+  onMistake,
+  onGiveUp,
+  autoAsk = false,
   isAudioLoading,
   tvMode = false
 }: LettersStageProps) {
@@ -1123,6 +1135,15 @@ function LettersStage({
     speakAudio(`Palavra: ${formatWordForSpeech(currentWord)}!`, `palavra_${slug}`);
   };
 
+  // Modo RPG: ao começar cada palavra o mascote já diz qual é (e o texto aparece no balão)
+  useEffect(() => {
+    if (!autoAsk) return;
+    const t = setTimeout(() => speakAudio(`Palavra: ${formatWordForSpeech(currentWord)}!`, `palavra_${currentWord.toLowerCase()}`), 600);
+    return () => clearTimeout(t);
+    // uma vez por palavra (o estágio é remontado a cada palavra)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleSpeakNextLetter = () => {
     if (!expectedChar || isLetterCelebrating) return;
     playSoundFx('pop');
@@ -1175,6 +1196,7 @@ function LettersStage({
         }
       }
     } else {
+      onMistake?.();
       setTimeout(() => playSoundFx('wrong'), 280);
       setWrongLetterId(item.id);
       setTimeout(() => setWrongLetterId(null), 500);
@@ -1184,6 +1206,7 @@ function LettersStage({
       if (hintLevel >= 2 && newWrongCount >= 4) {
         setIsLetterCelebrating(true);
         speakAudio('Vamos tentar essa palavra de novo mais tarde!', 'pula_palavra');
+        onGiveUp?.();
         setTimeout(() => { onNextWord(); }, 2200);
       } else if (newWrongCount >= 2 && newWrongCount % 2 === 0) {
         // A cada 2 erros seguidos: o Gemini escreve uma dica e o Piper fala (sem revelar a letra)
@@ -2217,6 +2240,11 @@ interface MathStageProps {
   onWinStar: () => void;
   speakAudio: (text: string, staticKey?: string) => Promise<void>;
   askTutor: (req: BrainRequest) => Promise<boolean>;
+  /** Modo RPG: cada toque errado / desistência (para calcular as estrelas da fase). */
+  onMistake?: () => void;
+  onGiveUp?: () => void;
+  /** Modo RPG: o mascote lê a pergunta sozinho ao começar o desafio. */
+  autoAsk?: boolean;
   isAudioLoading: boolean;
   tvMode?: boolean;
 }
@@ -2233,6 +2261,9 @@ function MathStage({
   onWinStar,
   speakAudio,
   askTutor,
+  onMistake,
+  onGiveUp,
+  autoAsk = false,
   isAudioLoading,
   tvMode = false
 }: MathStageProps) {
@@ -2258,6 +2289,14 @@ function MathStage({
     speakAudio(problem.speechText, `math_pergunta_${problem.id}`);
   };
 
+  // Modo RPG: a Coruja lê a pergunta sozinha ao começar o desafio (e o texto aparece no balão)
+  useEffect(() => {
+    if (!autoAsk) return;
+    const t = setTimeout(() => speakAudio(problem.speechText, `math_pergunta_${problem.id}`), 600);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleMathOptionClick = (opt: number | string) => {
     if (isMathCelebrating || disabledOptions.includes(opt)) return;
 
@@ -2280,6 +2319,7 @@ function MathStage({
     }
 
     // Errou
+    onMistake?.();
     playSoundFx('wrong');
     setMathWrongOption(opt);
     const nextAttempts = wrongAttempts + 1;
@@ -2290,6 +2330,7 @@ function MathStage({
       // Não revela a resposta — pula e agenda para outra oportunidade
       setIsMathCelebrating(true);
       speakAudio('Vamos tentar essa de novo mais tarde! Próxima pergunta!');
+      onGiveUp?.();
       setTimeout(() => {
         onMissProblem();
       }, 2200);
@@ -2561,6 +2602,11 @@ export default function EducationalApp() {
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>('');
   const [lastVoiceUsedType, setLastVoiceUsedType] = useState<string>('kore_static');
   const piper = usePiperState();
+  const gameData = useGameData();
+  const [voiceTest, setVoiceTest] = useState<string>('');
+  const [brainTest, setBrainTest] = useState<BrainTestResult | null>(null);
+  const [testingVoice, setTestingVoice] = useState(false);
+  const [testingBrain, setTestingBrain] = useState(false);
   // Cérebro de texto (Gemini): escreve dicas/explicações que o Piper fala
   const [brainEnabled, setBrainEnabled] = useState(true);
   const speakSeq = useRef(0);
@@ -2599,6 +2645,8 @@ export default function EducationalApp() {
 
     // Voz Faber (Piper no navegador): se já estiver baixada e ligada, carrega em segundo plano
     bootPiper();
+    // iOS/Safari: libera o áudio no 1º toque (a voz chega depois de uma espera assíncrona)
+    installAudioUnlock();
   }, []);
 
   // Navegação por setas SEMPRE ativa — a 1ª seta liga o modo TV se precisar
@@ -2689,6 +2737,93 @@ export default function EducationalApp() {
   const handleToggleBrain = (on: boolean) => {
     setBrainEnabled(on);
     writeBrainEnabled(on);
+  };
+
+  // ---------- Modo RPG (mapa, fases, mascotes) ----------
+  // O modo TV ainda usa a interface clássica (será reformulado depois).
+  const gameMode = !tvMode && !(gameData.ready && gameData.classic);
+
+  const handleGameStartPin = (world: WorldDef, pin: PinDef) => {
+    const base = pin.index * 5;
+    if (world.subject === 'letras') {
+      setSubject('letras');
+      setWordIndex(base);
+    } else if (world.subject === 'matematica') {
+      setSubject('matematica');
+      setMathOrder(MATH_PROBLEMS[ageGroup].map((_, i) => i));
+      setMathIndex(base);
+    }
+  };
+
+  const handleGameAge = (a: AgeGroup) => {
+    setAgeGroup(a);
+    setWordIndex(0);
+    setMathIndex(0);
+    setMathOrder(MATH_PROBLEMS[a].map((_, i) => i));
+  };
+
+  const renderGameStage = (ctx: StageCtx) =>
+    ctx.world.subject === 'letras' ? (
+      <LettersStage
+        key={`letters-${ageGroup}-${wordIndex % currentWordList.length}-${activeWordObj.word}`}
+        ageGroup={ageGroup}
+        wordObj={activeWordObj}
+        soundEnabled={soundEnabled}
+        onNextWord={() => setWordIndex(prev => (prev + 1) % currentWordList.length)}
+        onPrevWord={() => setWordIndex(prev => (prev - 1 + currentWordList.length) % currentWordList.length)}
+        wordIndex={wordIndex % currentWordList.length}
+        totalWords={currentWordList.length}
+        onWinStar={ctx.onWin}
+        speakAudio={ctx.speak}
+        askTutor={ctx.askTutor}
+        onMistake={ctx.onMistake}
+        onGiveUp={ctx.onGiveUp}
+        autoAsk
+        isAudioLoading={false}
+      />
+    ) : (
+      <MathStage
+        key={`math-${ageGroup}-${mathPos}-${activeMathProblem.id}-${mathIndex}`}
+        ageGroup={ageGroup}
+        problem={activeMathProblem}
+        soundEnabled={soundEnabled}
+        onNextProblem={goNextMath}
+        onPrevProblem={goPrevMath}
+        onMissProblem={handleMissMath}
+        mathIndex={mathPos}
+        totalProblems={currentMathList.length}
+        onWinStar={ctx.onWin}
+        speakAudio={ctx.speak}
+        askTutor={ctx.askTutor}
+        onMistake={ctx.onMistake}
+        onGiveUp={ctx.onGiveUp}
+        autoAsk
+        isAudioLoading={false}
+      />
+    );
+
+  const handleTestVoice = async () => {
+    setTestingVoice(true);
+    setVoiceTest('');
+    try {
+      const r = await testPiperVoice();
+      const rtf = r.audioMs ? (r.ms / r.audioMs).toFixed(2) : '?';
+      setVoiceTest(
+        `Sintetizou em ${r.ms} ms (áudio de ${(r.audioMs / 1000).toFixed(1)} s, velocidade ${rtf}× do tempo real). ` +
+          `Pico do modelo: ${r.peak.toFixed(2)}. ${r.played ? 'Tocou pelo canal de áudio.' : 'Tocou por <audio> (canal Web Audio bloqueado).'}`
+      );
+    } catch (e) {
+      setVoiceTest(`Falhou: ${(e as Error).message}`);
+    } finally {
+      setTestingVoice(false);
+    }
+  };
+
+  const handleTestBrain = async () => {
+    setTestingBrain(true);
+    setBrainTest(null);
+    setBrainTest(await testBrain());
+    setTestingBrain(false);
   };
 
   const handleVoiceChange = (voiceName: string) => {
@@ -2831,7 +2966,26 @@ export default function EducationalApp() {
         </div>
       )}
 
-      {/* Top Header & Console */}
+      {/* Modo RPG: mapa, fases e mascotes */}
+      {gameMode && (
+        <GameRoot
+          age={ageGroup}
+          onAgeChange={handleGameAge}
+          soundEnabled={soundEnabled}
+          onToggleSound={() => {
+            if (soundEnabled) stopAllAudio();
+            setSoundEnabled(!soundEnabled);
+          }}
+          onOpenSettings={() => setShowSettingsModal(true)}
+          paused={showSettingsModal || showIOSPrompt}
+          brainActive={brainActive}
+          onStartPin={handleGameStartPin}
+          renderStage={renderGameStage}
+        />
+      )}
+
+      {/* Interface clássica (modo TV / modo clássico) */}
+      {!gameMode && (
       <header className={`shrink-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs px-3 sm:px-6 py-1.5 ${tvMode ? 'tv-header' : ''}`}>
         <div className={`mx-auto flex flex-col gap-1.5 ${tvMode ? 'max-w-6xl gap-3' : 'max-w-3xl'}`}>
           
@@ -2989,8 +3143,9 @@ export default function EducationalApp() {
           </div>
         </div>
       </header>
+      )}
 
-      {/* Main Game Stage */}
+      {!gameMode && (
       <main className={`flex-1 min-h-0 w-full mx-auto px-4 py-2 sm:py-3 flex flex-col items-center overflow-y-auto ${tvMode ? 'tv-main max-w-5xl' : 'max-w-2xl'}`}>
         {subject === 'letras' ? (
           <LettersStage
@@ -3027,6 +3182,7 @@ export default function EducationalApp() {
           />
         )}
       </main>
+      )}
 
       {/* iOS Safari Install Guide Modal */}
       {showIOSPrompt && (
@@ -3331,6 +3487,65 @@ export default function EducationalApp() {
                             : 'Ativo — fala com a voz do aparelho (ative a voz Faber acima para usar o Piper).'}
                     {' '}Só a palavra ou a pergunta é enviada; nada da criança é gravado.
                   </p>
+                </div>
+
+                {/* Diagnóstico das vozes + modo de jogo */}
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5">
+                  <span className="text-xs font-black text-slate-800 uppercase tracking-wide">Diagnóstico das vozes</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      disabled={testingVoice || piper.status !== 'ready'}
+                      onClick={handleTestVoice}
+                      className="py-2 px-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-xl font-black text-xs"
+                    >
+                      {testingVoice ? 'Falando…' : 'Testar voz Faber'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={testingBrain}
+                      onClick={handleTestBrain}
+                      className="py-2 px-3 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white rounded-xl font-black text-xs"
+                    >
+                      {testingBrain ? 'Perguntando…' : 'Testar tutor (Gemini)'}
+                    </button>
+                  </div>
+                  {piper.status !== 'ready' && (
+                    <p className="text-[11px] text-slate-500">Ative a voz Faber acima para poder testá-la.</p>
+                  )}
+                  {voiceTest && <p className="text-[11px] text-slate-700 bg-white border border-slate-200 rounded-lg p-2">{voiceTest}</p>}
+                  {piper.lastStats && !voiceTest && (
+                    <p className="text-[11px] text-slate-500">
+                      Última fala: {piper.lastStats.ms} ms para {(piper.lastStats.audioMs / 1000).toFixed(1)} s de áudio.
+                    </p>
+                  )}
+                  {brainTest && (
+                    <p className={`text-[11px] rounded-lg p-2 border ${brainTest.ok ? 'text-emerald-800 bg-emerald-50 border-emerald-200' : 'text-red-800 bg-red-50 border-red-200'}`}>
+                      {brainTest.ok
+                        ? `OK em ${brainTest.ms} ms: “${brainTest.text}”`
+                        : `${BRAIN_REASON_LABEL[brainTest.reason ?? ''] ?? `Falhou (${brainTest.reason}).`}${brainTest.detail ? ` Detalhe: ${brainTest.detail}` : ''}`}
+                    </p>
+                  )}
+
+                  <div className="pt-2 border-t border-slate-200 space-y-2">
+                    <span className="text-xs font-black text-slate-800 uppercase tracking-wide">Modo de jogo</span>
+                    <label className="flex items-center justify-between gap-2 text-xs font-bold text-slate-700">
+                      <span>Modo clássico (sem mapa e mascotes)</span>
+                      <input
+                        type="checkbox"
+                        checked={gameData.classic}
+                        onChange={(e) => setClassicMode(e.target.checked)}
+                        className="w-4 h-4 accent-indigo-600"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => resetCoach()}
+                      className="w-full py-2 px-3 bg-white hover:bg-slate-100 text-slate-700 rounded-xl font-bold text-xs border border-slate-200"
+                    >
+                      Rever as explicações de primeira vez
+                    </button>
+                  </div>
                 </div>
 
                 {/* Local Device Voice Selection */}
