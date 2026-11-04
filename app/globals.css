@@ -208,3 +208,8 @@ html.tv-mode main.tv-main {
 @keyframes px-pin-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
 .px-pin-bounce { animation: px-pin-bounce 0.9s steps(4) infinite; }
 @media (prefers-reduced-motion: reduce) { .px-pin-bounce { animation: none; } }
+
+/* contorno do tutorial: pisca só a sombra (a posição nunca depende de animação) */
+@keyframes px-ring { 0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); } 50% { box-shadow: 0 0 0 8px rgba(250, 204, 21, 0); } }
+.px-ring { animation: px-ring 1s steps(4) infinite; }
+@media (prefers-reduced-motion: reduce) { .px-ring { animation: none; } }

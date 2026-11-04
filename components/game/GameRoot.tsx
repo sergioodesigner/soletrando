@@ -580,6 +580,7 @@ export function GameRoot({
     body = (
       <div className="game-root relative flex-1 min-h-0 flex flex-col" style={sceneBg(training ? undefined : pin.scene)}>
         <div className="absolute inset-0 bg-[#1a1033]/60" />
+        <div className="relative z-10 mx-auto w-full max-w-xl flex-1 min-h-0 flex flex-col">
         {/* barra de cima */}
         <div className="relative z-10 flex items-center gap-1.5 p-2">
           <span data-coach="back">
@@ -669,6 +670,7 @@ export function GameRoot({
           >
             <HelpCircle size={22} />
           </button>
+        </div>
         </div>
       </div>
     );

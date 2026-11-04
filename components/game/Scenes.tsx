@@ -35,13 +35,13 @@ export function Portrait({
         alt={def.name}
         draggable={false}
         className={`px-img select-none ${talking ? 'mascot-talk' : 'mascot-idle'} ${dim ? 'opacity-70 saturate-50' : ''}`}
-        style={{ height: size * 1.05, width: 'auto' }}
+        style={{ height: size * 1.05, width: 'auto', maxWidth: 'none', flexShrink: 0 }}
       />
     );
   }
   const src = `/game/npcs/${who}.png`;
   return (
-    <div className={`flex flex-col items-center ${dim ? 'opacity-70 saturate-50' : ''}`}>
+    <div className={`shrink-0 flex flex-col items-center ${dim ? 'opacity-70 saturate-50' : ''}`}>
       {failed ? (
         <div
           className={`px-panel px-notch flex items-center justify-center ${talking ? 'mascot-talk' : 'mascot-idle'}`}
@@ -58,7 +58,7 @@ export function Portrait({
           draggable={false}
           onError={() => setFailed(true)}
           className={`px-img select-none ${talking ? 'mascot-talk' : 'mascot-idle'}`}
-          style={{ height: size, width: 'auto' }}
+          style={{ height: size, width: 'auto', maxWidth: 'none', flexShrink: 0 }}
         />
       )}
     </div>
@@ -233,7 +233,7 @@ export function MemoryScreen({ subject, age, mascot, dialogue, onFinish, onBack,
   return (
     <div className="game-root relative flex-1 min-h-0 flex flex-col" style={PARK}>
       <div className="absolute inset-0 bg-[#1a1033]/65" />
-      <div className="relative z-10 flex items-center gap-1.5 p-2">
+      <div className="relative z-10 flex items-center gap-1.5 p-2 mx-auto w-full max-w-md">
         <IconBtn label="Voltar" onClick={onBack}>
           <ArrowLeft size={20} />
         </IconBtn>
@@ -242,7 +242,7 @@ export function MemoryScreen({ subject, age, mascot, dialogue, onFinish, onBack,
         <SoundSettings {...top} />
       </div>
 
-      <div className="relative z-10 px-2 flex items-end gap-2">
+      <div className="relative z-10 px-2 flex items-end gap-2 mx-auto w-full max-w-md">
         <Mascot id={mascot} size={84} flip={mascot === 'owl'} mood={dialogue.status === 'typing' ? 'talk' : mood} className="shrink-0" />
         <DialogueBox dialogue={dialogue} className="flex-1" idleHint="Toque em duas cartas!" />
       </div>

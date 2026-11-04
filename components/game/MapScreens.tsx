@@ -435,7 +435,7 @@ export function ResultScreen({ world, pin, title, speech, bonusLines, ally, onTr
         <div className="flex gap-2" aria-label={`${stars} estrelas`}>
           {[1, 2, 3].map((n) => (
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={n} src={n <= stars && n <= shown ? '/game/ui/star.png' : '/game/ui/star-empty.png'} alt="" className={`px-img w-16 h-16 object-contain ${n <= stars && n <= shown ? 'px-float' : 'opacity-60'}`} />
+            <img key={n} src={n <= stars && n <= shown ? '/game/ui/star.png' : '/game/ui/star-empty.png'} alt="" className={`px-img w-16 h-16 object-contain shrink-0 ${n <= stars && n <= shown ? 'px-float' : 'opacity-60'}`} />
           ))}
         </div>
         <div className="px-panel px-notch w-full p-3 flex items-center justify-around text-[18px] font-bold">

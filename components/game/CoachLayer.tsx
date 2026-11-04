@@ -77,8 +77,8 @@ export function CoachLayer({ step, dialogue, onDone }: Props) {
       <div className={shade} style={{ left: 0, top: hy, width: hx, height: hh }} />
       <div className={shade} style={{ left: hx + hw, top: hy, width: Math.max(0, vw - hx - hw), height: hh }} />
       <div
-        className="fixed z-[61] pointer-events-none border-4 border-[#facc15] px-pin-available"
-        style={{ left: hx + hw / 2, top: hy + hh / 2, width: hw, height: hh, translate: '0 0' }}
+        className="fixed z-[61] pointer-events-none border-4 border-[#facc15] px-ring"
+        style={{ left: hx, top: hy, width: hw, height: hh }}
       />
       <div
         className="fixed z-[62] pointer-events-none text-3xl px-finger"

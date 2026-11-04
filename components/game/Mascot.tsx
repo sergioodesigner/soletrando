@@ -64,12 +64,12 @@ export function Mascot({ id, mood = 'idle', size = 96, flip, dim, className = ''
       alt={m.name}
       draggable={false}
       className={`px-img select-none ${MOTION[mood]} ${dim ? 'opacity-70 saturate-50' : ''}`}
-      style={{ height: size, width: 'auto', transform: flip ? 'scaleX(-1)' : undefined }}
+      style={{ height: size, width: 'auto', maxWidth: 'none', flexShrink: 0, transform: flip ? 'scaleX(-1)' : undefined }}
     />
   );
-  if (!onClick) return <div className={className} {...rest}>{img}</div>;
+  if (!onClick) return <div className={`shrink-0 ${className}`} {...rest}>{img}</div>;
   return (
-    <button type="button" onClick={onClick} className={`${className} block`} aria-label={`Falar com ${m.name}`} {...rest}>
+    <button type="button" onClick={onClick} className={`shrink-0 ${className} block`} aria-label={`Falar com ${m.name}`} {...rest}>
       {img}
     </button>
   );
