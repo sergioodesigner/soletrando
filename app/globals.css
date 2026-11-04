@@ -213,3 +213,27 @@ html.tv-mode main.tv-main {
 @keyframes px-ring { 0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); } 50% { box-shadow: 0 0 0 8px rgba(250, 204, 21, 0); } }
 .px-ring { animation: px-ring 1s steps(4) infinite; }
 @media (prefers-reduced-motion: reduce) { .px-ring { animation: none; } }
+
+/* ---- jogo dentro da fase: sem card; botões com letra grande, grossa e nítida ---- */
+.game-stage { --legible: ui-rounded, "Arial Rounded MT Bold", "Trebuchet MS", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.game-stage .tv-letter-tile,
+.game-stage .tv-word-slot,
+.game-stage .tv-math-option {
+  font-family: var(--legible) !important;
+  font-weight: 900 !important;
+  letter-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+}
+.game-stage .tv-letter-tile { max-height: none !important; min-height: 54px; font-size: 34px !important; border-radius: 6px !important; line-height: 1; }
+.game-stage .tv-letter-tile.bg-white {
+  background: #fff4d6 !important; color: #2a1a08 !important; border: 4px solid #3b2a1a !important;
+  box-shadow: inset 0 -5px 0 #e0c68c, 0 3px 0 rgba(0,0,0,0.35);
+}
+.game-stage .tv-letter-tile.bg-white:active { transform: translateY(3px); box-shadow: inset 0 -2px 0 #e0c68c; }
+.game-stage .tv-word-slot { font-size: 40px !important; border-radius: 6px !important; border-color: #3b2a1a !important; border-width: 4px !important; }
+.game-stage .tv-word-slot.bg-white { background: #fff4d6 !important; }
+.game-stage .tv-word-slot span { text-shadow: 2px 2px 0 rgba(0,0,0,0.35); }
+.game-stage .tv-math-option { font-size: 30px !important; color: #2a1a08; border: 4px solid #3b2a1a !important; border-radius: 6px !important; }
+.game-stage .tv-math-option.bg-white { background: #fff4d6 !important; color: #2a1a08 !important; box-shadow: inset 0 -5px 0 #e0c68c, 0 3px 0 rgba(0,0,0,0.35); }
+.game-stage .tv-math-option:disabled { opacity: 0.55; }
+.game-stage .tv-word-slot.bg-white\/70 { background: rgba(26, 16, 51, 0.55) !important; border-color: #fff4d6 !important; }

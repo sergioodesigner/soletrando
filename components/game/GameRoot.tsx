@@ -648,7 +648,7 @@ export function GameRoot({
 
         {/* o jogo por dentro */}
         <div className="relative z-10 flex-1 min-h-0 px-2 pt-2 pb-2">
-          <div className="max-h-full px-panel px-notch overflow-y-auto p-1.5 flex flex-col items-center">
+          <div className="game-stage max-h-full overflow-y-auto p-1 flex flex-col items-center">
             {/* speak/askTutor só são chamados em eventos e effects dos jogos — nunca durante o render */}
             {/* eslint-disable-next-line react-hooks/refs */}
             {renderStage({
