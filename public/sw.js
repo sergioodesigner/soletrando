@@ -1,6 +1,12 @@
 // Service Worker for "Aprender Letras & Matemática"
 const CACHE_NAME = 'aprender-offline-v2';
 const AUDIO_CACHE = 'aprender-audio-recorded-v2';
+// Runtime WASM da voz Faber (Piper no navegador) vindo de CDN — cache-first para funcionar offline
+const PIPER_RUNTIME_CACHE = 'aprender-piper-runtime-v1';
+// Modelo da voz Faber: gravado pela própria página (lib/piperTts.ts) — NÃO pode ser apagado aqui
+const PIPER_MODEL_CACHE = 'aprender-piper-model-v1';
+const PIPER_CDN_HOSTS = ['cdn.jsdelivr.net'];
+const KEEP_CACHES = [CACHE_NAME, AUDIO_CACHE, PIPER_RUNTIME_CACHE, PIPER_MODEL_CACHE];
 
 const STATIC_ASSETS = [
   '/',
@@ -26,7 +32,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME && key !== AUDIO_CACHE) {
+          if (!KEEP_CACHES.includes(key)) {
             return caches.delete(key);
           }
         })
@@ -39,6 +45,22 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+
+  // 0. Runtime WASM da voz Faber (CDN) — Cache First
+  if (PIPER_CDN_HOSTS.includes(url.hostname)) {
+    event.respondWith(
+      caches.open(PIPER_RUNTIME_CACHE).then(async (cache) => {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        const networkResponse = await fetch(request);
+        if (networkResponse.ok) {
+          cache.put(request, networkResponse.clone());
+        }
+        return networkResponse;
+      })
+    );
+    return;
+  }
 
   // 1. Audio files — Cache First com rede
   if (url.pathname.startsWith('/audio/')) {

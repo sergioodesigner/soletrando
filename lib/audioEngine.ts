@@ -3,6 +3,7 @@
 
 import { getCachedAudio, saveCachedAudio, getCachedAudioCount, clearCachedAudios } from './audioStorage';
 import recordedManifest from './recordedAudioManifest.json';
+import { isPiperReady, synthesizePiper } from './piperTts';
 
 // Nomes das letras para TTS do aparelho (soletrar).
 // Evitar Á/É/Ó — o sintetizador exagera o acento agudo (ex.: A de CASA virava “Á”).
@@ -339,7 +340,9 @@ export interface PlayAudioOptions {
   useKoreApi?: boolean;
   soundEnabled?: boolean;
   onLoadingChange?: (loading: boolean) => void;
-  onVoiceTypeUsed?: (type: 'kore_static' | 'kore_cached' | 'kore_api' | 'local_fallback' | 'local_letter') => void;
+  onVoiceTypeUsed?: (
+    type: 'kore_static' | 'kore_cached' | 'kore_api' | 'piper_local' | 'local_fallback' | 'local_letter'
+  ) => void;
 }
 
 let ttsQuotaCooldownUntil = 0;
@@ -421,7 +424,8 @@ export async function playSmartAudio(
   const useDeviceLetterVoice =
     Boolean(inferredLetterKey) && !RECORDED_AUDIO_MAP[inferredLetterKey!];
 
-  if (useDeviceLetterVoice) {
+  // Com a voz Faber (Piper local) pronta, a letra sem MP3 é falada por ela em vez da voz do aparelho.
+  if (useDeviceLetterVoice && !isPiperReady()) {
     if (generation !== playGeneration) return;
     onVoiceTypeUsed?.('local_letter');
     speakTunedLocal(cleanText, soundEnabled, { slowerForLetter: true });
@@ -448,7 +452,44 @@ export async function playSmartAudio(
     // Continue to next tier
   }
 
-  // 3. TIER 3: Kore/Gemini API — se MP3 do manifesto falhou ou não existe
+  // 3. TIER 3: Piper "faber" rodando no navegador (opt-in, grátis e offline depois de baixar o modelo)
+  if (isPiperReady()) {
+    try {
+      if (generation !== playGeneration) return;
+      onLoadingChange?.(true);
+      const letter = inferredLetterKey ? inferredLetterKey.slice(-1).toUpperCase() : undefined;
+      const spoken = letter && PT_LETTER_PHONETICS[letter] ? PT_LETTER_PHONETICS[letter] : cleanText;
+      const wav = await synthesizePiper(spoken, { slow: Boolean(letter) });
+      onLoadingChange?.(false);
+      if (generation !== playGeneration) return;
+
+      const dataUrl = await blobToDataUrl(wav);
+      if (generation !== playGeneration) return;
+      // Guarda no IndexedDB: da próxima vez toca na hora pelo TIER 2, sem sintetizar de novo
+      saveCachedAudio(slugKey, cleanText, dataUrl).catch(() => {});
+
+      const audio = new Audio(dataUrl);
+      audio.volume = 1;
+      activeAudioElement = audio;
+      onVoiceTypeUsed?.('piper_local');
+      await audio.play();
+      return;
+    } catch {
+      onLoadingChange?.(false);
+      if (generation !== playGeneration) return;
+      // Falhou/expirou: segue para os próximos tiers
+    }
+  }
+
+  // Letra sem MP3 e sem Piper: nunca vai para a API, usa a voz do aparelho
+  if (useDeviceLetterVoice) {
+    if (generation !== playGeneration) return;
+    onVoiceTypeUsed?.('local_letter');
+    speakTunedLocal(cleanText, soundEnabled, { slowerForLetter: true });
+    return;
+  }
+
+  // 4. TIER 4: Kore/Gemini API — se MP3 do manifesto falhou ou não existe
   const isOnline = typeof navigator !== 'undefined' ? (navigator.onLine ?? true) : true;
   const isQuotaActive = Date.now() < ttsQuotaCooldownUntil;
 
@@ -497,10 +538,19 @@ export async function playSmartAudio(
     }
   }
 
-  // 4. TIER 4: Local Optimized Web Speech Synthesis Fallback (Instant & 100% Offline)
+  // 5. TIER 5: Local Optimized Web Speech Synthesis Fallback (Instant & 100% Offline)
   if (generation !== playGeneration) return;
   onVoiceTypeUsed?.('local_fallback');
   speakTunedLocal(cleanText, soundEnabled);
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
 }
 
 /** Toca URL gravada; retorna false se o browser não conseguir decodificar (ex.: cache de PCM antigo). */

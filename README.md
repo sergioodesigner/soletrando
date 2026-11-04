@@ -25,6 +25,16 @@ Abra [http://localhost:3000](http://localhost:3000).
 
 Os áudios em `public/audio/recorded/` já vão no deploy — o app funciona offline sem ElevenLabs.
 
+## Voz Faber no navegador (Piper)
+
+O app pode falar com a voz neural **Piper `pt_BR-faber-medium`** (a mesma do [tts-api](https://github.com/sergioodesigner/tts-api)) rodando **dentro do navegador do usuário** — sem servidor.
+
+- Ative em **Configurações → Voz Faber no Navegador → Baixar e ativar** (~63 MB, uma única vez; fica na Cache API e depois funciona offline).
+- Ordem de prioridade das falas: MP3 gravado → memória local (IndexedDB) → **Piper (navegador)** → API Gemini → voz do aparelho.
+- Falas geradas pelo Piper são guardadas no IndexedDB, então cada palavra nova só é sintetizada uma vez.
+- Como funciona: `public/piper/piper-worker.js` (Web Worker) → espeak-ng WASM (fonemas) + ONNX Runtime Web (modelo VITS). Cliente em `lib/piperTts.ts`.
+- O modelo vem do repositório oficial `rhasspy/piper-voices` (Hugging Face) e o runtime WASM do jsDelivr (versões fixadas). Para self-host, defina `NEXT_PUBLIC_PIPER_MODEL_BASE`, `NEXT_PUBLIC_PIPER_ORT_BASE` e `NEXT_PUBLIC_PIPER_PHONEMIZE_BASE` (veja `.env.example`).
+
 ## Regenerar falas (ElevenLabs)
 
 ```bash

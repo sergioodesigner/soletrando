@@ -41,6 +41,14 @@ import {
   stopAllAudio,
   isTtsQuotaExhausted
 } from '@/lib/audioEngine';
+import {
+  usePiperState,
+  bootPiper,
+  enablePiper,
+  disablePiper,
+  removePiperModel,
+  isPiperSupported
+} from '@/lib/piperTts';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useTvMode } from '@/hooks/useTvMode';
@@ -2517,6 +2525,7 @@ export default function EducationalApp() {
   const [deviceVoices, setDeviceVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>('');
   const [lastVoiceUsedType, setLastVoiceUsedType] = useState<string>('kore_static');
+  const piper = usePiperState();
 
   // Custom Words for spelling
   const [customWords, setCustomWords] = useState<WordChallenge[]>(INITIAL_WORDS['3-5']);
@@ -2548,6 +2557,9 @@ export default function EducationalApp() {
     }
 
     getCachedAudioCount().then(setCachedAudioCount);
+
+    // Voz Faber (Piper no navegador): se já estiver baixada e ligada, carrega em segundo plano
+    bootPiper();
   }, []);
 
   // Navegação por setas SEMPRE ativa — a 1ª seta liga o modo TV se precisar
@@ -3096,6 +3108,101 @@ export default function EducationalApp() {
                       </div>
                     </button>
                   </div>
+                </div>
+
+                {/* Voz Faber (Piper) rodando no navegador */}
+                <div className="bg-violet-50/80 border border-violet-200/80 rounded-2xl p-4 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-black text-violet-950 uppercase tracking-wide flex items-center gap-1.5">
+                      <Bot size={15} className="text-violet-600" />
+                      Voz Faber no Navegador
+                    </span>
+                    <span
+                      className={`text-[10px] border px-2 py-0.5 rounded-full font-black ${
+                        piper.status === 'ready'
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                          : piper.status === 'error'
+                            ? 'bg-red-100 text-red-800 border-red-300'
+                            : 'bg-white text-violet-700 border-violet-200'
+                      }`}
+                    >
+                      {piper.status === 'ready'
+                        ? 'Ativa'
+                        : piper.status === 'downloading'
+                          ? `Baixando ${Math.round(piper.progress * 100)}%`
+                          : piper.status === 'loading'
+                            ? 'Carregando…'
+                            : piper.status === 'error'
+                              ? 'Erro'
+                              : piper.modelCached
+                                ? 'Baixada'
+                                : 'Desativada'}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-violet-900/90 leading-relaxed">
+                    Voz neural <strong>Piper “faber” (pt-BR)</strong> que roda <strong>dentro do seu navegador</strong>, sem servidor. Fala palavras que não têm áudio gravado (como as suas palavras personalizadas) e depois de baixada funciona <strong>offline</strong>.
+                  </p>
+
+                  {(piper.status === 'downloading' || piper.status === 'loading') && (
+                    <div className="h-2 w-full bg-violet-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-violet-600 transition-all"
+                        style={{ width: `${Math.round((piper.status === 'loading' ? 1 : piper.progress) * 100)}%` }}
+                      />
+                    </div>
+                  )}
+
+                  {piper.error && (
+                    <p className="text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-lg px-2 py-1.5">
+                      {piper.error}
+                    </p>
+                  )}
+
+                  {!mounted || !isPiperSupported() ? (
+                    <p className="text-[11px] text-slate-600">
+                      Este navegador não suporta a voz Faber local.
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {!piper.enabled && (
+                        <button
+                          type="button"
+                          onClick={() => enablePiper()}
+                          disabled={piper.status === 'downloading' || piper.status === 'loading'}
+                          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white rounded-xl font-black text-xs transition-colors"
+                        >
+                          <Download size={15} />
+                          <span>
+                            {piper.modelCached ? 'Ativar voz Faber' : 'Baixar e ativar (~63 MB)'}
+                          </span>
+                        </button>
+                      )}
+                      {piper.enabled && (
+                        <button
+                          type="button"
+                          onClick={() => disablePiper()}
+                          className="flex-1 py-2 px-3 bg-white hover:bg-violet-100 text-violet-800 border border-violet-200 rounded-xl font-bold text-xs transition-colors"
+                        >
+                          Desativar
+                        </button>
+                      )}
+                      {piper.modelCached && (
+                        <button
+                          type="button"
+                          onClick={() => removePiperModel()}
+                          className="py-2 px-3 text-[11px] text-red-600 hover:text-red-700 font-bold underline"
+                        >
+                          Remover do aparelho
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {!piper.modelCached && !piper.enabled && (
+                    <p className="text-[10px] text-violet-800/70">
+                      O download acontece uma única vez (use Wi-Fi). Nenhum áudio seu sai do aparelho.
+                    </p>
+                  )}
                 </div>
 
                 {/* Local Device Voice Selection */}
