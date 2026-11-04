@@ -204,3 +204,7 @@ html.tv-mode main.tv-main {
 @media (prefers-reduced-motion: reduce) {
   .mascot-idle, .mascot-talk, .mascot-happy, .mascot-think, .px-pin-available, .px-finger, .px-float { animation: none; }
 }
+
+@keyframes px-pin-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+.px-pin-bounce { animation: px-pin-bounce 0.9s steps(4) infinite; }
+@media (prefers-reduced-motion: reduce) { .px-pin-bounce { animation: none; } }

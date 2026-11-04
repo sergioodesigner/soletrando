@@ -6,7 +6,7 @@ import { Mascot, type MascotMood } from './Mascot';
 import { DialogueBox, type Choice } from './DialogueBox';
 import { AgeChip, IconBtn, SoundSettings, Stats } from './Hud';
 import { itemName, itemSrc } from '@/lib/game/items';
-import { BOSS_MIN_STARS, WORLDS, pinUnlocked } from '@/lib/game/worlds';
+import { BOSS_MIN_STARS, WORLDS, WORLD_MAP, pinUnlocked } from '@/lib/game/worlds';
 import { pinStars } from '@/lib/game/store';
 import type { DialogueApi } from '@/lib/game/dialogue';
 import type { AgeId, PinDef, Profile, WorldDef } from '@/lib/game/types';
@@ -42,61 +42,69 @@ export function WorldSelect({ profile, dialogue, onPick, onAlbum, onTitle, onAge
 
   return (
     <div className="game-root relative flex-1 min-h-0 flex flex-col" style={PARK}>
-      <div className="absolute inset-0 bg-[#1a1033]/55" />
-      <div className="relative z-10 flex items-center gap-2 p-2">
+      <div className="absolute inset-0 bg-[#1a1033]/70" />
+      <div className="relative z-10 flex items-center gap-1.5 p-2">
         <IconBtn label="Voltar ao título" onClick={onTitle}>
           <ArrowLeft size={20} />
         </IconBtn>
+        <Stats stars={totalStars(profile)} coins={profile.coins} />
         <div className="flex-1" />
+        <IconBtn label="Meu álbum de figurinhas" onClick={onAlbum}>
+          <span aria-hidden>📖</span>
+        </IconBtn>
         <AgeChip profile={profile} onChange={onAge} />
         <SoundSettings {...top} />
       </div>
 
-      <div className="relative z-10 flex-1 min-h-0 overflow-y-auto px-3 pb-2">
-        <div className="mx-auto max-w-md flex flex-col gap-3">
-          <h2 className="px-title text-[#fff4d6] text-[13px] text-center [text-shadow:3px_3px_0_#3b2a1a] mt-1">MAPA-MÚNDI</h2>
+      <div className="relative z-10 flex-1 min-h-0 flex justify-center px-2 pb-2">
+        <div
+          className="relative h-full max-w-full border-4 border-[#3b2a1a] overflow-hidden"
+          style={{ aspectRatio: String(WORLD_MAP.aspect), backgroundImage: `url(${WORLD_MAP.image})`, backgroundSize: '100% 100%' }}
+        >
           {WORLDS.map((w) => {
+            const spot = WORLD_MAP.spots[w.id];
+            if (!spot) return null;
             const stars = pinStars(profile, w.id).reduce((a, b) => a + b, 0);
             return (
               <button
                 key={w.id}
                 type="button"
+                data-coach={`world-${w.id}`}
                 onClick={() => (w.locked ? void dialogue.say(w.lockedHint ?? 'Em breve!', { mascot: 'fox' }) : onPick(w))}
-                className={`px-panel px-notch p-3 flex items-center gap-3 text-left ${w.locked ? 'opacity-80' : ''}`}
-                style={{ borderColor: w.locked ? '#475569' : '#3b2a1a' }}
+                aria-label={`${w.name}${w.locked ? ' (trancado)' : ''}`}
+                className="absolute flex flex-col items-center"
+                style={{ left: `${spot.x}%`, top: `${spot.y}%`, transform: 'translate(-50%, -50%)' }}
               >
-                <div className="w-20 h-20 shrink-0 flex items-end justify-center" style={{ background: `${w.accent}33` }}>
-                  {w.mascot ? (
-                    <Mascot id={w.mascot} size={72} flip={w.mascot === 'owl'} />
-                  ) : (
-                    <span className="text-4xl self-center" aria-hidden>
-                      🌫️
-                    </span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="px-title text-[11px] leading-snug">{w.name}</p>
-                  <p className="text-[16px]">{w.subtitle}</p>
-                  {!w.locked && (
-                    <p className="text-[15px] mt-1 font-bold">
-                      ⭐ {stars}/{w.pins.length * 3}
-                    </p>
-                  )}
-                </div>
-                <span className="text-2xl" aria-hidden>
-                  {w.locked ? '🔒' : '▶'}
+                {w.locked ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src="/game/ui/lock.png" alt="" className="px-img w-11 h-11 object-contain drop-shadow-[0_3px_0_rgba(0,0,0,0.5)]" />
+                ) : (
+                  <span className="px-pin-bounce">
+                    <Mascot id={w.mascot ?? 'fox'} size={74} flip={w.mascot === 'owl'} mood="wave" />
+                  </span>
+                )}
+                <span className={`px-panel px-notch px-2 py-0.5 mt-0.5 text-center leading-tight ${w.locked ? 'opacity-85' : ''}`}>
+                  <span className="px-title block text-[8px] whitespace-nowrap">{w.name}</span>
+                  <span className="block text-[13px] font-bold whitespace-nowrap">
+                    {w.locked ? 'Em breve' : (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/game/ui/star.png" alt="" className="px-img inline w-3.5 h-3.5 mr-1 -mt-0.5" />
+                        {stars}/{w.pins.length * 3}
+                      </>
+                    )}
+                  </span>
                 </span>
               </button>
             );
           })}
-          <button type="button" onClick={onAlbum} className="px-btn px-btn-blue px-notch text-[17px]">
-            📖 Meu álbum de figurinhas
-          </button>
         </div>
       </div>
 
-      <div className="relative z-10 px-3 pb-3 mx-auto w-full max-w-md">
-        <DialogueBox dialogue={dialogue} idleHint="Escolha um mundo para explorar!" />
+      <div className="absolute z-20 left-0 right-0 bottom-0 px-3 pb-3 pointer-events-none">
+        <div className="mx-auto max-w-md pointer-events-auto">
+          <DialogueBox dialogue={dialogue} idleHint="Escolha um mundo para explorar!" />
+        </div>
       </div>
     </div>
   );
@@ -151,7 +159,7 @@ export function WorldMap({
   };
 
   const atPin = world.pins[at] ?? world.pins[0];
-  const mascotLeft = atPin.x > 50 ? atPin.x - 14 : atPin.x + 14;
+  const mascotLeft = atPin.x > 50 ? atPin.x - 13 : atPin.x + 13;
   const total = stars.reduce((a, b) => a + b, 0);
 
   const menuChoices: Choice[] = [
@@ -194,72 +202,55 @@ export function WorldMap({
       <div className="relative z-10 flex-1 min-h-0 flex justify-center px-2 pb-2">
         <div
           className="relative h-full max-w-full border-4 border-[#3b2a1a] overflow-hidden"
-          style={{
-            aspectRatio: '2 / 3',
-            backgroundImage: `url(${world.mapImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: '0% 55%',
-            filter: undefined,
-          }}
+          style={{ aspectRatio: String(world.mapAspect), backgroundImage: `url(${world.mapImage})`, backgroundSize: '100% 100%' }}
         >
-          {/* filtro de cor só na arte (provisório), não nos pins */}
-          <div className="absolute inset-0" style={{ backdropFilter: world.mapFilter }} />
-          <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 150" preserveAspectRatio="none" aria-hidden>
-            <polyline points={world.pins.map((p) => `${p.x},${p.y * 1.5}`).join(' ')} fill="none" stroke="#3b2a1a" strokeWidth="2.6" strokeLinejoin="round" strokeDasharray="1.2 3" strokeLinecap="square" />
-            <polyline points={world.pins.map((p) => `${p.x},${p.y * 1.5}`).join(' ')} fill="none" stroke="#fff4d6" strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="1.2 3" strokeLinecap="square" />
-          </svg>
-
           {world.pins.map((p) => {
             const unlocked = pinUnlocked(stars, p);
             const s = stars[p.index] ?? 0;
             const available = unlocked && s === 0;
-            const big = p.kind !== 'normal';
-            const size = big ? 60 : 50;
+            const w = p.kind === 'boss' ? 62 : p.kind === 'mini' ? 54 : 46;
+            const sprite = !unlocked ? '/game/ui/lock.png' : s > 0 ? '/game/ui/pin-done.png' : '/game/ui/pin.png';
             return (
-              <div key={p.index} className="absolute" style={{ left: `${p.x}%`, top: `${p.y}%` }}>
-                <button
-                  type="button"
-                  onClick={() => openPin(p)}
-                  data-coach={available && p.index === firstOpen ? 'pin-available' : undefined}
-                  aria-label={`Fase ${p.index + 1}: ${p.name}${!unlocked ? ' (trancada)' : ''}`}
-                  className={`px-btn px-notch absolute !p-0 flex items-center justify-center ${available ? 'px-pin-available' : ''}`}
-                  style={{
-                    width: size,
-                    height: size,
-                    left: 0,
-                    top: 0,
-                    transform: available ? undefined : 'translate(-50%, -50%)',
-                    ['--btn' as string]: !unlocked ? '#9ca3af' : s > 0 ? '#6cc24a' : p.kind === 'boss' ? '#e8624a' : '#facc15',
-                  }}
-                >
-                  {!unlocked ? (
-                    <span className="text-xl" aria-hidden>🔒</span>
-                  ) : big ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={itemSrc(p.rewardItem)} alt="" className="px-img w-8 h-8 object-contain" />
-                  ) : (
-                    <span className="px-title text-[14px]">{p.index + 1}</span>
-                  )}
-                </button>
-                {s > 0 && (
-                  <span className="absolute text-[13px] leading-none -translate-x-1/2 whitespace-nowrap" style={{ top: size / 2 + 2, left: 0 }}>
-                    {'⭐'.repeat(s)}
+              <button
+                key={p.index}
+                type="button"
+                onClick={() => openPin(p)}
+                data-coach={available && p.index === firstOpen ? 'pin-available' : undefined}
+                aria-label={`Fase ${p.index + 1}: ${p.name}${!unlocked ? ' (trancada)' : ''}`}
+                className="absolute flex flex-col items-center"
+                style={{ left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -100%)', minWidth: 48, minHeight: 48, justifyContent: 'flex-end' }}
+              >
+                <span className={available ? 'px-pin-bounce' : ''}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={sprite} alt="" draggable={false} className="px-img object-contain drop-shadow-[0_3px_0_rgba(0,0,0,0.45)]" style={{ width: w, height: w }} />
+                </span>
+                {p.kind !== 'normal' && unlocked && (
+                  <span className="px-title absolute -top-3 text-[7px] bg-[#3b2a1a] text-[#fff4d6] px-1 py-0.5 whitespace-nowrap">
+                    {p.kind === 'boss' ? 'CHEFE' : 'MINI'}
                   </span>
                 )}
-              </div>
+                {s > 0 && (
+                  <span className="absolute flex" style={{ bottom: -12 }}>
+                    {[1, 2, 3].map((n) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={n} src={n <= s ? '/game/ui/star.png' : '/game/ui/star-empty.png'} alt="" className="px-img w-3.5 h-3.5" />
+                    ))}
+                  </span>
+                )}
+              </button>
             );
           })}
 
           {/* mascote ao lado do pin atual */}
           <div
             className="absolute z-10 transition-[left,top] duration-700 ease-steps"
-            style={{ left: `${mascotLeft}%`, top: `${atPin.y}%`, transform: 'translate(-50%, -78%)', transitionTimingFunction: 'steps(8)' }}
+            style={{ left: `${mascotLeft}%`, top: `${atPin.y}%`, transform: 'translate(-50%, -92%)', transitionTimingFunction: 'steps(8)' }}
           >
             <Mascot
               id={mascot}
               size={86}
               mood={dialogue.status === 'typing' ? 'talk' : mood}
-              flip={atPin.x > 50 ? false : mascot === 'owl'}
+              flip={atPin.x > 50 ? mascot !== 'owl' : mascot === 'owl'}
               data-coach="mascot"
               onClick={() => {
                 setSel(null);
@@ -328,7 +319,8 @@ function PinSheet({
       <div className="flex items-center justify-between mt-2 text-[15px]">
         <span aria-label={`${got} de 3 estrelas`}>
           {[1, 2, 3].map((n) => (
-            <span key={n} className={n <= got ? '' : 'opacity-30 grayscale'}>⭐</span>
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={n} src={n <= got ? '/game/ui/star.png' : '/game/ui/star-empty.png'} alt="" className="px-img inline w-5 h-5 mr-0.5" />
           ))}
           <span className="ml-2 text-[13px]">{pin.challenges} desafios</span>
         </span>
@@ -392,15 +384,16 @@ export function ResultScreen({ world, pin, stars, coins, newItem, dialogue, hasN
         <p className="px-title text-[#facc15] text-[13px] [text-shadow:3px_3px_0_#3b2a1a] text-center">
           {pin.kind === 'boss' ? 'CHEFE DERROTADO!' : 'FASE CUMPRIDA!'}
         </p>
-        <div className="flex gap-2 text-5xl" aria-label={`${stars} estrelas`}>
+        <div className="flex gap-2" aria-label={`${stars} estrelas`}>
           {[1, 2, 3].map((n) => (
-            <span key={n} className={n <= stars && n <= shown ? 'px-float' : 'opacity-25 grayscale'}>⭐</span>
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={n} src={n <= stars && n <= shown ? '/game/ui/star.png' : '/game/ui/star-empty.png'} alt="" className={`px-img w-16 h-16 object-contain ${n <= stars && n <= shown ? 'px-float' : 'opacity-60'}`} />
           ))}
         </div>
         <div className="px-panel px-notch w-full p-3 flex items-center justify-around text-[18px] font-bold">
           <span className="flex items-center gap-1.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/game/items/item35.png" alt="" className="px-img w-6 h-6" /> +{coins}
+            <img src="/game/ui/coin.png" alt="" className="px-img w-6 h-6" /> +{coins}
           </span>
           {newItem !== null && (
             <span className="flex items-center gap-2">

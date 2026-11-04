@@ -34,7 +34,7 @@ Fluxo: **Título → Perfil (nome + idade) → Introdução → Mapa-múndi → 
 - **Idade:** cada perfil tem sua faixa (3-5, 6-8, 9-11, 12-14) e o progresso é salvo por idade (`localStorage`, chave `soletrando_game_v1`).
 - **Diálogo:** o mascote fala (voz Faber) e o texto aparece **digitando no ritmo da voz** (`lib/game/dialogue.ts`). Toque no balão para ler tudo de uma vez.
 - **Primeira vez:** todo botão novo é explicado pelo mascote com destaque na tela (`lib/game/coach.ts`). Para adicionar um tutorial novo, crie um passo com id novo.
-- **Arte:** `public/game/` (mascotes sem fundo, cenários provisórios e `items/` com os ícones das figurinhas). Mapas e pins ficam em `lib/game/worlds.ts` (posições em %).
+- **Arte:** `public/game/` — `fox/` e `owl/` (9 poses cada), `maps/` (mapa-múndi e um mapa vertical por mundo), `ui/` (estrela, moeda, pin, cadeado…), `items/` e `stickers/` (figurinhas). Os pins ficam em `lib/game/worlds.ts`: `x`/`y` em % da imagem do mapa, na ponta do pin. Para trocar um mapa, troque o JPG e reposicione os 8 pins.
 - **Modo clássico** (sem mapa) em Configurações; o modo TV usa a interface clássica por enquanto e será reformulado.
 
 ## Voz Faber no navegador (Piper)

@@ -8,7 +8,7 @@ import type { MascotId } from './types';
 export interface CoachStep {
   /** Identificador salvo em "já visto". Mudar o id faz o tutorial reaparecer (botão novo em atualização). */
   id: string;
-  screen: 'map' | 'play-letras' | 'play-matematica' | 'play';
+  screen: 'worlds' | 'map' | 'play-letras' | 'play-matematica' | 'play';
   /** Seletor CSS do elemento a destacar. */
   target: string;
   mascot: MascotId;
@@ -18,6 +18,12 @@ export interface CoachStep {
 }
 
 export const COACH_STEPS: CoachStep[] = [
+  // ---- mapa-múndi ----
+  { id: 'worlds.pick.v1', screen: 'worlds', target: '[data-coach="world-letras"]', mascot: 'fox', mode: 'tap',
+    text: 'Este é o mapa-múndi! Cada ilha é um mundo. Toque na minha ilha, o Reino das Letras!' },
+  { id: 'worlds.locked.v1', screen: 'worlds', target: '[data-coach="world-fe"]', mascot: 'fox', mode: 'ok',
+    text: 'As ilhas com cadeado ainda estão trancadas. Em breve vão abrir para você!' },
+
   // ---- mapa ----
   { id: 'map.pin.v1', screen: 'map', target: '[data-coach="pin-available"]', mascot: 'fox', mode: 'tap',
     text: 'Este é o mapa! Cada bolinha é uma fase. Toque na que está brilhando para começar!' },

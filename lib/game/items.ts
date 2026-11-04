@@ -18,5 +18,22 @@ export const ITEM_NAMES: Record<number, string> = {
   40: 'Livro da Floresta',
 };
 
-export const itemSrc = (n: number) => `/game/items/item${String(n).padStart(2, '0')}.png`;
-export const itemName = (n: number) => ITEM_NAMES[n] ?? 'Figurinha';
+/** Figurinhas da Grécia (índices 100+): public/game/stickers/*.png */
+const GREEK: Record<number, [string, string]> = {
+  100: ['owl', 'Coruja de Atena'],
+  101: ['amphora', 'Ânfora'],
+  102: ['laurel', 'Coroa de Louro'],
+  103: ['column', 'Coluna de Mármore'],
+  104: ['ship', 'Trirreme'],
+  105: ['olive', 'Ramo de Oliveira'],
+  106: ['torch', 'Tocha Olímpica'],
+  107: ['helmet', 'Elmo de Hoplita'],
+  108: ['coin', 'Dracma de Prata'],
+  109: ['sundial', 'Relógio de Sol'],
+  110: ['apple', 'Maçã Dourada'],
+  111: ['triangle', 'Pergaminho de Pitágoras'],
+};
+
+export const itemSrc = (n: number) =>
+  GREEK[n] ? `/game/stickers/${GREEK[n][0]}.png` : `/game/items/item${String(n).padStart(2, '0')}.png`;
+export const itemName = (n: number) => GREEK[n]?.[1] ?? ITEM_NAMES[n] ?? 'Figurinha';

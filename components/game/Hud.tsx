@@ -13,12 +13,13 @@ export function Stats({ stars, coins }: StatsProps) {
   return (
     <div data-coach="stats" className="px-panel px-notch flex items-center gap-3 px-3 py-1 text-[16px] font-bold">
       <span className="flex items-center gap-1">
-        <span aria-hidden>⭐</span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/game/ui/star.png" alt="" className="px-img w-5 h-5 object-contain" />
         {stars}
       </span>
       <span className="flex items-center gap-1">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/game/items/item35.png" alt="" className="px-img w-5 h-5 object-contain" />
+        <img src="/game/ui/coin.png" alt="" className="px-img w-5 h-5 object-contain" />
         {coins}
       </span>
     </div>

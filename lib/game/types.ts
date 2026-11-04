@@ -29,7 +29,7 @@ export interface PinDef {
   index: number;
   name: string;
   kind: PinKind;
-  /** Posição no mapa em % (0–100), moldura vertical 2:3. */
+  /** Posição no mapa em % da imagem — é a PONTA do pin (onde ele "pisa"). */
   x: number;
   y: number;
   /** Quantos desafios tem a fase. */
@@ -46,9 +46,10 @@ export interface WorldDef {
   subtitle: string;
   mascot: MascotId | null;
   subject: 'letras' | 'matematica' | null;
-  /** Arte do mapa (provisória até as imagens finais). */
+  /** Arte do mapa (vertical). */
   mapImage: string;
-  mapFilter?: string;
+  /** largura / altura da imagem do mapa. */
+  mapAspect: number;
   accent: string;
   pins: PinDef[];
   locked?: boolean;

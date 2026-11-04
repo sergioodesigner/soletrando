@@ -1,25 +1,32 @@
 import type { WorldDef, PinDef, AgeId } from './types';
 
-// Trilha em zigue-zague de baixo para cima (moldura 2:3). Quando a arte final dos mapas chegar,
-// basta ajustar estes x/y para cair nos "clareiras" do desenho.
-const PATH: [number, number][] = [
-  [50, 90], [26, 79], [68, 69], [34, 58], [66, 47], [30, 36], [62, 26], [48, 13],
-];
 const KINDS: PinDef['kind'][] = ['normal', 'normal', 'normal', 'mini', 'normal', 'normal', 'normal', 'boss'];
 const CHALLENGES = [5, 5, 5, 6, 5, 5, 6, 8];
 
-function pins(names: string[], rewards: number[], intros: string[]): PinDef[] {
+function pins(names: string[], spots: [number, number][], rewards: number[], intros: string[]): PinDef[] {
   return names.map((name, i) => ({
     index: i,
     name,
     kind: KINDS[i],
-    x: PATH[i][0],
-    y: PATH[i][1],
+    x: spots[i][0],
+    y: spots[i][1],
     challenges: CHALLENGES[i],
     rewardItem: rewards[i],
     intro: intros[i],
   }));
 }
+
+/** Mapa-múndi (as 4 ilhas). x/y em % da imagem. */
+export const WORLD_MAP = {
+  image: '/game/maps/world.jpg',
+  aspect: 1116 / 2000,
+  spots: {
+    letras: { x: 68, y: 80 },
+    matematica: { x: 30, y: 58 },
+    fe: { x: 73, y: 45 },
+    dinos: { x: 48, y: 20 },
+  } as Record<string, { x: number; y: number }>,
+};
 
 export const WORLDS: WorldDef[] = [
   {
@@ -28,19 +35,21 @@ export const WORLDS: WorldDef[] = [
     subtitle: 'Português com o Rufo',
     mascot: 'fox',
     subject: 'letras',
-    mapImage: '/game/village.jpg',
+    mapImage: '/game/maps/letras.jpg',
+    mapAspect: 1116 / 2000,
     accent: '#6cc24a',
     pins: pins(
-      ['A Padaria', 'O Moinho', 'A Ponte', 'O Mercado', 'A Taverna', 'A Biblioteca', 'O Portão', 'O Castelo'],
+      ['A Fazenda', 'A Padaria', 'O Moinho', 'A Ponte', 'O Mercado', 'A Taverna', 'A Torre dos Livros', 'O Castelo'],
+      [[42, 91], [78, 83], [22, 58], [46, 54.5], [80, 51], [33, 35], [80, 32], [57, 16]],
       [1, 2, 5, 28, 39, 13, 4, 40],
       [
-        'Cheirinho de pão! Vamos soletrar palavras da padaria.',
+        'Bom dia na fazenda! Vamos soletrar palavras do campo.',
+        'Cheirinho de pão quentinho! Vamos soletrar na padaria.',
         'O vento do moinho bagunçou as letras. Ajude a arrumar!',
         'Para atravessar a ponte, só soletrando certinho.',
         'No mercado, cada palavra vale uma moeda. Vamos?',
-        'Hmm, deixa eu ver... Esta é uma fase de ouvir bem!',
-        'Shhh... a biblioteca guarda as palavras mais difíceis.',
-        'O portão do castelo só abre com palavras mágicas.',
+        'Hmm, deixa eu ver... Na taverna a gente precisa ouvir bem!',
+        'Shhh... a torre guarda as palavras mais difíceis.',
         'O Dragão Borrão embaralhou tudo! Soletre para vencê-lo!',
       ]
     ),
@@ -51,20 +60,21 @@ export const WORLDS: WorldDef[] = [
     subtitle: 'Matemática com a Sofia',
     mascot: 'owl',
     subject: 'matematica',
-    mapImage: '/game/village.jpg',
-    mapFilter: 'hue-rotate(160deg) saturate(0.9) brightness(1.05)',
+    mapImage: '/game/maps/matematica.jpg',
+    mapAspect: 1116 / 2000,
     accent: '#4aa8e0',
     pins: pins(
-      ['O Porto', 'O Bosque de Oliveiras', 'A Ágora', 'O Farol', 'O Teatro', 'O Estádio', 'A Biblioteca de Atenas', 'O Grande Templo'],
-      [35, 21, 23, 9, 7, 10, 33, 30],
+      ['O Porto', 'O Bosque de Oliveiras', 'A Ágora', 'O Farol', 'O Teatro', 'O Estádio', 'O Jardim do Relógio de Sol', 'O Grande Templo'],
+      [[47, 84], [72, 77], [31, 67], [23, 52.5], [51, 45], [81, 48], [65, 29], [54, 15]],
+      [104, 105, 108, 106, 102, 107, 109, 100],
       [
-        'Bem-vindo à Grécia! Aqui os números nasceram.',
+        'Bem-vindo à Grécia! Foi aqui que os números nasceram.',
         'Cada oliveira esconde uma conta. Vamos resolver!',
         'Na ágora, os mercadores precisam de ajuda com as somas.',
         'O farol só acende com a resposta certa.',
         'No teatro, os números sobem ao palco. Preste atenção!',
         'Olimpíada de números! Quem calcula mais rápido?',
-        'Os pergaminhos de Atenas guardam contas desafiadoras.',
+        'O relógio de sol mede o tempo... e também as contas!',
         'A Hidra das Contas tem uma resposta em cada cabeça. Corte a certa!',
       ]
     ),
@@ -76,6 +86,7 @@ export const WORLDS: WorldDef[] = [
     mascot: null,
     subject: null,
     mapImage: '',
+    mapAspect: 1,
     accent: '#a78bfa',
     pins: [],
     locked: true,
@@ -88,6 +99,7 @@ export const WORLDS: WorldDef[] = [
     mascot: null,
     subject: null,
     mapImage: '',
+    mapAspect: 1,
     accent: '#fb923c',
     pins: [],
     locked: true,

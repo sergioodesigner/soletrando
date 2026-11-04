@@ -216,7 +216,7 @@ export function GameRoot({
 
   /* ---------------- tutoriais de primeira vez ---------------- */
 
-  const screenKey = phase === 'map' ? 'map' : phase === 'play' ? (world?.subject === 'letras' ? 'play-letras' : 'play-matematica') : null;
+  const screenKey = phase === 'worlds' ? 'worlds' : phase === 'map' ? 'map' : phase === 'play' ? (world?.subject === 'letras' ? 'play-letras' : 'play-matematica') : null;
 
   useEffect(() => {
     if (!screenKey || paused || coach || (phase === 'map' && sheetOpen)) return;
