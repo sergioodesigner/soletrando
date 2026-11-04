@@ -579,7 +579,7 @@ export function GameRoot({
   } else if (phase === 'play' && profile && world && pin) {
     body = (
       <div className="game-root relative flex-1 min-h-0 flex flex-col" style={sceneBg(training ? undefined : pin.scene)}>
-        <div className="absolute inset-0 bg-[#1a1033]/60" />
+        <div className="absolute inset-0 bg-[#1a1033]/30" />
         <div className="relative z-10 mx-auto w-full max-w-xl flex-1 min-h-0 flex flex-col">
         {/* barra de cima */}
         <div className="relative z-10 flex items-center gap-1.5 p-2">
@@ -648,7 +648,7 @@ export function GameRoot({
 
         {/* o jogo por dentro */}
         <div className="relative z-10 flex-1 min-h-0 px-2 pt-2 pb-2">
-          <div className="h-full px-panel px-notch overflow-y-auto p-1.5 flex flex-col items-center">
+          <div className="max-h-full px-panel px-notch overflow-y-auto p-1.5 flex flex-col items-center">
             {/* speak/askTutor só são chamados em eventos e effects dos jogos — nunca durante o render */}
             {/* eslint-disable-next-line react-hooks/refs */}
             {renderStage({
