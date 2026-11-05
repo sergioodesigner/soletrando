@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-05T00:54:27.658Z",
+ "generatedAt": "2026-11-05T01:54:04.141Z",
  "speakers": [
   {
    "id": "fox",
@@ -109,7 +109,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "A",
-   "say": "A.",
+   "say": "Letra A.",
    "aliases": [
     "h1r9wi7g",
     "k_letra_a"
@@ -132,7 +132,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Bê",
-   "say": "Bê.",
+   "say": "Letra Bê.",
    "aliases": [
     "h1s3vbad",
     "k_letra_b"
@@ -155,7 +155,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Cê",
-   "say": "Cê.",
+   "say": "Letra Cê.",
    "aliases": [
     "h1rtvple",
     "k_letra_c"
@@ -178,7 +178,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Dê",
-   "say": "Dê.",
+   "say": "Letra Dê.",
    "aliases": [
     "h1qfxp4j",
     "k_letra_d"
@@ -201,7 +201,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "E",
-   "say": "E.",
+   "say": "Letra E.",
    "aliases": [
     "h1q5y3fk",
     "k_letra_e"
@@ -224,7 +224,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "efe",
-   "say": "efe.",
+   "say": "Letra efe.",
    "aliases": [
     "h1qzwwih",
     "k_letra_f"
@@ -247,7 +247,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Gê",
-   "say": "Gê.",
+   "say": "Letra Gê.",
    "aliases": [
     "h1qpxati",
     "k_letra_g"
@@ -270,7 +270,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "agá",
-   "say": "agá.",
+   "say": "Letra agá.",
    "aliases": [
     "h1trsxg7",
     "k_letra_h"
@@ -293,7 +293,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "I",
-   "say": "I.",
+   "say": "Letra I.",
    "aliases": [
     "h1thtbr8",
     "k_letra_i"
@@ -316,7 +316,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "jota",
-   "say": "jota.",
+   "say": "Letra jota.",
    "aliases": [
     "h1ubs4u5",
     "k_letra_j"
@@ -339,7 +339,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "cá",
-   "say": "cá.",
+   "say": "Letra cá.",
    "aliases": [
     "h1u1sj56",
     "k_letra_k"
@@ -362,7 +362,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "ele",
-   "say": "ele.",
+   "say": "Letra ele.",
    "aliases": [
     "h1snuiob",
     "k_letra_l"
@@ -385,7 +385,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "eme",
-   "say": "eme.",
+   "say": "Letra eme.",
    "aliases": [
     "h1sduwzc",
     "k_letra_m"
@@ -408,7 +408,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "ene",
-   "say": "ene.",
+   "say": "Letra ene.",
    "aliases": [
     "h1t7tq29",
     "k_letra_n"
@@ -431,7 +431,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "O",
-   "say": "O.",
+   "say": "Letra O.",
    "aliases": [
     "h1sxu4da",
     "k_letra_o"
@@ -454,7 +454,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Pê",
-   "say": "Pê.",
+   "say": "Letra Pê.",
    "aliases": [
     "h1vzpqzz",
     "k_letra_p"
@@ -477,7 +477,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "quê",
-   "say": "quê.",
+   "say": "Letra quê.",
    "aliases": [
     "h1vpq5b0",
     "k_letra_q"
@@ -500,7 +500,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "erre",
-   "say": "erre.",
+   "say": "Letra erre.",
    "aliases": [
     "h1wjoydx",
     "k_letra_r"
@@ -523,7 +523,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "esse",
-   "say": "esse.",
+   "say": "Letra esse.",
    "aliases": [
     "h1w9pcoy",
     "k_letra_s"
@@ -546,7 +546,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "tê",
-   "say": "tê.",
+   "say": "Letra tê.",
    "aliases": [
     "h1uvrc83",
     "k_letra_t"
@@ -569,7 +569,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "U",
-   "say": "U.",
+   "say": "Letra U.",
    "aliases": [
     "h1ulrqj4",
     "k_letra_u"
@@ -592,7 +592,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Vê",
-   "say": "Vê.",
+   "say": "Letra Vê.",
    "aliases": [
     "h1vfqjm1",
     "k_letra_v"
@@ -615,7 +615,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "dáblio",
-   "say": "dáblio.",
+   "say": "Letra dáblio.",
    "aliases": [
     "h1v5qxx2",
     "k_letra_w"
@@ -638,7 +638,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "xis",
-   "say": "xis.",
+   "say": "Letra xis.",
    "aliases": [
     "h1y7mkjr",
     "k_letra_x"
@@ -661,7 +661,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "ípsilon",
-   "say": "ípsilon.",
+   "say": "Letra ípsilon.",
    "aliases": [
     "h1xxmyus",
     "k_letra_y"
@@ -684,7 +684,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Zê",
-   "say": "Zê.",
+   "say": "Letra Zê.",
    "aliases": [
     "h1yrlrxp",
     "k_letra_z"

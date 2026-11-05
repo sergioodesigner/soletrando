@@ -158,10 +158,11 @@ function haveFfmpeg() {
 }
 
 /** Corta silêncio do começo/fim, nivela o volume e comprime em MP3 mono. */
-function pcmToMp3(pcm, rate) {
+function pcmToMp3(pcm, rate, keepTail = false) {
   const trim = 'silenceremove=start_periods=1:start_duration=0.01:start_threshold=-48dB:detection=peak';
   const filters = [];
-  if (!NO_TRIM) filters.push(trim, 'areverse', trim, 'areverse', 'apad=pad_dur=0.08');
+  // falas muito curtas (letras): corta só o silêncio do COMEÇO e deixa folga no fim, para nunca perder o final
+  if (!NO_TRIM) filters.push(...(keepTail ? [trim, 'apad=pad_dur=0.2'] : [trim, 'areverse', trim, 'areverse', 'apad=pad_dur=0.08']));
   if (!NO_NORM) filters.push('loudnorm=I=-18:TP=-2:LRA=9');
   const argv = ['-v', 'error', '-f', 's16le', '-ar', String(rate), '-ac', '1', '-i', 'pipe:0'];
   if (filters.length) argv.push('-af', filters.join(','));
@@ -208,7 +209,7 @@ async function synth(e, info = {}) {
       for (let i = 0; i < pcm.length - 1; i += 2) { const v = Math.abs(pcm.readInt16LE(i)); if (v > peak) peak = v; if (peak > 400) break; }
       if (peak < 40) throw Object.assign(new Error('Áudio vazio (só silêncio)'), { status: 0 });
       if (info.onRaw) info.onRaw(pcm, rate);
-      return haveFfmpeg() ? pcmToMp3(pcm, rate) : pcmToWav(pcm, rate);
+      return haveFfmpeg() ? pcmToMp3(pcm, rate, e.group === 'letras') : pcmToWav(pcm, rate);
     } catch (err) {
       lastErr = err;
       const retryable = !err.fatal && (err.status === 429 || err.status >= 500 || err.status === undefined || err.status === 0);

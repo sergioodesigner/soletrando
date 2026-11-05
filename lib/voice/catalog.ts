@@ -67,8 +67,8 @@ export function buildCatalog(): CatalogEntry[] {
   // ------------------------------------------------------------------ letras (Rufo)
   for (const [L, phon] of Object.entries(PT_LETTER_PHONETICS)) {
     const l = L.toLowerCase();
-    // letra solta: o ponto final dá entonação firme (sem ele algumas vozes “arrastam” a sílaba)
-    add('letras', 'fox', phon, { label: `letra_${l}`, say: `${phon}.`, aliases: [textKey(L), staticKeyId(`letra_${l}`)] });
+    // letra solta: uma palavra isolada é lida como inglês e fica curtíssima; dentro de uma frase em português o idioma fica certo
+    add('letras', 'fox', phon, { label: `letra_${l}`, say: `Letra ${phon}.`, aliases: [textKey(L), staticKeyId(`letra_${l}`)] });
     add('proxima_letra', 'fox', pProximaLetra(phon), { label: `proxima_letra_${l}`, aliases: [staticKeyId(`proxima_letra_${l}`)] });
   }
 
