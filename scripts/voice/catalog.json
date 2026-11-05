@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-05T02:28:28.838Z",
+ "generatedAt": "2026-11-05T02:33:21.478Z",
  "speakers": [
   {
    "id": "fox",
@@ -615,7 +615,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "dáblio",
-   "say": "Lê, tra, dáblio.",
+   "say": "Lêtra, dáblio.",
    "aliases": [
     "h1v5qxx2",
     "k_letra_w"
@@ -638,7 +638,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "xis",
-   "say": "Lê, tra, xís.",
+   "say": "Lêtra, xís.",
    "aliases": [
     "h1y7mkjr",
     "k_letra_x"
@@ -661,7 +661,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "ípsilon",
-   "say": "Lê, tra, ípsilon.",
+   "say": "Lêtra, ípsilon.",
    "aliases": [
     "h1xxmyus",
     "k_letra_y"
@@ -684,7 +684,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Zê",
-   "say": "Lê, tra, zê.",
+   "say": "Lêtra, zê.",
    "aliases": [
     "h1yrlrxp",
     "k_letra_z"

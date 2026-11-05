@@ -73,7 +73,7 @@ export function buildCatalog(): CatalogEntry[] {
     const spoken = VOGAL_ACENTO[L] ?? phon.toLowerCase();
     // Ajustes de pronúncia pedidos após ouvir os áudios
     const FALA_LETRA: Record<string, string> = {
-      Z: 'Lê, tra, zê.', Y: 'Lê, tra, ípsilon.', X: 'Lê, tra, xís.', W: 'Lê, tra, dáblio.', I: 'Lê, tra, í.',
+      Z: 'Lêtra, zê.', Y: 'Lêtra, ípsilon.', X: 'Lêtra, xís.', W: 'Lêtra, dáblio.', I: 'Lê, tra, í.',
       S: 'Letra, éssi.', R: 'Letra, érri.', N: 'Letra, éni.', J: 'Letra, Jóta.',
     };
     const FALA_PROX: Record<string, string> = { S: 'éssi', N: 'ení', M: 'emí', L: 'éli' };
