@@ -187,6 +187,8 @@ async function synth(e, info = {}) {
         const err = new Error(`HTTP ${res.status}: ${txt}`);
         err.status = res.status;
         err.retryAfter = Number(res.headers.get('retry-after')) || 0;
+        // limite DIÁRIO/cota esgotada: insistir não adianta — para já (o que foi gerado fica salvo)
+        if (res.status === 429 && /day|daily|quota|credit|exceeded|limit.*(reset|tomorrow)/i.test(txt) && !/per.?minute|rpm/i.test(txt)) { err.dailyLimit = true; err.fatal = true; }
         throw err;
       }
       const raw = Buffer.from(await res.arrayBuffer());
@@ -364,7 +366,7 @@ if (DRY) {
   process.exit(0);
 }
 
-let done = 0, failed = [];
+let done = 0, failed = [], limited = 0;
 const queue = todo.slice(0, LIMIT);
 let stop = false;
 process.on('SIGINT', () => { stop = true; console.log('\nInterrompido — salvando o que já foi gerado…'); });
@@ -383,6 +385,9 @@ for (const e of queue) {
     console.log(`FALHOU: ${String(err.message).slice(0, 160)}`);
     failed.push({ label: e.label, id: e.id, error: String(err.message).slice(0, 300) });
     if (err.status === 401 || err.status === 403) { console.error('\nChave recusada. Confira a chave e o acesso ao modelo.'); break; }
+    if (err.dailyLimit) { console.error('\n⏸ Limite diário/cota do OpenRouter atingido. Tudo o que foi gerado está salvo — rode o MESMO comando amanhã (ou depois de liberar mais cota) que ele continua de onde parou.'); break; }
+    limited = err.status === 429 ? limited + 1 : 0;
+    if (limited >= 3) { console.error('\n⏸ 3 falas seguidas barradas por limite de taxa. Parando para não desperdiçar tentativas — rode o mesmo comando daqui a pouco.'); break; }
   }
   if (queue.length > 1) await sleep(DELAY);
 }
