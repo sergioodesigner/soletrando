@@ -7,7 +7,19 @@
 const FOCUSABLE =
   'button:not([disabled]):not([aria-hidden="true"]), a[href], [tabindex]:not([tabindex="-1"])';
 
+import { isBackKey, isBackspace, runAdvance, runBack, setDpad } from './dpad';
+
 type Dir = 'up' | 'down' | 'left' | 'right';
+
+/** Onde estava o foco por último (se o elemento sumir, escolhemos o vizinho mais próximo dali). */
+let lastCenter: { x: number; y: number } | null = null;
+
+/** Janela/ficha aberta: a navegação fica presa dentro dela. */
+function navScope(): ParentNode {
+  const modals = document.querySelectorAll('[data-tv-modal]');
+  if (modals.length) return modals[modals.length - 1];
+  return document.querySelector('[data-tv-nav]') || document;
+}
 
 function isVisible(el: HTMLElement): boolean {
   if (el.closest('[aria-hidden="true"]')) return false;
@@ -107,6 +119,7 @@ function collectFocusables(root?: ParentNode | null): HTMLElement[] {
 }
 
 function focusEl(el: HTMLElement) {
+  lastCenter = center(el.getBoundingClientRect());
   try {
     el.focus({ preventScroll: false });
   } catch {
@@ -115,8 +128,8 @@ function focusEl(el: HTMLElement) {
   el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
 }
 
-export function focusFirstTvControl(root: ParentNode = document): void {
-  const candidates = collectFocusables(root);
+export function focusFirstTvControl(root?: ParentNode): void {
+  const candidates = collectFocusables(root ?? navScope());
   const preferred =
     candidates.find((el) => el.hasAttribute('data-tv-autofocus')) ||
     candidates.find((el) => el.id === 'btn-speak-math-prominent') ||
@@ -126,16 +139,29 @@ export function focusFirstTvControl(root: ParentNode = document): void {
 }
 
 function moveFocus(dir: Dir): boolean {
-  const navRoot = document.querySelector('[data-tv-nav]') || document;
-  const candidates = collectFocusables(navRoot);
+  const candidates = collectFocusables(navScope());
   if (candidates.length === 0) return false;
 
   const active = document.activeElement as HTMLElement | null;
-  let currentIndex = active ? candidates.indexOf(active) : -1;
+  const currentIndex = active ? candidates.indexOf(active) : -1;
 
-  // Se nada focado (comum na TV), começa no primeiro e só move na próxima seta
+  // Nada focado (o botão sumiu, ou 1ª seta): vai para o mais próximo de onde o foco estava
   if (currentIndex < 0) {
-    focusEl(candidates[0]);
+    if (lastCenter) {
+      let near = candidates[0];
+      let nd = Infinity;
+      for (const el of candidates) {
+        const c = center(el.getBoundingClientRect());
+        const d = Math.hypot(c.x - lastCenter.x, c.y - lastCenter.y);
+        if (d < nd) {
+          nd = d;
+          near = el;
+        }
+      }
+      focusEl(near);
+    } else {
+      focusEl(candidates[0]);
+    }
     return true;
   }
 
@@ -179,6 +205,11 @@ function moveFocus(dir: Dir): boolean {
 }
 
 function ensureTvModeClass() {
+  // No RPG as setas só mostram o anel de foco; o modo TV (tela grande) vem por ?tv=1 ou navegador de TV
+  if ((window as unknown as { __soletrandoGameActive?: boolean }).__soletrandoGameActive) {
+    setDpad(true);
+    return;
+  }
   if (!document.documentElement.classList.contains('tv-mode')) {
     document.documentElement.classList.add('tv-mode');
     document.documentElement.dataset.tv = '1';
@@ -191,12 +222,34 @@ function ensureTvModeClass() {
   }
 }
 
+function refocusIfLost() {
+  const a = document.activeElement as HTMLElement | null;
+  if (a && a !== document.body && document.contains(a)) return;
+  if (!lastCenter) return;
+  // cenas de história: o OK avança a fala, não pode haver botão focado
+  if (document.querySelector('[data-tv-cutscene]')) return;
+  const candidates = collectFocusables(navScope());
+  let near: HTMLElement | null = null;
+  let nd = Infinity;
+  for (const el of candidates) {
+    const c = center(el.getBoundingClientRect());
+    const d = Math.hypot(c.x - lastCenter.x, c.y - lastCenter.y);
+    if (d < nd) {
+      nd = d;
+      near = el;
+    }
+  }
+  if (near) focusEl(near);
+}
+
 function activateFocused() {
   const active = document.activeElement as HTMLElement | null;
   if (!active) return false;
   if (active.tagName === 'BUTTON' || active.getAttribute('role') === 'button') {
     if ((active as HTMLButtonElement).disabled) return false;
     active.click();
+    // se o botão sumir ou for trocado (ex.: letra escolhida), o foco passa ao vizinho mais próximo
+    window.setTimeout(refocusIfLost, 160);
     return true;
   }
   return false;
@@ -214,10 +267,31 @@ export function initTvSpatialNavigation(): () => void {
     const ke = e as KeyboardEvent;
 
     const tag = (document.activeElement as HTMLElement | null)?.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
 
-    const dir = readDpadDirection(ke);
-    const confirm = isConfirmKey(ke);
+    // Voltar do controle
+    if (!ke.altKey && !ke.ctrlKey && !ke.metaKey && (isBackKey(ke) || (!typing && isBackspace(ke)))) {
+      setDpad(true);
+      if (runBack()) {
+        ke.preventDefault();
+        ke.stopPropagation();
+      }
+      return;
+    }
+
+    let dir = readDpadDirection(ke);
+    let confirm = isConfirmKey(ke);
+
+    // Dentro de um campo de texto: ←/→ movem o cursor; ↑/↓ saem do campo; Enter confirma e sai
+    if (typing) {
+      if (dir === 'left' || dir === 'right') return;
+      if (ke.key === 'Enter') {
+        (document.activeElement as HTMLElement).blur();
+        confirm = false;
+        dir = 'down';
+      } else if (!dir) return;
+      confirm = false;
+    }
 
     if (!dir && !confirm) return;
     if (ke.altKey || ke.ctrlKey || ke.metaKey) return;
@@ -243,7 +317,8 @@ export function initTvSpatialNavigation(): () => void {
       ke.preventDefault();
       ke.stopPropagation();
       if (!activateFocused()) {
-        focusFirstTvControl();
+        // nada focado: OK avança a fala; se a tela não tem fala, foca o primeiro controle
+        if (!runAdvance()) focusFirstTvControl();
       }
       return;
     }
@@ -255,11 +330,20 @@ export function initTvSpatialNavigation(): () => void {
     }
   };
 
-  window.addEventListener('keydown', onKeyDown, true);
+  // toque/clique some com o anel de foco; no RPG não roubamos o foco ao abrir (só depois da 1ª tecla)
+  const onPointer = () => setDpad(false);
 
-  window.setTimeout(() => focusFirstTvControl(), 350);
+  window.addEventListener('keydown', onKeyDown, true);
+  window.addEventListener('pointerdown', onPointer, true);
+
+  const t = window.setTimeout(() => {
+    const gameActive = (window as unknown as { __soletrandoGameActive?: boolean }).__soletrandoGameActive;
+    if (!gameActive || document.documentElement.classList.contains('tv-mode')) focusFirstTvControl();
+  }, 350);
 
   return () => {
+    window.clearTimeout(t);
     window.removeEventListener('keydown', onKeyDown, true);
+    window.removeEventListener('pointerdown', onPointer, true);
   };
 }

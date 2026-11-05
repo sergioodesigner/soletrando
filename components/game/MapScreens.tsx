@@ -10,6 +10,7 @@ import { itemName, itemSrc } from '@/lib/game/items';
 import { BOSS_MIN_STARS, WORLDS, WORLD_MAP, pinUnlocked } from '@/lib/game/worlds';
 import { pinStars } from '@/lib/game/store';
 import type { DialogueApi } from '@/lib/game/dialogue';
+import { isDpad, registerBack } from '@/lib/dpad';
 import { speakerOf, type AgeId, type PinDef, type Profile, type WorldDef } from '@/lib/game/types';
 
 const PARK = { backgroundImage: 'url(/game/park.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' } as const;
@@ -71,6 +72,7 @@ export function WorldSelect({ profile, dialogue, onPick, onAlbum, onTitle, onAge
                 key={w.id}
                 type="button"
                 data-coach={`world-${w.id}`}
+                data-tv-autofocus={w.id === 'letras' ? true : undefined}
                 onClick={() => (w.locked ? void dialogue.say(w.lockedHint ?? 'Em breve!', { mascot: 'fox' }) : onPick(w))}
                 aria-label={`${w.name}${w.locked ? ' (trancado)' : ''}`}
                 className="absolute flex flex-col items-center"
@@ -159,6 +161,16 @@ export function WorldMap({
   const pin = sel !== null ? world.pins[sel] : null;
   const sheetOpen = pin !== null || menu;
   useEffect(() => onSheetOpen(sheetOpen), [sheetOpen, onSheetOpen]);
+  // Voltar do controle fecha a ficha / o menu do mascote
+  useEffect(() => {
+    if (!sheetOpen) return;
+    return registerBack(() => {
+      setSel(null);
+      setMenu(false);
+      dialogue.stop();
+      return true;
+    });
+  }, [sheetOpen, dialogue]);
 
   const openPin = (p: PinDef) => {
     setMenu(false);
@@ -226,6 +238,7 @@ export function WorldMap({
                 type="button"
                 onClick={() => openPin(p)}
                 data-coach={available && p.index === firstOpen ? 'pin-available' : undefined}
+                data-tv-autofocus={p.index === firstOpen ? true : undefined}
                 aria-label={`Fase ${p.index + 1}: ${p.name}${!unlocked ? ' (trancada)' : ''}`}
                 className="absolute flex flex-col items-center"
                 style={{ left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -100%)', minWidth: 48, minHeight: 48, justifyContent: 'flex-end' }}
@@ -288,7 +301,7 @@ export function WorldMap({
 
       {sheetOpen && (
         <div className="absolute z-30 left-0 right-0 bottom-0 p-3">
-          <div className="mx-auto max-w-md px-panel px-notch p-3">
+          <div data-tv-modal className="mx-auto max-w-md px-panel px-notch p-3">
             {pin ? (
               <PinSheet
                 world={world}
@@ -360,6 +373,8 @@ function PinSheet({
       <button
         type="button"
         disabled={!unlocked}
+        data-tv-autofocus
+        autoFocus={isDpad()}
         onClick={onStart}
         className="px-btn px-btn-green px-notch w-full mt-2 text-[19px]"
       >
@@ -473,7 +488,7 @@ export function ResultScreen({ world, pin, title, speech, bonusLines, ally, onTr
         </div>
         <div className="w-full flex flex-col gap-2">
           {hasNext && (
-            <button type="button" onClick={onNext} className="px-btn px-btn-green px-notch text-[19px]">
+            <button type="button" data-tv-autofocus onClick={onNext} className="px-btn px-btn-green px-notch text-[19px]">
               Próxima fase ▶
             </button>
           )}
@@ -497,7 +512,7 @@ export function ResultScreen({ world, pin, title, speech, bonusLines, ally, onTr
             <button type="button" onClick={onRetry} className="px-btn px-btn-plain px-notch flex-1 text-[16px]">
               ↻ Repetir
             </button>
-            <button type="button" onClick={onMap} className="px-btn px-btn-blue px-notch flex-1 text-[16px]">
+            <button type="button" data-tv-autofocus={!hasNext ? true : undefined} onClick={onMap} className="px-btn px-btn-blue px-notch flex-1 text-[16px]">
               Voltar ao mapa
             </button>
           </div>

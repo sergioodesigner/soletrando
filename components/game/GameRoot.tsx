@@ -21,6 +21,8 @@ import type { AgeId, PinDef, WorldDef } from '@/lib/game/types';
 import { pinUnlocked, starsFor, WORLDS } from '@/lib/game/worlds';
 import { askBrain, FALLBACK_FACTS, type BrainRequest } from '@/lib/brain';
 import { usePiperState } from '@/lib/piperTts';
+import { isDpad, registerBack, setAdvanceHandler } from '@/lib/dpad';
+import { focusFirstTvControl } from '@/lib/tvSpatialNav';
 
 type Phase = 'title' | 'profile' | 'intro' | 'worlds' | 'map' | 'sceneOpen' | 'play' | 'sceneClose' | 'result' | 'album' | 'memory';
 
@@ -67,11 +69,13 @@ interface Props {
   /** Tutor Gemini disponível (ligado, online e no modo híbrido). */
   brainActive: boolean;
   onStartPin: (world: WorldDef, pin: PinDef, ctx: StartCtx) => void;
+  /** Modo TV: o jogo inteiro é ampliado para ser lido de longe. */
+  tvMode?: boolean;
   renderStage: (ctx: StageCtx) => React.ReactNode;
 }
 
 export function GameRoot({
-  age, onAgeChange, soundEnabled, onToggleSound, onOpenSettings, paused, brainActive, onStartPin, renderStage,
+  age, onAgeChange, soundEnabled, onToggleSound, onOpenSettings, paused, brainActive, onStartPin, tvMode = false, renderStage,
 }: Props) {
   const data = useGameData();
   const profile = activeProfile(data);
@@ -104,10 +108,30 @@ export function GameRoot({
     hydrateGameStore();
     const w = window as unknown as { __soletrandoGameActive?: boolean };
     w.__soletrandoGameActive = true;
+    document.documentElement.classList.add('game-active');
     return () => {
       w.__soletrandoGameActive = false;
+      document.documentElement.classList.remove('game-active');
     };
   }, []);
+
+  // ---- escala para TV: o layout é pensado para ~720px de altura; na TV ampliamos tudo por igual ----
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const measure = () => setBox({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    ro?.observe(el);
+    window.addEventListener('resize', measure);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [data.ready]);
+  const scale = tvMode && box.h > 0 ? Math.min(2.4, Math.max(1, box.h / 720)) : 1;
 
   // a idade do perfil manda no nível do jogo
   useEffect(() => {
@@ -423,11 +447,56 @@ export function GameRoot({
     []
   );
 
+  /* ---------------- controle remoto: Voltar, OK e foco automático ---------------- */
+
+  const backRef = useRef<() => boolean>(() => false);
+  useEffect(() => {
+    backRef.current = () => {
+    if (coach) {
+      closeCoach();
+      return true;
+    }
+    const to: Partial<Record<Phase, Phase>> = {
+      profile: 'title', intro: 'worlds', worlds: 'title', map: 'worlds', album: world ? 'map' : 'worlds',
+      memory: 'map', result: 'map', sceneOpen: 'map', sceneClose: 'result', play: 'map',
+    };
+    const next = to[phase];
+    if (!next) return false;
+    if (phase === 'sceneClose') {
+      setResult(pendingResult.current);
+    }
+    if (phase === 'play') {
+      if (finishTimer.current) clearTimeout(finishTimer.current);
+      finishTimer.current = null;
+    }
+    goPhase(next);
+    return true;
+    };
+  });
+  useEffect(() => registerBack(() => backRef.current()), []);
+
+  // OK com nada focado: pula a digitação do balão
+  useEffect(() => {
+    setAdvanceHandler(() => dialogue.skip());
+    return () => setAdvanceHandler(null);
+  }, [dialogue]);
+
+  // Ao trocar de tela (ou fechar tutorial/ficha), com o controle em uso, foca o controle principal
+  useEffect(() => {
+    if (!isDpad()) return;
+    // nas cenas/introdução o OK avança a fala — não pode haver botão focado (senão o OK apertaria o som)
+    if (phase === 'intro' || phase === 'sceneOpen' || phase === 'sceneClose') return;
+    const t = setTimeout(() => {
+      focusFirstTvControl(); // a tela nova manda: o foco inicial dela vale mais que o "vizinho" da tela anterior
+    }, 450);
+    return () => clearTimeout(t);
+  }, [phase, coach, sheetOpen, data.ready]);
+
   /* ---------------- telas ---------------- */
 
   const top = { soundEnabled, onToggleSound, onSettings: onOpenSettings };
 
-  if (!data.ready) return <div className="flex-1 bg-[#1a1033]" />;
+  if (!data.ready) return <div ref={boxRef} className="flex-1 bg-[#1a1033]" />;
 
   let body: React.ReactNode = null;
 
@@ -678,18 +747,20 @@ export function GameRoot({
 
   return (
     <>
-      {body}
+      <div ref={boxRef} className="flex-1 min-h-0 relative overflow-hidden">
+        <div
+          className="absolute left-0 top-0 flex flex-col"
+          style={
+            scale > 1
+              ? { width: box.w / scale, height: box.h / scale, transform: `scale(${scale})`, transformOrigin: '0 0' }
+              : { width: '100%', height: '100%' }
+          }
+        >
+          {body}
+        </div>
+      </div>
       {coach && !paused && (
-        <>
-          <CoachLayer step={coach} dialogue={dialogue} onDone={closeCoach} />
-          <button
-            type="button"
-            onClick={skipAllCoach}
-            className="game-root fixed z-[64] top-2 right-2 px-btn px-btn-plain px-notch !min-h-[34px] !py-0 text-[13px]"
-          >
-            Pular explicações
-          </button>
-        </>
+        <CoachLayer step={coach} dialogue={dialogue} onDone={closeCoach} onSkipAll={skipAllCoach} scale={scale} />
       )}
     </>
   );

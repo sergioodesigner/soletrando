@@ -1,6 +1,7 @@
 'use client';
 
 import { speakerOf } from '@/lib/game/types';
+import { isDpad } from '@/lib/dpad';
 import type { DialogueApi } from '@/lib/game/dialogue';
 
 export interface Choice {
@@ -49,9 +50,11 @@ export function DialogueBox({ dialogue, idleHint, choices, className = '', ...re
       </div>
       {choices && choices.length > 0 && (
         <div className="mt-2 flex flex-wrap justify-end gap-2">
-          {choices.map((c) => (
+          {choices.map((c, ci) => (
             <button
               key={c.label}
+              data-tv-autofocus={ci === 0 ? true : undefined}
+              autoFocus={ci === 0 && isDpad()}
               type="button"
               onClick={c.onClick}
               className={`px-btn px-notch text-[16px] ${

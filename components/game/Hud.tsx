@@ -2,7 +2,8 @@
 
 import { Settings, Volume2, VolumeX } from 'lucide-react';
 import { AGES, type AgeId, type Profile } from '@/lib/game/types';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { isDpad, registerBack } from '@/lib/dpad';
 
 interface StatsProps {
   stars: number;
@@ -72,6 +73,13 @@ export function SoundSettings({
 export function AgeChip({ profile, onChange }: { profile: Profile; onChange: (a: AgeId) => void }) {
   const [open, setOpen] = useState(false);
   const cur = AGES.find((a) => a.id === profile.age) ?? AGES[1];
+  useEffect(() => {
+    if (!open) return;
+    return registerBack(() => {
+      setOpen(false);
+      return true;
+    });
+  }, [open]);
   return (
     <div className="relative" data-coach="age">
       <button
@@ -84,11 +92,13 @@ export function AgeChip({ profile, onChange }: { profile: Profile; onChange: (a:
         {cur.id}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-40 px-panel px-notch p-2 flex flex-col gap-1.5 w-44">
+        <div data-tv-modal className="absolute right-0 top-full mt-1 z-40 px-panel px-notch p-2 flex flex-col gap-1.5 w-44">
           {AGES.map((a) => (
             <button
               key={a.id}
               type="button"
+              data-tv-autofocus={a.id === profile.age ? true : undefined}
+              autoFocus={a.id === profile.age && isDpad()}
               onClick={() => {
                 setOpen(false);
                 if (a.id !== profile.age) onChange(a.id);

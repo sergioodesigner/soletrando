@@ -60,6 +60,7 @@ import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useTvMode } from '@/hooks/useTvMode';
 import { initTvSpatialNavigation, focusFirstTvControl } from '@/lib/tvSpatialNav';
+import { registerBack } from '@/lib/dpad';
 
 // Normalize word to uppercase, remove accents and special chars
 const normalizeWord = (w: string) => 
@@ -1358,7 +1359,6 @@ function LettersStage({
         {/* Botão 2: Falar Próxima Letra */}
         <button
           id="btn-speak-next-letter"
-          data-tv-autofocus
           onClick={handleSpeakNextLetter}
           disabled={isLetterCelebrating || !expectedChar}
           className={`tv-action-btn flex items-center justify-center gap-2 px-2.5 py-2 bg-gradient-to-br from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 active:scale-95 text-amber-950 rounded-xl font-black shadow-md border-b-4 border-amber-700 transition-all text-xs disabled:opacity-50 group ${tvMode ? 'text-base py-5' : ''}`}
@@ -2447,7 +2447,6 @@ function MathStage({
         {/* Prominent Question Speech Button */}
         <button
           id="btn-speak-math-prominent"
-          data-tv-autofocus
           onClick={handleSpeakQuestion}
           className={`flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-800 rounded-full font-bold text-xs border border-emerald-200 shadow-2xs transition-all ${tvMode ? 'tv-action-btn text-base px-6 py-4' : ''}`}
           title="Ouvir a pergunta em voz alta"
@@ -2696,6 +2695,15 @@ export default function EducationalApp() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Voltar do controle fecha a janela de configurações
+  useEffect(() => {
+    if (!showSettingsModal) return;
+    return registerBack(() => {
+      setShowSettingsModal(false);
+      return true;
+    });
+  }, [showSettingsModal]);
+
   // Persist custom words
   useEffect(() => {
     try {
@@ -2751,8 +2759,8 @@ export default function EducationalApp() {
   };
 
   // ---------- Modo RPG (mapa, fases, mascotes) ----------
-  // O modo TV ainda usa a interface clássica (será reformulado depois).
-  const gameMode = !tvMode && !(gameData.ready && gameData.classic);
+  // O RPG funciona também na TV (setas/OK/Voltar); a interface clássica só entra se o "modo clássico" estiver ligado.
+  const gameMode = !(gameData.ready && gameData.classic);
 
   const handleGameStartPin = (world: WorldDef, pin: PinDef, ctx: StartCtx) => {
     const base = pin.index * 5;
@@ -2974,7 +2982,7 @@ export default function EducationalApp() {
   return (
     <div
       data-tv-nav
-      className={`h-dvh max-h-dvh overflow-hidden bg-slate-50 text-slate-900 flex flex-col font-sans select-none ${tvMode ? 'tv-shell' : ''}`}
+      className={`h-dvh max-h-dvh overflow-hidden bg-slate-50 text-slate-900 flex flex-col font-sans select-none ${tvMode && !gameMode ? 'tv-shell' : ''}`}
     >
       {/* Offline Status Toast */}
       {mounted && !isOnline && (
@@ -2985,7 +2993,7 @@ export default function EducationalApp() {
       )}
 
       {/* Banner Modo TV */}
-      {tvMode && (
+      {tvMode && !gameMode && (
         <div className="tv-banner bg-indigo-700 text-white px-4 py-2.5 text-sm sm:text-base font-bold items-center justify-center gap-3 shadow-sm">
           <Tv size={20} className="shrink-0" />
           <span>
@@ -3008,6 +3016,7 @@ export default function EducationalApp() {
           paused={showSettingsModal || showIOSPrompt}
           brainActive={brainActive}
           onStartPin={handleGameStartPin}
+          tvMode={tvMode}
           renderStage={renderGameStage}
         />
       )}
@@ -3249,7 +3258,7 @@ export default function EducationalApp() {
 
       {/* Parents / Settings Modal */}
       {showSettingsModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div data-tv-modal className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}

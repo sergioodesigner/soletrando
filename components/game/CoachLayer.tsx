@@ -5,11 +5,15 @@ import { DialogueBox } from './DialogueBox';
 import { Mascot } from './Mascot';
 import type { CoachStep } from '@/lib/game/coach';
 import type { DialogueApi } from '@/lib/game/dialogue';
+import { isDpad } from '@/lib/dpad';
 
 interface Props {
   step: CoachStep;
   dialogue: DialogueApi;
   onDone: () => void;
+  onSkipAll: () => void;
+  /** Escala da TV (o balão e os botões do tutorial acompanham o resto do jogo). */
+  scale?: number;
 }
 
 interface Rect { x: number; y: number; w: number; h: number }
@@ -18,7 +22,7 @@ interface Rect { x: number; y: number; w: number; h: number }
  * Explica um elemento na primeira vez: escurece a tela, deixa um "buraco" em volta do alvo
  * (o toque passa direto para ele), aponta com um dedo e o mascote explica falando e digitando.
  */
-export function CoachLayer({ step, dialogue, onDone }: Props) {
+export function CoachLayer({ step, dialogue, onDone, onSkipAll, scale = 1 }: Props) {
   const [rect, setRect] = useState<Rect | null>(null);
   const [vh, setVh] = useState(0);
   const [vw, setVw] = useState(0);
@@ -70,7 +74,15 @@ export function CoachLayer({ step, dialogue, onDone }: Props) {
   const fingerBelow = rect.y < vh * 0.35;
 
   return (
-    <div className="game-root">
+    <div className="game-root" data-tv-modal>
+      <button
+        type="button"
+        onClick={onSkipAll}
+        className="fixed z-[64] top-2 right-2 px-btn px-btn-plain px-notch !min-h-[34px] !py-0 text-[13px]"
+        style={{ transform: `scale(${scale})`, transformOrigin: 'top right' }}
+      >
+        Pular explicações
+      </button>
       {/* 4 faixas ao redor do alvo: o "buraco" deixa o toque passar */}
       <div className={shade} style={{ left: 0, top: 0, width: vw, height: hy }} onClick={(e) => e.stopPropagation()} />
       <div className={shade} style={{ left: 0, top: hy + hh, width: vw, height: Math.max(0, vh - hy - hh) }} />
@@ -93,10 +105,13 @@ export function CoachLayer({ step, dialogue, onDone }: Props) {
       </div>
 
       <div className={`fixed z-[63] left-0 right-0 px-3 ${bubbleAtTop ? 'top-3' : 'bottom-3'}`}>
-        <div className="mx-auto max-w-md flex items-end gap-2">
+        <div
+          className="mx-auto max-w-md flex items-end gap-2"
+          style={scale > 1 ? { transform: `scale(${scale})`, transformOrigin: bubbleAtTop ? 'top center' : 'bottom center' } : undefined}
+        >
           {!targetIsBubble && <Mascot id={step.mascot} size={72} mood={dialogue.status === 'typing' ? 'talk' : 'point'} className="shrink-0" />}
           {targetIsBubble ? (
-            <button type="button" onClick={onDone} className="px-btn px-btn-green px-notch ml-auto">
+            <button type="button" data-tv-autofocus autoFocus={isDpad()} onClick={onDone} className="px-btn px-btn-green px-notch ml-auto">
               Entendi!
             </button>
           ) : (

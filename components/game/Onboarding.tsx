@@ -6,6 +6,7 @@ import { DialogueBox } from './DialogueBox';
 import { AGES, MASCOTS, type AgeId, type Profile } from '@/lib/game/types';
 import type { DialogueApi } from '@/lib/game/dialogue';
 import { enablePiper, isPiperSupported, usePiperState } from '@/lib/piperTts';
+import { isDpad } from '@/lib/dpad';
 
 const PARK = { backgroundImage: 'url(/game/park.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' } as const;
 
@@ -35,14 +36,14 @@ export function TitleScreen({ profiles, active, onPlay, onNewPlayer, onPick }: T
 
       <div className="relative z-10 w-full max-w-xs px-4 pb-6 flex flex-col gap-3">
         {active ? (
-          <button type="button" onClick={onPlay} className="px-btn px-btn-green px-notch px-title text-[13px] py-4">
+          <button type="button" data-tv-autofocus onClick={onPlay} className="px-btn px-btn-green px-notch px-title text-[13px] py-4">
             CONTINUAR
             <span className="block text-[11px] mt-1 font-sans normal-case tracking-normal" style={{ fontFamily: 'Pixelify' }}>
               {active.name}
             </span>
           </button>
         ) : (
-          <button type="button" onClick={onNewPlayer} className="px-btn px-btn-green px-notch px-title text-[14px] py-4">
+          <button type="button" data-tv-autofocus onClick={onNewPlayer} className="px-btn px-btn-green px-notch px-title text-[14px] py-4">
             JOGAR
           </button>
         )}
@@ -92,7 +93,7 @@ export function ProfileScreen({ onCreate, onBack }: ProfileProps) {
               <p className="text-[18px] leading-snug pb-1">Oi! Eu sou o <b>Rufo</b>. Qual é o seu nome?</p>
             </div>
             <input
-              autoFocus
+              autoFocus={!isDpad()}
               value={name}
               maxLength={14}
               onChange={(e) => setName(e.target.value)}
@@ -100,6 +101,14 @@ export function ProfileScreen({ onCreate, onBack }: ProfileProps) {
               className="w-full px-3 py-3 text-[20px] bg-white border-4 border-[#3b2a1a] outline-none focus:border-[#f59e0b]"
               style={{ fontFamily: 'Pixelify' }}
             />
+            {/* Sem teclado (TV/controle): nomes rápidos para escolher com as setas */}
+            <div className="flex flex-wrap gap-1.5 mt-2" aria-label="Nomes rápidos">
+              {['Ana', 'Bia', 'Léo', 'Davi', 'Mia', 'Théo', 'Sofia', 'Pedro'].map((n) => (
+                <button key={n} type="button" onClick={() => setName(n)} className={`px-btn px-notch !min-h-[36px] !py-0 text-[15px] ${name === n ? 'px-btn-green' : 'px-btn-plain'}`}>
+                  {n}
+                </button>
+              ))}
+            </div>
             <p className="text-[16px] mt-4 mb-2 font-bold">Quantos anos você tem?</p>
             <div className="grid grid-cols-2 gap-2">
               {AGES.map((a) => (
@@ -150,7 +159,7 @@ export function ProfileScreen({ onCreate, onBack }: ProfileProps) {
             )}
             <div className="flex flex-col gap-2">
               {!ready && (
-                <button type="button" disabled={busy} onClick={() => enablePiper()} className="px-btn px-btn-blue px-notch text-[18px]">
+                <button type="button" data-tv-autofocus disabled={busy} onClick={() => enablePiper()} className="px-btn px-btn-blue px-notch text-[18px]">
                   {busy ? `Baixando ${Math.round(piper.progress * 100)}%…` : '⬇ Baixar a voz'}
                 </button>
               )}
@@ -219,7 +228,7 @@ export function IntroScreen({ profile, dialogue, onFinish }: IntroProps) {
   const talking = dialogue.status === 'typing';
 
   return (
-    <div className="game-root relative flex-1 min-h-0 overflow-hidden flex flex-col" style={PARK}>
+    <div data-tv-cutscene className="game-root relative flex-1 min-h-0 overflow-hidden flex flex-col" style={PARK}>
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#1a1033]/60" />
       <button
         type="button"

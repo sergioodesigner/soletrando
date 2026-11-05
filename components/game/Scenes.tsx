@@ -9,6 +9,7 @@ import { fillName, sceneBg, type Line } from '@/lib/game/story';
 import { memoryDeck, memoryPairs, type MemoryCard } from '@/lib/game/content';
 import { speakerOf, type AgeId, type MascotId, type SpeakerId } from '@/lib/game/types';
 import type { DialogueApi } from '@/lib/game/dialogue';
+import { isDpad } from '@/lib/dpad';
 
 const PARK = { backgroundImage: 'url(/game/park.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' } as const;
 
@@ -117,7 +118,7 @@ export function SceneScreen({ title, scene, lines, npc, mascot, playerName, dial
   const talking = dialogue.status === 'typing';
 
   return (
-    <div className="game-root relative flex-1 min-h-0 overflow-hidden flex flex-col" style={sceneBg(scene)}>
+    <div data-tv-cutscene className="game-root relative flex-1 min-h-0 overflow-hidden flex flex-col" style={sceneBg(scene)}>
       <div className="absolute inset-0 bg-gradient-to-b from-[#1a1033]/50 via-transparent to-[#1a1033]/70" />
       <div className="relative z-10 flex items-center gap-1.5 p-2">
         <p className="px-title text-[#fff4d6] text-[10px] [text-shadow:2px_2px_0_#3b2a1a] flex-1 pl-1">{title.toUpperCase()}</p>
@@ -257,6 +258,7 @@ export function MemoryScreen({ subject, age, mascot, dialogue, onFinish, onBack,
                 type="button"
                 onClick={() => flip(c)}
                 aria-label={isUp ? c.say : 'Carta virada para baixo'}
+                data-tv-autofocus={deck[0]?.id === c.id ? true : undefined}
                 className={`px-notch aspect-[3/4] border-4 flex items-center justify-center transition-transform ${
                   matched.includes(c.pair) ? 'border-[#6cc24a] bg-[#e8f7d4] scale-[0.97]' : isUp ? 'border-[#3b2a1a] bg-[#fff4d6]' : 'border-[#140c1f] bg-[#4a3a66]'
                 }`}
