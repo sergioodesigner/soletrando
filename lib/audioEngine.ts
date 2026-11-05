@@ -3,40 +3,12 @@
 
 import { getCachedAudio, saveCachedAudio, getCachedAudioCount, clearCachedAudios } from './audioStorage';
 import recordedManifest from './recordedAudioManifest.json';
+import { PT_LETTER_PHONETICS } from './voice/letters';
+import { findVoiceUrl, loadVoiceManifest, noteMissingVoice } from './voice/manifest';
 import { isPiperReady, synthesizePiperPcm, pcmToWavBlob, type PiperStats } from './piperTts';
 
-// Nomes das letras para TTS do aparelho (soletrar).
-// Evitar Á/É/Ó — o sintetizador exagera o acento agudo (ex.: A de CASA virava “Á”).
-export const PT_LETTER_PHONETICS: Record<string, string> = {
-  A: 'A',
-  B: 'Bê',
-  C: 'Cê',
-  D: 'Dê',
-  E: 'E',
-  F: 'efe',
-  G: 'Gê',
-  H: 'agá',
-  I: 'I',
-  J: 'jota',
-  K: 'cá',
-  L: 'ele',
-  M: 'eme',
-  N: 'ene',
-  O: 'O',
-  P: 'Pê',
-  Q: 'quê',
-  R: 'erre',
-  S: 'esse',
-  // "Tê" maiúsculo/agudo costuma soar como inglês "tea" ou alongar demais.
-  T: 'tê',
-  U: 'U',
-  V: 'Vê',
-  W: 'dáblio',
-  // Minúsculo evita inglês "ex" / "eks".
-  X: 'xis',
-  Y: 'ípsilon',
-  Z: 'Zê'
-};
+// Nomes das letras (soletrar): fonte única em lib/voice/letters.ts
+export { PT_LETTER_PHONETICS };
 
 /** Só o toque na letra isolada (chave letra_*). "próxima letra" NÃO entra aqui. */
 export function isLetterSpeechKey(staticKey?: string): boolean {
@@ -436,6 +408,10 @@ export interface PlayAudioOptions {
   staticKey?: string;
   useKoreApi?: boolean;
   soundEnabled?: boolean;
+  /** Quem fala (fox, owl, npc…): escolhe o arquivo de voz pré-gravado desse personagem. */
+  speaker?: string;
+  /** Chave do molde do texto (com {nome}) para achar o áudio pré-gravado sem o nome. */
+  audioKey?: string;
   /** Texto único (ex.: gerado pelo tutor): não lê nem grava o cache local (IndexedDB). */
   ephemeral?: boolean;
   /** Quando a voz Faber estiver pronta, usa ela mesmo havendo MP3 gravado (exceto letras isoladas). */
@@ -471,6 +447,8 @@ export async function playSmartAudio(
     staticKey,
     useKoreApi = true,
     soundEnabled = true,
+    speaker = 'fox',
+    audioKey,
     ephemeral = false,
     preferPiper = false,
     voiceRate = 1,
@@ -515,6 +493,24 @@ export async function playSmartAudio(
 
   // Dedup preserving order
   const uniqueKeys = [...new Set(candidateKeys)];
+
+  // 0. TIER 0: voz pré-gravada do personagem (scripts/voice/generate.mjs). Vem antes de tudo.
+  if (!ephemeral) {
+    const vq = { speaker, text: cleanText, audioKey, staticKey };
+    const voiceUrl = (await loadVoiceManifest()) ? findVoiceUrl(vq) : null;
+    if (generation !== playGeneration) return;
+    if (voiceUrl) {
+      const ok = await playRecordedUrl(
+        voiceUrl,
+        generation,
+        () => onVoiceTypeUsed?.('kore_static'),
+        { onPlaybackStart, onPlaybackEnd }
+      );
+      if (ok || generation !== playGeneration) return;
+    } else {
+      noteMissingVoice(vq);
+    }
+  }
 
   // Voz dos personagens: com a Faber pronta, ela fala tudo (menos letras isoladas, que têm MP3 instantâneo)
   const piperFirst = preferPiper && isPiperReady() && !inferredLetterKey;

@@ -1,0 +1,57 @@
+name: Gerar vozes
+
+# Roda manualmente (Actions → Gerar vozes → Run workflow). Precisa do segredo OPENROUTER_API_KEY.
+on:
+  workflow_dispatch:
+    inputs:
+      group:
+        description: 'Grupo(s) separados por vírgula (vazio = tudo o que falta). Ex.: letras,palavras'
+        required: false
+        default: ''
+      redo:
+        description: 'Falas a refazer (nomes do review.html separados por vírgula)'
+        required: false
+        default: ''
+      limit:
+        description: 'Máximo de falas nesta execução (vazio = sem limite)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Gerar áudios
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          IN_GROUP: ${{ inputs.group }}
+          IN_REDO: ${{ inputs.redo }}
+          IN_LIMIT: ${{ inputs.limit }}
+        run: |
+          set -e
+          if [ -z "$OPENROUTER_API_KEY" ]; then echo "Falta o segredo OPENROUTER_API_KEY"; exit 1; fi
+          ARGS=""
+          [ -n "$IN_GROUP" ] && ARGS="$ARGS --group=$IN_GROUP"
+          [ -n "$IN_REDO" ]  && ARGS="$ARGS --redo=$IN_REDO"
+          [ -n "$IN_LIMIT" ] && ARGS="$ARGS --limit=$IN_LIMIT"
+          # exit 2 = algumas falas falharam: ainda assim publicamos o que deu certo
+          node scripts/voice/generate.mjs $ARGS || [ $? -eq 2 ]
+      - name: Enviar para um branch
+        run: |
+          git config user.name "voice-bot"
+          git config user.email "voice-bot@users.noreply.github.com"
+          BR="audio/voice-${GITHUB_RUN_NUMBER}"
+          git checkout -b "$BR"
+          rm -rf public/audio/voice/_probe
+          git add public/audio/voice scripts/voice/voices.json
+          git commit -m "audio: vozes geradas (execução ${GITHUB_RUN_NUMBER})" || { echo "Nada novo para enviar"; exit 0; }
+          git push origin "$BR"
+          echo "Branch enviado: $BR — abra um Pull Request para a main."

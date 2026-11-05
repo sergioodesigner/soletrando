@@ -11,6 +11,7 @@ import { BOSS_MIN_STARS, WORLDS, WORLD_MAP, pinUnlocked } from '@/lib/game/world
 import { pinStars } from '@/lib/game/store';
 import type { DialogueApi } from '@/lib/game/dialogue';
 import { isDpad, registerBack } from '@/lib/dpad';
+import { PH, pGanhou } from '@/lib/voice/phrases';
 import { speakerOf, type AgeId, type PinDef, type Profile, type WorldDef } from '@/lib/game/types';
 
 const PARK = { backgroundImage: 'url(/game/park.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' } as const;
@@ -37,7 +38,7 @@ interface WorldSelectProps extends TopProps {
 
 export function WorldSelect({ profile, dialogue, onPick, onAlbum, onTitle, onAge, ...top }: WorldSelectProps) {
   useEffect(() => {
-    void dialogue.say(`Para onde vamos hoje, ${profile.name}?`, { mascot: 'fox' });
+    void dialogue.say(PH.paraOndeVamos, { mascot: 'fox' });
     // só ao entrar
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -73,7 +74,7 @@ export function WorldSelect({ profile, dialogue, onPick, onAlbum, onTitle, onAge
                 type="button"
                 data-coach={`world-${w.id}`}
                 data-tv-autofocus={w.id === 'letras' ? true : undefined}
-                onClick={() => (w.locked ? void dialogue.say(w.lockedHint ?? 'Em breve!', { mascot: 'fox' }) : onPick(w))}
+                onClick={() => (w.locked ? void dialogue.say(w.lockedHint ?? PH.emBreve, { mascot: 'fox' }) : onPick(w))}
                 aria-label={`${w.name}${w.locked ? ' (trancado)' : ''}`}
                 className="absolute flex flex-col items-center"
                 style={{ left: `${spot.x}%`, top: `${spot.y}%`, transform: 'translate(-50%, -50%)' }}
@@ -177,7 +178,7 @@ export function WorldMap({
     setSel(p.index);
     setAt(p.index);
     const locked = !pinUnlocked(stars, p);
-    void dialogue.say(locked ? 'Esta fase ainda está trancada. Vença as anteriores!' : p.intro, { mascot });
+    void dialogue.say(locked ? PH.faseTrancada : p.intro, { mascot });
   };
 
   const atPin = world.pins[at] ?? world.pins[0];
@@ -292,7 +293,7 @@ export function WorldMap({
               onClick={() => {
                 setSel(null);
                 setMenu(true);
-                void dialogue.say(mascot === 'fox' ? 'Oi! O que você quer fazer?' : 'Olá! Em que posso ajudar?', { mascot });
+                void dialogue.say(mascot === 'fox' ? PH.oiFox : PH.oiOwl, { mascot });
               }}
             />
           </div>
@@ -426,16 +427,24 @@ export function ResultScreen({ world, pin, title, speech, bonusLines, ally, onTr
   const mascot = world.mascot ?? 'fox';
 
   useEffect(() => {
-    const line =
-      stars === 3
-        ? 'Perfeito! Você arrasou!'
-        : stars === 2
-          ? 'Muito bem! Quase perfeito!'
-          : 'Você conseguiu! Que tal tentar de novo para ganhar mais estrelas?';
-    const base = speech ?? `${line}${newItem !== null ? ` Olha só, você ganhou: ${itemName(newItem)}!` : ''}`;
-    void dialogue.say(ally ? `${base} ${ally.text}` : base, { mascot });
+    let cancelled = false;
+    const line = stars === 3 ? PH.estrelas3 : stars === 2 ? PH.estrelas2 : PH.estrelas1;
+    const base = speech ?? line;
+    // falas em sequência (cada uma tem o próprio áudio gravado): resultado → prêmio → aliado
+    (async () => {
+      await dialogue.say(base, { mascot });
+      if (cancelled) return;
+      if (newItem !== null && !speech) {
+        await dialogue.say(pGanhou(itemName(newItem)), { mascot });
+        if (cancelled) return;
+      }
+      if (ally) await dialogue.say(ally.text, { mascot });
+    })();
     const timers = [1, 2, 3].map((n) => setTimeout(() => setShown((s) => Math.max(s, n)), 500 * n));
-    return () => timers.forEach(clearTimeout);
+    return () => {
+      cancelled = true;
+      timers.forEach(clearTimeout);
+    };
     // só ao entrar
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

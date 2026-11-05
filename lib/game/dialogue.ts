@@ -15,6 +15,8 @@ export interface SayOptions {
   mascot: SpeakerId;
   /** Chave de áudio gravado (se houver). */
   staticKey?: string;
+  /** Chave do molde do texto (com {nome}): o áudio é gravado sem o nome do jogador. */
+  audioKey?: string;
   /** Frase única (ex.: gerada pelo Gemini): não usa o cache local. */
   ephemeral?: boolean;
   /** false = só mostra o texto digitando, sem voz. */
@@ -156,6 +158,8 @@ export function useDialogue(config: Config): DialogueApi {
         timers.push(setTimeout(() => startTyping(), cfg.current.preferPiper ? 2500 : 800));
         void playSmartAudio(text, {
           staticKey: opts.staticKey,
+          audioKey: opts.audioKey,
+          speaker: opts.mascot,
           ephemeral: opts.ephemeral,
           soundEnabled: true,
           useKoreApi: false,

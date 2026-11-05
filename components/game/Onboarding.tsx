@@ -5,8 +5,10 @@ import { Mascot } from './Mascot';
 import { DialogueBox } from './DialogueBox';
 import { AGES, MASCOTS, type AgeId, type Profile } from '@/lib/game/types';
 import type { DialogueApi } from '@/lib/game/dialogue';
-import { enablePiper, isPiperSupported, usePiperState } from '@/lib/piperTts';
+import { enablePiper, isPiperSupported, usePiperState, PIPER_ENABLED } from '@/lib/piperTts';
 import { isDpad } from '@/lib/dpad';
+import { textKey } from '@/lib/voice/ids';
+import { INTRO_TEMPLATES } from '@/lib/game/story';
 
 const PARK = { backgroundImage: 'url(/game/park.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' } as const;
 
@@ -78,7 +80,7 @@ export function ProfileScreen({ onCreate, onBack }: ProfileProps) {
   const [name, setName] = useState('');
   const [age, setAge] = useState<AgeId>('3-5');
   const piper = usePiperState();
-  const supported = typeof window !== 'undefined' && isPiperSupported();
+  const supported = PIPER_ENABLED && typeof window !== 'undefined' && isPiperSupported();
   const busy = piper.status === 'downloading' || piper.status === 'loading';
   const ready = piper.status === 'ready' && piper.enabled;
 
@@ -182,10 +184,7 @@ export function ProfileScreen({ onCreate, onBack }: ProfileProps) {
 /* ------------------------------------------------------------------ Introdução */
 
 type Who = 'fox' | 'owl';
-const script = (name: string): { who: Who; text: string }[] => [
-  { who: 'fox', text: `Oi, ${name}! Eu sou o Rufo. Um vento maluco bagunçou as letras!` },
-  { who: 'owl', text: 'Eu sou a Sofia e cuido dos números. Vamos arrumar tudo juntos?' },
-];
+const script = (name: string) => INTRO_TEMPLATES.map((l) => ({ ...l, text: l.text.replace('{nome}', name) }));
 
 interface IntroProps {
   profile: Profile;
@@ -208,7 +207,7 @@ export function IntroScreen({ profile, dialogue, onFinish }: IntroProps) {
         if (cancelled) return;
         setI(k);
         setSpeaker(lines[k].who);
-        await dialogue.say(lines[k].text, { mascot: lines[k].who });
+        await dialogue.say(lines[k].text, { mascot: lines[k].who, audioKey: textKey(INTRO_TEMPLATES[k].text) });
         if (cancelled) return;
         await new Promise((r) => setTimeout(r, 700));
       }

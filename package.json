@@ -9,7 +9,11 @@
     "lint": "eslint .",
     "clean": "next clean",
     "generate-audios": "node scripts/generate_audios_batch.mjs",
-    "generate-audios:pronuncia": "node scripts/generate_audios_batch.mjs --only=pronuncia"
+    "generate-audios:pronuncia": "node scripts/generate_audios_batch.mjs --only=pronuncia",
+    "voice:catalog": "npx --yes tsx scripts/voice/export-catalog.ts",
+    "voice:generate": "node scripts/voice/generate.mjs",
+    "voice:probe": "node scripts/voice/generate.mjs --probe",
+    "voice:info": "node scripts/voice/generate.mjs --info"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

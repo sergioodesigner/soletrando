@@ -1,0 +1,109 @@
+{
+  "_ajuda": "Preencha \"voice\" de cada personagem com um id de voz do modelo (null = voz padr\u00e3o do modelo). \"extra\" \u00e9 mesclado ao corpo da requisi\u00e7\u00e3o (ex.: {\"speed\":1.0}).",
+  "default": {
+    "voice": null,
+    "extra": {}
+  },
+  "speakers": {
+    "fox": {
+      "_nota": "Rufo, o Raposo Letrado \u2014 curioso, alegre, voz jovem e animada",
+      "voice": null,
+      "extra": {}
+    },
+    "owl": {
+      "_nota": "Sofia, a Coruja \u2014 s\u00e1bia, calma e carinhosa, voz feminina suave",
+      "voice": null,
+      "extra": {}
+    },
+    "borrao": {
+      "_nota": "Drag\u00e3o Borr\u00e3o \u2014 travesso, voz grave e brincalhona (nada assustadora)",
+      "voice": null,
+      "extra": {}
+    },
+    "hidra": {
+      "_nota": "Hidra das Contas \u2014 voz aguda, animada e engra\u00e7ada",
+      "voice": null,
+      "extra": {}
+    },
+    "tiao": {
+      "_nota": "Seu Ti\u00e3o (npc)",
+      "voice": null,
+      "extra": {}
+    },
+    "rosa": {
+      "_nota": "Dona Rosa (npc)",
+      "voice": null,
+      "extra": {}
+    },
+    "moa": {
+      "_nota": "Seu Moa (npc)",
+      "voice": null,
+      "extra": {}
+    },
+    "bia": {
+      "_nota": "Guarda Bia (npc)",
+      "voice": null,
+      "extra": {}
+    },
+    "lia": {
+      "_nota": "Dona Lia (npc)",
+      "voice": null,
+      "extra": {}
+    },
+    "beto": {
+      "_nota": "Seu Beto (npc)",
+      "voice": null,
+      "extra": {}
+    },
+    "bento": {
+      "_nota": "Velho Bento (npc)",
+      "voice": null,
+      "extra": {}
+    },
+    "rei": {
+      "_nota": "Rei Bartolomeu (npc)",
+      "voice": null,
+      "extra": {}
+    },
+    "nico": {
+      "_nota": "Capit\u00e3o Nico (npc)",
+      "voice": null,
+      "extra": {}
+    },
+    "olivia": {
+      "_nota": "Dona Ol\u00edvia (npc)",
+      "voice": null,
+      "extra": {}
+    },
+    "dimitri": {
+      "_nota": "Dimitri (npc)",
+      "voice": null,
+      "extra": {}
+    },
+    "teo": {
+      "_nota": "Faroleiro Teo (npc)",
+      "voice": null,
+      "extra": {}
+    },
+    "ariadne": {
+      "_nota": "Ariadne (npc)",
+      "voice": null,
+      "extra": {}
+    },
+    "pan": {
+      "_nota": "Corredor Pan (npc)",
+      "voice": null,
+      "extra": {}
+    },
+    "selene": {
+      "_nota": "S\u00e1bia Selene (npc)",
+      "voice": null,
+      "extra": {}
+    },
+    "zenon": {
+      "_nota": "Z\u00eanon (npc)",
+      "voice": null,
+      "extra": {}
+    }
+  }
+}

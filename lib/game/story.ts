@@ -147,4 +147,10 @@ export const sceneBg = (scene?: string) => ({
   backgroundPosition: 'center',
 });
 
+/** Introdução (2 falas). `{nome}` vira o nome da criança na tela; a voz é gravada sem o nome. */
+export const INTRO_TEMPLATES: { who: 'fox' | 'owl'; text: string }[] = [
+  { who: 'fox', text: 'Oi, {nome}! Eu sou o Rufo. Um vento maluco bagunçou as letras!' },
+  { who: 'owl', text: 'Eu sou a Sofia e cuido dos números. Vamos arrumar tudo juntos?' },
+];
+
 export const fillName = (text: string, name: string) => text.replaceAll('{nome}', name);

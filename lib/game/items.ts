@@ -19,7 +19,7 @@ export const ITEM_NAMES: Record<number, string> = {
 };
 
 /** Figurinhas da Grécia (índices 100+): public/game/stickers/*.png */
-const GREEK: Record<number, [string, string]> = {
+export const GREEK: Record<number, [string, string]> = {
   100: ['owl', 'Coruja de Atena'],
   101: ['amphora', 'Ânfora'],
   102: ['laurel', 'Coroa de Louro'],

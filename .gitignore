@@ -18,3 +18,8 @@ out/
 
 # test / coverage
 coverage/
+
+# vozes: sondagens e falhas locais
+public/audio/voice/_probe/
+public/audio/voice/.tmp.pcm
+scripts/voice/failed.json

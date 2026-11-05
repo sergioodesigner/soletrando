@@ -10,6 +10,8 @@ import { memoryDeck, memoryPairs, type MemoryCard } from '@/lib/game/content';
 import { speakerOf, type AgeId, type MascotId, type SpeakerId } from '@/lib/game/types';
 import type { DialogueApi } from '@/lib/game/dialogue';
 import { isDpad } from '@/lib/dpad';
+import { PH } from '@/lib/voice/phrases';
+import { textKey } from '@/lib/voice/ids';
 
 const PARK = { backgroundImage: 'url(/game/park.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' } as const;
 
@@ -100,7 +102,7 @@ export function SceneScreen({ title, scene, lines, npc, mascot, playerName, dial
       for (let k = 0; k < lines.length; k++) {
         if (cancelled) return;
         setI(k);
-        await dialogue.say(fillName(lines[k].text, playerName), { mascot: lines[k].who });
+        await dialogue.say(fillName(lines[k].text, playerName), { mascot: lines[k].who, audioKey: textKey(lines[k].text) });
         if (cancelled) return;
         await new Promise((r) => setTimeout(r, 650));
       }
@@ -182,10 +184,10 @@ export function MemoryScreen({ subject, age, mascot, dialogue, onFinish, onBack,
   useEffect(() => {
     void dialogue.say(
       subject === 'letras'
-        ? 'Jogo da Memória! Ache a figura e a palavra que combinam.'
+        ? PH.memoriaLetras
         : age === '3-5'
-          ? 'Jogo da Memória! Ache o número e a quantidade que combinam.'
-          : 'Jogo da Memória! Ache cada conta e o resultado dela.',
+          ? PH.memoriaNumeros
+          : PH.memoriaContas,
       { mascot }
     );
     return () => dialogue.stop();

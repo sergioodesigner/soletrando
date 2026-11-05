@@ -23,6 +23,8 @@ import { pinUnlocked, starsFor, WORLDS } from '@/lib/game/worlds';
 import { askBrain, FALLBACK_FACTS, type BrainRequest } from '@/lib/brain';
 import { usePiperState } from '@/lib/piperTts';
 import { isDpad, registerBack, setAdvanceHandler } from '@/lib/dpad';
+import { PH } from '@/lib/voice/phrases';
+import { textKey } from '@/lib/voice/ids';
 import { focusFirstTvControl } from '@/lib/tvSpatialNav';
 
 type Phase = 'title' | 'profile' | 'intro' | 'worlds' | 'map' | 'sceneOpen' | 'play' | 'sceneClose' | 'result' | 'album' | 'memory';
@@ -189,7 +191,7 @@ export function GameRoot({
       const data: ResultData = {
         variant: 'training', stars: perfect ? 3 : wins >= 2 ? 2 : 1, coins, newItem: null,
         title: 'TREINO CUMPRIDO!',
-        speech: perfect ? 'Treino perfeito! Você acertou tudo sem errar!' : 'Bom treino! Praticando você fica cada vez melhor!',
+        speech: perfect ? PH.treinoPerfeito : PH.treinoBom,
         bonusLines: perfect ? [`Bônus de treino perfeito: +${coins} moedas`] : [`Treino concluído: +${coins} moedas`],
       };
       setResult(data);
@@ -355,7 +357,7 @@ export function GameRoot({
       setResult({
         variant: 'memory', stars: r.perfect ? 3 : r.moves <= r.pairs * 2 ? 2 : 1, coins, newItem: null,
         title: 'MEMÓRIA COMPLETA!',
-        speech: r.perfect ? 'Que memória incrível! Você achou todos os pares com pouquíssimas jogadas!' : 'Muito bem! Você achou todos os pares!',
+        speech: r.perfect ? PH.memoriaPerfeita : PH.memoriaBoa,
         bonusLines: [`Bônus da memória: +${coins} moedas`, `Jogadas: ${r.moves}`],
       });
       setPin(null);
@@ -478,7 +480,7 @@ export function GameRoot({
     if (phase !== 'play' || !openingLine.current || !profile) return;
     const line = openingLine.current;
     openingLine.current = null;
-    const p = dialogue.say(fillName(line.text, profile.name), { mascot: line.who });
+    const p = dialogue.say(fillName(line.text, profile.name), { mascot: line.who, audioKey: textKey(line.text) });
     openingRef.current = p;
     void p.finally(() => {
       if (openingRef.current === p) openingRef.current = null;
@@ -724,7 +726,7 @@ export function GameRoot({
                   className="shrink-0"
                   data-coach="mascot-play"
                   onClick={() => {
-                    void dialogue.say('Estou aqui com você! Toque no "?" azul se quiser rever as explicações.', { mascot: mascotId });
+                    void dialogue.say(PH.aquiComVoce, { mascot: mascotId });
                   }}
                 />
               ) : (

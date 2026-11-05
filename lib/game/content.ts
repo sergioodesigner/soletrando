@@ -91,7 +91,7 @@ export interface MathItem {
   explanation?: string;
 }
 
-const NUM_M = ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez'];
+export const NUM_M = ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez'];
 const NUM_F = ['zero', 'uma', 'duas', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez'];
 
 interface Theme { emoji: string; noun: string; g: 'm' | 'f' }
@@ -180,6 +180,18 @@ const GREECE: { theme: Theme; specs: Spec[] }[] = [
   { theme: { emoji: '🐲', noun: 'cabeças da Hidra', g: 'f' }, specs: [['count', 5], ['add', 2, 3], ['sub', 5, 2], ['next', 8], ['count', 3], ['add', 4, 4], ['sub', 9, 4], ['add', 5, 5]] },
 ];
 
+/** Todas as contas possíveis do Nível Aprendiz (inclui as do Momento Treino): usado pelo catálogo de vozes. */
+export function allMathItems(): MathItem[] {
+  const out: MathItem[] = [];
+  GREECE.forEach((g, gi) => g.specs.forEach((spec, si) => out.push(build(`g35-all-${gi}-${si}`, g.theme, spec))));
+  return out;
+}
+
+/** Todas as palavras do Nível Aprendiz (por fase + treino). */
+export function allContentWords(): WordItem[] {
+  return Object.values(WORD_BANK);
+}
+
 export function pinMath(pinIndex: number, age: AgeId): MathItem[] | null {
   if (age !== '3-5') return null;
   const g = GREECE[pinIndex];
@@ -243,7 +255,7 @@ export interface MemoryCard {
   say: string;
 }
 
-const MEM_LETRAS: { icon: string; word: string; say: string }[] = [
+export const MEM_LETRAS: { icon: string; word: string; say: string }[] = [
   { icon: '/game/items/item14.png', word: 'LEITE', say: 'Leite!' },
   { icon: '/game/items/item17.png', word: 'BOLO', say: 'Bolo!' },
   { icon: '/game/items/item31.png', word: 'OVO', say: 'Ovo!' },

@@ -29,6 +29,12 @@ export const PIPER_MODEL_CACHE = 'aprender-piper-model-v1';
 const ENABLED_KEY = 'aprender_piper_enabled_v1';
 const WORKER_URL = '/piper/piper-worker.js';
 
+/**
+ * Voz Faber (Piper) no navegador: EM STANDBY. O jogo usa as vozes pré-gravadas (scripts/voice).
+ * Para reativar: NEXT_PUBLIC_ENABLE_PIPER=1 no ambiente de build.
+ */
+export const PIPER_ENABLED = process.env.NEXT_PUBLIC_ENABLE_PIPER === '1';
+
 export type PiperStatus = 'idle' | 'downloading' | 'loading' | 'ready' | 'error';
 
 export interface PiperState {
@@ -250,7 +256,7 @@ let booted = false;
  * já está no aparelho, carrega em segundo plano — sem nenhuma chamada de rede para o modelo.
  */
 export async function bootPiper(): Promise<void> {
-  if (booted || !isPiperSupported()) return;
+  if (!PIPER_ENABLED || booted || !isPiperSupported()) return;
   booted = true;
   const enabled = readEnabledFlag();
   const cached = await checkModelCached();

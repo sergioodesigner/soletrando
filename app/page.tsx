@@ -44,13 +44,14 @@ import {
 } from '@/lib/audioEngine';
 import { askBrain, readBrainEnabled, writeBrainEnabled, testBrain, BRAIN_REASON_LABEL, type BrainRequest, type BrainTestResult } from '@/lib/brain';
 import { GameRoot, type StageCtx, type StartCtx } from '@/components/game/GameRoot';
-import { CONTENT_SPEECH } from '@/lib/game/content';
 import { setClassicMode, resetCoach, useGameData } from '@/lib/game/store';
 import { installAudioUnlock, testPiperVoice } from '@/lib/audioEngine';
+import { loadVoiceManifest, voiceManifestInfo, getMissingVoices, clearMissingVoices } from '@/lib/voice/manifest';
 import type { WorldDef, PinDef } from '@/lib/game/types';
 import {
   usePiperState,
   bootPiper,
+  PIPER_ENABLED,
   enablePiper,
   disablePiper,
   removePiperModel,
@@ -61,360 +62,21 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useTvMode } from '@/hooks/useTvMode';
 import { initTvSpatialNavigation, focusFirstTvControl } from '@/lib/tvSpatialNav';
 import { registerBack } from '@/lib/dpad';
+import {
+  PH, pProximaLetra, pPalavra, pPista, pSoletre, pDesafio, pCompletou, pDicaTipo, pDicaBloqueia,
+  pParabensResposta, pRespostaCerta, pDicaParidade, pDica2Paridade,
+} from '@/lib/voice/phrases';
+import {
+  INITIAL_WORDS, MATH_PROBLEMS, formatWordForSpeech, normalizeWord,
+  type AgeGroup, type Subject, type WordChallenge, type MathProblem,
+} from '@/lib/game/data';
 
-// Normalize word to uppercase, remove accents and special chars
-const normalizeWord = (w: string) => 
-  w.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim().replace(/[^A-Z]/g, '');
-
-// Ortografia falada (acentos + respelling) para o TTS acertar a sílaba tônica / o som.
-// Chave = palavra do jogo (sem acento). Valor = como deve soar na narração.
-const SPEECH_WORD_FORMS: Record<string, string> = {
-  METAFORA: 'Metáfora',
-  HIPOTESE: 'Hipótese',
-  // "Paradoxo" sozinho o TTS costuma ler o X como "ch"; "quiso" força /ks/.
-  PARADOXO: 'Paradóquiso',
-  CONSCIENCIA: 'Consciência',
-  RESILIENCIA: 'Resiliência',
-  ATMOSFERA: 'Atmosfera'
-};
-
-// Formats uppercase word for natural Brazilian Portuguese TTS
-const formatWordForSpeech = (w: string): string => {
-  if (!w) return '';
-  const upper = w.trim().toUpperCase();
-  if (SPEECH_WORD_FORMS[upper]) return SPEECH_WORD_FORMS[upper];
-  if (CONTENT_SPEECH[upper]) return CONTENT_SPEECH[upper];
-  const clean = w.trim();
-  return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
-};
-
-// Types
-type AgeGroup = '3-5' | '6-8' | '9-11' | '12-14';
-type Subject = 'letras' | 'matematica';
 
 interface LetterItem {
   id: string;
   char: string;
   isTarget: boolean;
 }
-
-interface WordChallenge {
-  word: string;
-  clue?: string;
-  /** Frase de exemplo (gerada pelo cérebro de texto) falada ao completar a palavra. */
-  sentence?: string;
-}
-
-interface MathProblem {
-  id: string;
-  question: string;
-  speechText: string;
-  visualItems?: { emoji: string; total: number };
-  visualSum?: { count1: number; emoji1: string; count2: number; emoji2: string };
-  hint: string;
-  options: (number | string)[];
-  answer: number | string;
-  explanation?: string;
-}
-
-// Initial Preset Words by Age Group
-const INITIAL_WORDS: Record<AgeGroup, WordChallenge[]> = {
-  '3-5': [
-    { word: 'BOLA' },
-    { word: 'GATO' },
-    { word: 'CASA' },
-    { word: 'SOL' },
-    { word: 'PATO' },
-    { word: 'PEIXE' },
-    { word: 'DADO' },
-    { word: 'URSO' },
-    { word: 'LUA' },
-    { word: 'SAPO' },
-    { word: 'MAMA' },
-    { word: 'PAPA' }
-  ],
-  '6-8': [
-    { word: 'ESCOLA', clue: 'Lugar onde aprendemos e brincamos' },
-    { word: 'PIPOCA', clue: 'Lanche crocante que estoura na panela' },
-    { word: 'JANELA', clue: 'Abre para ver a luz do sol e o vento' },
-    { word: 'AMIZADE', clue: 'O carinho sincero entre amigos' },
-    { word: 'FOGUETE', clue: 'Voa alto em direção às estrelas' },
-    { word: 'CANETA', clue: 'Usada para escrever no caderno' },
-    { word: 'CAVALO', clue: 'Animal forte e veloz' },
-    { word: 'ESTRELA', clue: 'Brilha no céu durante a noite' },
-    { word: 'JARDIM', clue: 'Cheio de flores e plantas coloridas' }
-  ],
-  '9-11': [
-    { word: 'DINOSSAURO', clue: 'Criaturas gigantes que habitaram a Terra no passado' },
-    { word: 'AVENTURA', clue: 'Uma emocionante viagem cheia de desafios' },
-    { word: 'UNIVERSO', clue: 'A imensidão com todos os planetas e galáxias' },
-    { word: 'CORAGEM', clue: 'Força interior para enfrentar o desconhecido' },
-    { word: 'NATUREZA', clue: 'O conjunto de florestas, rios, oceanos e animais' },
-    { word: 'BRILHANTE', clue: 'Algo que reflete muita luz ou muito inteligente' },
-    { word: 'BORBOLETA', clue: 'Inseto gracioso que passa por metamorfose' },
-    { word: 'PLANETA', clue: 'Corpo celeste como a Terra, Marte ou Júpiter' }
-  ],
-  '12-14': [
-    { word: 'METAFORA', clue: 'Figura de linguagem com comparação implícita' },
-    { word: 'CONSCIENCIA', clue: 'Capacidade de perceber e julgar a própria mente' },
-    { word: 'PARADOXO', clue: 'Ideia que desafia a lógica comum com sentidos opostos' },
-    { word: 'ATMOSFERA', clue: 'Camada de gases que envolve e protege nosso planeta' },
-    { word: 'HIPOTESE', clue: 'Suposição formulada para ser comprovada por experimentos' },
-    { word: 'LABIRINTO', clue: 'Estrutura complexa de caminhos que desafia o raciocínio' },
-    { word: 'RESILIENCIA', clue: 'Habilidade de se adaptar e superar momentos difíceis' },
-    { word: 'FILOSOFIA', clue: 'Investigação profunda sobre a existência, mente e verdade' }
-  ]
-};
-
-// Math Problems by Age Group
-const MATH_PROBLEMS: Record<AgeGroup, MathProblem[]> = {
-  '3-5': [
-    {
-      id: 'm3-1',
-      question: 'Quantas maçãs você vê?',
-      speechText: 'Quantas maçãs você vê? Toque nas maçãs para contar!',
-      visualItems: { emoji: '🍎', total: 3 },
-      hint: 'Toque em cada maçã para contar: 1, 2, 3!',
-      options: [1, 2, 3, 4, 5, 6],
-      answer: 3
-    },
-    {
-      id: 'm3-2',
-      question: 'Quantas estrelinhas estão brilhando?',
-      speechText: 'Quantas estrelinhas estão brilhando? Vamos contar!',
-      visualItems: { emoji: '⭐', total: 5 },
-      hint: 'Conte devagarzinho: 1, 2, 3, 4, 5 estrelas!',
-      options: [2, 3, 4, 5, 6, 7],
-      answer: 5
-    },
-    {
-      id: 'm3-3',
-      question: 'Quantos carrinhos você vê?',
-      speechText: 'Quantos carrinhos você vê aqui na tela?',
-      visualItems: { emoji: '🚗', total: 2 },
-      hint: 'Tem 1 e depois 2!',
-      options: [1, 2, 3, 4, 5, 6],
-      answer: 2
-    },
-    {
-      id: 'm3-4',
-      question: 'Quantos balões coloridos temos?',
-      speechText: 'Quantos balões coloridos estão flutuando?',
-      visualItems: { emoji: '🎈', total: 4 },
-      hint: 'São quatro balões: 1, 2, 3, 4!',
-      options: [1, 2, 3, 4, 5, 6],
-      answer: 4
-    },
-    {
-      id: 'm3-5',
-      question: 'Quantos gatinhos no total?',
-      speechText: 'Dois gatinhos mais um gatinho. Quantos gatinhos ficam?',
-      visualSum: { count1: 2, emoji1: '🐱', count2: 1, emoji2: '🐱' },
-      hint: 'Junte 2 gatinhos com mais 1 gatinho = 3 gatinhos!',
-      options: [1, 2, 3, 4, 5, 6],
-      answer: 3
-    },
-    {
-      id: 'm3-6',
-      question: 'Quantos cachorrinhos no total?',
-      speechText: 'Um cachorrinho mais um cachorrinho. Quanto dá?',
-      visualSum: { count1: 1, emoji1: '🐶', count2: 1, emoji2: '🐶' },
-      hint: '1 mais 1 é igual a 2!',
-      options: [1, 2, 3, 4, 5, 6],
-      answer: 2
-    },
-    {
-      id: 'm3-7',
-      question: 'Quantos sóis você vê no céu?',
-      speechText: 'Quantos sóis você vê no céu?',
-      visualItems: { emoji: '☀️', total: 1 },
-      hint: 'Temos apenas um sol radiante!',
-      options: [1, 2, 3, 4, 5, 6],
-      answer: 1
-    }
-  ],
-  '6-8': [
-    {
-      id: 'm6-1',
-      question: '5 + 4 = ?',
-      speechText: 'Quanto é 5 mais 4?',
-      hint: 'Pense: 5 mais 5 é 10, então 5 mais 4 é 9!',
-      options: [7, 8, 9, 10, 11, 6],
-      answer: 9
-    },
-    {
-      id: 'm6-2',
-      question: '8 + 7 = ?',
-      speechText: 'Quanto é 8 mais 7?',
-      hint: '8 mais 2 é 10, com mais 5 dá 15!',
-      options: [13, 14, 15, 16, 17, 12],
-      answer: 15
-    },
-    {
-      id: 'm6-3',
-      question: '10 - 4 = ?',
-      speechText: 'Se você tem 10 e tira 4, quanto sobra?',
-      hint: 'Conte voltando de 10 tirando 4: 9, 8, 7, 6!',
-      options: [4, 5, 6, 7, 8, 9],
-      answer: 6
-    },
-    {
-      id: 'm6-4',
-      question: '14 - 6 = ?',
-      speechText: 'Quanto é 14 menos 6?',
-      hint: '14 menos 4 é 10, menos 2 é 8!',
-      options: [6, 7, 8, 9, 10, 5],
-      answer: 8
-    },
-    {
-      id: 'm6-5',
-      question: '2, 4, 6, [ ? ]',
-      speechText: 'Complete a sequência de 2 em 2: 2, 4, 6, e o próximo?',
-      hint: 'Estamos contando de 2 em 2. Depois de 6 vem o 8!',
-      options: [5, 6, 7, 8, 9, 10],
-      answer: 8
-    },
-    {
-      id: 'm6-6',
-      question: 'Quanto falta para 10 se você tem 7?',
-      speechText: 'Se você tem 7, quantos faltam para chegar no 10?',
-      hint: '7 mais 3 dá 10!',
-      options: [1, 2, 3, 4, 5, 6],
-      answer: 3
-    },
-    {
-      id: 'm6-7',
-      question: '6 + 6 = ?',
-      speechText: 'Qual é o dobro de 6? 6 mais 6!',
-      hint: '6 mais 6 é uma dúzia: 12!',
-      options: [9, 10, 11, 12, 13, 14],
-      answer: 12
-    }
-  ],
-  '9-11': [
-    {
-      id: 'm9-1',
-      question: '7 × 8 = ?',
-      speechText: 'Quanto é 7 vezes 8?',
-      hint: 'Lembre-se da tabuada: 7 vezes 7 é 49. Some mais 7 e terá 56!',
-      options: [48, 52, 54, 56, 58, 64],
-      answer: 56
-    },
-    {
-      id: 'm9-2',
-      question: '6 × 9 = ?',
-      speechText: 'Quanto é 6 vezes 9?',
-      hint: '6 vezes 10 é 60. Subtraia 6 e você terá 54!',
-      options: [48, 50, 52, 54, 56, 63],
-      answer: 54
-    },
-    {
-      id: 'm9-3',
-      question: '48 ÷ 6 = ?',
-      speechText: 'Quanto é 48 dividido por 6?',
-      hint: 'Qual número multiplicado por 6 dá 48? É o 8!',
-      options: [5, 6, 7, 8, 9, 10],
-      answer: 8
-    },
-    {
-      id: 'm9-4',
-      question: '72 ÷ 9 = ?',
-      speechText: 'Quanto é 72 dividido por 9?',
-      hint: 'Pense: 9 vezes quanto é igual a 72? É o 8!',
-      options: [6, 7, 8, 9, 10, 11],
-      answer: 8
-    },
-    {
-      id: 'm9-5',
-      question: '45 + 38 = ?',
-      speechText: 'Quanto é 45 mais 38?',
-      hint: '45 mais 30 dá 75, mais 8 resulta em 83!',
-      options: [79, 81, 83, 85, 87, 73],
-      answer: 83
-    },
-    {
-      id: 'm9-6',
-      question: '100 - 37 = ?',
-      speechText: 'Quanto é 100 menos 37?',
-      hint: '100 menos 30 dá 70. 70 menos 7 dá 63!',
-      options: [57, 60, 63, 67, 70, 73],
-      answer: 63
-    },
-    {
-      id: 'm9-7',
-      question: 'Qual é o dobro de 18?',
-      speechText: 'Qual é o dobro de 18?',
-      hint: '18 vezes 2: 10x2=20 mais 8x2=16 -> 36!',
-      options: [30, 32, 34, 36, 38, 40],
-      answer: 36
-    }
-  ],
-  '12-14': [
-    {
-      id: 'm12-1',
-      question: 'x + 9 = 24. Quanto vale x?',
-      speechText: 'Se x mais 9 é igual a 24, qual é o valor de x?',
-      hint: 'Isole o x: subtraia 9 de 24. x = 24 - 9 = 15!',
-      options: [11, 12, 13, 14, 15, 16],
-      answer: 15,
-      explanation: 'x = 24 - 9 = 15'
-    },
-    {
-      id: 'm12-2',
-      question: 'Quanto é 25% de 80?',
-      speechText: 'Quanto é vinte e cinco por cento de oitenta?',
-      hint: '25% é o mesmo que dividir por 4. 80 ÷ 4 = 20!',
-      options: [10, 15, 20, 25, 30, 40],
-      answer: 20,
-      explanation: '80 ÷ 4 = 20'
-    },
-    {
-      id: 'm12-3',
-      question: 'Qual o valor de 3³ (3 ao cubo)?',
-      speechText: 'Qual o valor de 3 elevado a 3?',
-      hint: 'Multiplique 3 por ele mesmo 3 vezes: 3 × 3 = 9, e 9 × 3 = 27!',
-      options: [9, 18, 21, 27, 36, 81],
-      answer: 27,
-      explanation: '3 × 3 × 3 = 27'
-    },
-    {
-      id: 'm12-4',
-      question: 'Qual é a raiz quadrada de 144 (√144)?',
-      speechText: 'Qual é a raiz quadrada de 144?',
-      hint: 'Qual número multiplicado por ele mesmo dá 144? 12 × 12 = 144!',
-      options: [10, 11, 12, 13, 14, 16],
-      answer: 12,
-      explanation: '12 × 12 = 144'
-    },
-    {
-      id: 'm12-5',
-      question: 'Qual o resultado de 1/2 + 1/4?',
-      speechText: 'Quanto é a fração um meio mais um quarto?',
-      hint: '1/2 equivale a 2/4. Somando 2/4 + 1/4 obtemos 3/4!',
-      options: ['1/4', '2/6', '1/2', '3/4', '2/4', '1/8'],
-      answer: '3/4',
-      explanation: '2/4 + 1/4 = 3/4'
-    },
-    {
-      id: 'm12-6',
-      question: '2x - 4 = 16. Quanto vale x?',
-      speechText: 'Se 2x menos 4 é igual a 16, qual é o valor de x?',
-      hint: 'Some 4 aos dois lados: 2x = 20. Divida por 2: x = 10!',
-      options: [6, 8, 9, 10, 12, 14],
-      answer: 10,
-      explanation: '2x = 20 -> x = 10'
-    },
-    {
-      id: 'm12-7',
-      question: 'Se 3 livros custam R$ 15, quanto custam 6 livros?',
-      speechText: 'Se 3 livros custam 15 reais, quanto custam 6 livros?',
-      hint: '6 livros é o dobro de 3, logo o preço é o dobro de 15: R$ 30!',
-      options: ['R$ 20', 'R$ 25', 'R$ 30', 'R$ 35', 'R$ 40', 'R$ 45'],
-      answer: 'R$ 30',
-      explanation: 'Dobro da quantidade = dobro do valor'
-    }
-  ]
-};
 
 // Vowels for hint system
 const PT_VOWELS = new Set(['A','E','I','O','U']);
@@ -1113,9 +775,7 @@ function LettersStage({
 
 
   // Question speech prompt text
-  const questionSpeechText = wordObj.clue
-    ? `Desafio de Soletrar! Pista: ${wordObj.clue}. Qual é a palavra? É ${formatWordForSpeech(currentWord)}! Toque nas letras para soletrar.`
-    : `Desafio de Soletrar! Soletre a palavra: ${formatWordForSpeech(currentWord)}! Toque nas letras na ordem certa para formar a palavra.`;
+  const questionSpeechText = pDesafio(formatWordForSpeech(currentWord), wordObj.clue);
 
   useEffect(() => {
     if (!tvMode) return;
@@ -1135,7 +795,7 @@ function LettersStage({
   const handleSpeakFullWord = () => {
     playSoundFx('pop');
     const slug = currentWord.toLowerCase();
-    speakAudio(`Palavra: ${formatWordForSpeech(currentWord)}!`, `palavra_${slug}`);
+    speakAudio(pPalavra(formatWordForSpeech(currentWord)), `palavra_${slug}`);
   };
 
   // Modo RPG: ao começar cada palavra o mascote já diz qual é (e o texto aparece no balão)
@@ -1144,8 +804,8 @@ function LettersStage({
     const t = setTimeout(
       () =>
         wordObj.clue
-          ? speakAudio(`Soletre ${formatWordForSpeech(currentWord)}! Pista: ${wordObj.clue}.`)
-          : speakAudio(`Palavra: ${formatWordForSpeech(currentWord)}!`, `palavra_${currentWord.toLowerCase()}`),
+          ? speakAudio(pSoletre(formatWordForSpeech(currentWord), wordObj.clue))
+          : speakAudio(pPalavra(formatWordForSpeech(currentWord)), `palavra_${currentWord.toLowerCase()}`),
       600
     );
     return () => clearTimeout(t);
@@ -1159,7 +819,7 @@ function LettersStage({
     const upper = expectedChar.toUpperCase();
     const phonetic = PT_LETTER_PHONETICS[upper] || upper;
     const staticKey = `proxima_letra_${upper.toLowerCase()}`;
-    speakAudio(`A próxima letra é ${phonetic}!`, staticKey);
+    speakAudio(pProximaLetra(phonetic), staticKey);
   };
 
   const handleLetterClick = (item: LetterItem) => {
@@ -1189,7 +849,7 @@ function LettersStage({
         });
         setTimeout(() => {
           speakAudio(
-            `Muito bem! Você completou a palavra ${formatWordForSpeech(currentWord)}!${wordObj.sentence ? ` ${wordObj.sentence}` : ''}`,
+            `${pCompletou(formatWordForSpeech(currentWord))}${wordObj.sentence ? ` ${wordObj.sentence}` : ''}`,
             `completou_${currentWord.toLowerCase()}`
           );
         }, 500);
@@ -1214,7 +874,7 @@ function LettersStage({
       // Se já usou 2ª dica e errou 4+ vezes → pula a palavra
       if (hintLevel >= 2 && newWrongCount >= 4) {
         setIsLetterCelebrating(true);
-        speakAudio('Vamos tentar essa palavra de novo mais tarde!', 'pula_palavra');
+        speakAudio(PH.pulaPalavra, 'pula_palavra');
         onGiveUp?.();
         setTimeout(() => { onNextWord(); }, 2200);
       } else if (newWrongCount >= 2 && newWrongCount % 2 === 0) {
@@ -1239,12 +899,12 @@ function LettersStage({
     if (ageGroup === '3-5') {
       // Mini-desafio de traçado + áudio da dica
       setShowTracingModal(true);
-      speakAudio('Olha a letra brilhando! Trace o caminho com o dedinho!', 'dica_brilho');
+      speakAudio(PH.dicaBrilhoTraco, 'dica_brilho');
     } else {
       // 6-8, 9-11, 12-14: fala vogal ou consoante
       const upper = expectedChar.toUpperCase();
       const tipo = isVowel(upper) ? 'vogal' : 'consoante';
-      speakAudio(`Dica: A próxima letra é uma ${tipo}!`, `dica_tipo_${tipo}`);
+      speakAudio(pDicaTipo(tipo), `dica_tipo_${tipo}`);
     }
   };
 
@@ -1260,7 +920,7 @@ function LettersStage({
         setHintLetterId(target.id);
         setTimeout(() => setHintLetterId(null), 3000);
       }
-      speakAudio('Olha a letra brilhando!', 'dica_brilho');
+      speakAudio(PH.dicaBrilho, 'dica_brilho');
     } else {
       // 6-8, 9-11, 12-14: bloqueia letras do tipo oposto
       const upper = expectedChar.toUpperCase();
@@ -1271,7 +931,7 @@ function LettersStage({
         .map(x => x.id);
       setDisabledByHint(toDisable);
       const tipo = expectedIsVowel ? 'vogal' : 'consoante';
-      speakAudio(`Dica: É uma ${tipo}! As outras letras do tipo errado ficaram bloqueadas.`, `dica_bloqueia_${tipo}`);
+      speakAudio(pDicaBloqueia(tipo), `dica_bloqueia_${tipo}`);
     }
   };
 
@@ -1283,7 +943,7 @@ function LettersStage({
       setHintLetterId(target.id);
       setTimeout(() => setHintLetterId(null), 3000);
     }
-    speakAudio('Muito bem! Agora você sabe qual letra é. Encontre ela!', 'dica_tracado_ok');
+    speakAudio(PH.tracadoOk, 'dica_tracado_ok');
   };
 
   return (
@@ -1309,7 +969,7 @@ function LettersStage({
               onClick={() => {
                 playSoundFx('pop');
                 const slug = currentWord.toLowerCase();
-                speakAudio(`Pista: ${wordObj.clue}`, `pista_${slug}`);
+                speakAudio(pPista(wordObj.clue as string), `pista_${slug}`);
               }}
               className="p-1 rounded-full bg-white text-indigo-600 hover:bg-indigo-100 transition-colors shrink-0 shadow-2xs"
               title="Ouvir apenas a pista"
@@ -2319,7 +1979,7 @@ function MathStage({
         origin: { y: 0.6 },
         colors: ['#38bdf8', '#4ade80', '#facc15', '#f43f5e']
       });
-      speakAudio(`Parabéns! Resposta correta: ${opt}!`, 'parabens_acertou');
+      speakAudio(pParabensResposta(opt), 'parabens_acertou');
       setTimeout(() => {
         onNextProblem();
       }, 2500);
@@ -2337,13 +1997,13 @@ function MathStage({
     if (nextAttempts >= MAX_ATTEMPTS) {
       // Não revela a resposta — pula e agenda para outra oportunidade
       setIsMathCelebrating(true);
-      speakAudio('Vamos tentar essa de novo mais tarde! Próxima pergunta!');
+      speakAudio(PH.mathDepois);
       onGiveUp?.();
       setTimeout(() => {
         onMissProblem();
       }, 2200);
     } else {
-      const canned = () => speakAudio('Tente de novo! Você tem mais uma chance!', 'tente_de_novo');
+      const canned = () => speakAudio(PH.tenteDeNovo, 'tente_de_novo');
       if (nextAttempts >= 2) {
         // Do 2º erro em diante: explicação do tutor (Gemini escreve, Piper fala); se não vier, fala o padrão
         void askTutor({
@@ -2378,18 +2038,18 @@ function MathStage({
       const challengeConfig = getMathChallengeConfig(problem);
       if (challengeConfig) {
         setShowInteractiveMathModal(true);
-        speakAudio('Vamos resolver juntos com um desafio divertido!', 'dica_math_interativa');
+        speakAudio(PH.mathInterativa, 'dica_math_interativa');
       } else if (ageGroup === '3-5' || ageGroup === '6-8') {
         const wrong = shuffledOptions.filter(o => o !== problem.answer && !disabledOptions.includes(o));
         if (wrong.length > 0) {
           setDisabledOptions(prev => [...prev, wrong[0]]);
-          speakAudio('Dica: Essa resposta não está certa! Tente as outras.', 'math_dica_elimina');
+          speakAudio(PH.mathElimina, 'math_dica_elimina');
         }
       } else {
         const ans = Number(problem.answer);
         if (!isNaN(ans)) {
           const tipo = ans % 2 === 0 ? 'par' : 'impar';
-          speakAudio(`Dica: A resposta é um número ${tipo === 'par' ? 'par' : 'ímpar'}!`, `math_dica_paridade_${tipo}`);
+          speakAudio(pDicaParidade(tipo), `math_dica_paridade_${tipo}`);
           setMathHintActive(true);
         } else {
           speakAudio(problem.hint, `math_dica_${problem.id}`);
@@ -2401,14 +2061,14 @@ function MathStage({
       if (ageGroup === '3-5' || ageGroup === '6-8') {
         const ans = Number(problem.answer);
         const tipo = !isNaN(ans) ? (ans % 2 === 0 ? 'par' : 'impar') : null;
-        if (tipo) speakAudio(`Mais uma dica: A resposta é ${tipo === 'par' ? 'par' : 'ímpar'}!`, `math_dica2_${tipo}`);
+        if (tipo) speakAudio(pDica2Paridade(tipo), `math_dica2_${tipo}`);
         setMathHintActive(true);
       } else {
         // 9-11/12-14: elimina uma alternativa errada
         const wrong = shuffledOptions.filter(o => o !== problem.answer && !disabledOptions.includes(o));
         if (wrong.length > 0) {
           setDisabledOptions(prev => [...prev, wrong[0]]);
-          speakAudio('Mais uma dica: Eliminei uma opção errada!', 'math_dica2_elimina');
+          speakAudio(PH.mathElimina2, 'math_dica2_elimina');
         }
       }
     }
@@ -2434,7 +2094,7 @@ function MathStage({
         onComplete={() => {
           setShowInteractiveMathModal(false);
           setMathHintActive(true);
-          speakAudio(`Muito bem! A resposta certa é ${problem.answer}! Encontre nas opções!`, 'dica_math_ok');
+          speakAudio(pRespostaCerta(problem.answer), 'dica_math_ok');
         }}
         onClose={() => setShowInteractiveMathModal(false)}
         speakAudio={speakAudio}
@@ -2613,6 +2273,8 @@ export default function EducationalApp() {
   const [voiceTest, setVoiceTest] = useState<string>('');
   const [brainTest, setBrainTest] = useState<BrainTestResult | null>(null);
   const [testingVoice, setTestingVoice] = useState(false);
+  const [voiceStat, setVoiceStat] = useState({ count: 0, model: undefined as string | undefined, missing: 0 });
+  const [voiceCopied, setVoiceCopied] = useState(false);
   const [testingBrain, setTestingBrain] = useState(false);
   // Cérebro de texto (Gemini): escreve dicas/explicações que o Piper fala
   const [brainEnabled, setBrainEnabled] = useState(true);
@@ -2657,6 +2319,8 @@ export default function EducationalApp() {
     bootPiper();
     // iOS/Safari: libera o áudio no 1º toque (a voz chega depois de uma espera assíncrona)
     installAudioUnlock();
+    // vozes pré-gravadas: carrega o manifest já no começo (tocar depois é instantâneo, mesmo no iPhone)
+    void loadVoiceManifest();
   }, []);
 
   // Navegação por setas SEMPRE ativa — a 1ª seta liga o modo TV se precisar
@@ -2695,6 +2359,20 @@ export default function EducationalApp() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Ao abrir as configurações, atualiza o resumo das vozes gravadas
+  useEffect(() => {
+    if (!showSettingsModal) return;
+    let alive = true;
+    void loadVoiceManifest().then(() => {
+      if (!alive) return;
+      const i = voiceManifestInfo();
+      setVoiceStat({ count: i.count, model: i.model, missing: getMissingVoices().length });
+    });
+    return () => {
+      alive = false;
+    };
+  }, [showSettingsModal]);
+
   // Voltar do controle fecha a janela de configurações
   useEffect(() => {
     if (!showSettingsModal) return;
@@ -2724,6 +2402,7 @@ export default function EducationalApp() {
     speakSeq.current++;
     await playSmartAudio(text, {
       staticKey,
+      speaker: subject === 'matematica' ? 'owl' : 'fox',
       useKoreApi: audioMode === 'hybrid' && isOnline,
       soundEnabled,
       onLoadingChange: setIsAudioLoading,
@@ -2855,6 +2534,21 @@ export default function EducationalApp() {
     }
   };
 
+  const handleCopyMissing = async () => {
+    const list = getMissingVoices().map((m) => ({ speaker: m.speaker, text: m.text, group: 'extra' }));
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(list, null, 2));
+      setVoiceCopied(true);
+      setTimeout(() => setVoiceCopied(false), 4000);
+    } catch {
+      window.prompt('Copie a lista:', JSON.stringify(list));
+    }
+  };
+  const handleClearMissing = () => {
+    clearMissingVoices();
+    setVoiceStat((v) => ({ ...v, missing: 0 }));
+  };
+
   const handleTestBrain = async () => {
     setTestingBrain(true);
     setBrainTest(null);
@@ -2869,7 +2563,7 @@ export default function EducationalApp() {
   };
 
   const handleTestSelectedVoice = () => {
-    handleSpeak('Muito bem! Você acertou!', 'parabens_acertou');
+    handleSpeak(PH.parabens, 'parabens_acertou');
   };
 
   const handleClearCache = async () => {
@@ -2943,10 +2637,10 @@ export default function EducationalApp() {
     setMathIndex(0);
     setMathOrder(MATH_PROBLEMS[newAge].map((_, i) => i));
     const ageNames: Record<AgeGroup, string> = {
-      '3-5': 'Fase 3 a 5 anos! Bem-vindos pequenos!',
-      '6-8': 'Fase 6 a 8 anos! Vamos praticar!',
-      '9-11': 'Fase 9 a 11 anos! Desafios incríveis!',
-      '12-14': 'Fase 12 a 14 anos! Modo expert!'
+      '3-5': PH.faixa35,
+      '6-8': PH.faixa68,
+      '9-11': PH.faixa911,
+      '12-14': PH.faixa1214
     };
     const ageKeys: Record<AgeGroup, string> = {
       '3-5': 'fase_3_5',
@@ -2960,7 +2654,7 @@ export default function EducationalApp() {
   const handleSelectSubject = (newSubject: Subject) => {
     setSubject(newSubject);
     const key = newSubject === 'letras' ? 'modo_letras' : 'modo_matematica';
-    handleSpeak(newSubject === 'letras' ? 'Modo Letras e Palavras!' : 'Modo Matemática!', key);
+    handleSpeak(newSubject === 'letras' ? PH.modoLetras : PH.modoMatematica, key);
   };
 
   const handleAddCustomWord = (e: React.FormEvent) => {
@@ -3319,12 +3013,12 @@ export default function EducationalApp() {
                       Falas Gravadas & Estratégia de Áudio
                     </span>
                     <span className="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full font-black">
-                      277 Áudios Gravados (0ms)
+                      Áudios Gravados (0ms)
                     </span>
                   </div>
 
                   <p className="text-xs text-indigo-900/90 leading-relaxed">
-                    O aplicativo possui <strong>falas gravadas (voz Bella)</strong> para letras, palavras, pistas, desafios, matemática e “próxima letra”. Os áudios gravados têm prioridade; se algum faltar, usa a voz do aparelho. Tudo toca <strong>instantaneamente</strong> e funciona <strong>offline</strong>.
+                    O aplicativo toca <strong>falas gravadas com a voz de cada personagem</strong> (Rufo, Sofia, chefes e amigos) para letras, palavras, pistas, matemática, tutoriais e história. Os áudios gravados têm prioridade; se algum faltar, usa os áudios antigos e depois a voz do aparelho. Tudo toca <strong>instantaneamente</strong> e funciona <strong>offline</strong>.
                   </p>
 
                   <div className="grid grid-cols-1 gap-2 pt-1">
@@ -3350,7 +3044,7 @@ export default function EducationalApp() {
                           Modo Inteligente Híbrido (Recomendado)
                         </span>
                         <span className="text-[11px] text-slate-600 mt-0.5 leading-snug">
-                          Toca áudios Kore já armazenados localmente. Quando online, gera e salva novos áudios na memória; quando offline, usa fallback de voz local suave sem erro.
+                          Toca as falas gravadas já armazenadas no aparelho. Quando online, pode gerar e salvar novas falas na memória; quando offline, usa a voz local do aparelho sem erro.
                         </span>
                         {isTtsQuotaExhausted() && (
                           <span className="mt-1.5 inline-flex items-center gap-1.5 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200">
@@ -3390,7 +3084,8 @@ export default function EducationalApp() {
                   </div>
                 </div>
 
-                {/* Voz Faber (Piper) rodando no navegador */}
+                {/* Voz Faber (Piper) rodando no navegador — em standby (NEXT_PUBLIC_ENABLE_PIPER=1 reativa) */}
+                {PIPER_ENABLED && (
                 <div className="bg-violet-50/80 border border-violet-200/80 rounded-2xl p-4 space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-black text-violet-950 uppercase tracking-wide flex items-center gap-1.5">
@@ -3484,6 +3179,7 @@ export default function EducationalApp() {
                     </p>
                   )}
                 </div>
+                )}
 
                 {/* Cérebro de texto: Gemini escreve, a voz fala */}
                 <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 space-y-2">
@@ -3526,18 +3222,42 @@ export default function EducationalApp() {
                   </p>
                 </div>
 
+                {/* Vozes gravadas dos personagens */}
+                <div className="bg-sky-50/80 border border-sky-200/80 rounded-2xl p-4 space-y-2">
+                  <span className="text-xs font-black text-sky-950 uppercase tracking-wide">Vozes gravadas dos personagens</span>
+                  <p className="text-xs text-sky-900/90 leading-relaxed">
+                    {voiceStat.count > 0
+                      ? <>Tocando <strong>{voiceStat.count} falas gravadas</strong>{voiceStat.model ? <> (modelo {voiceStat.model})</> : null}. Falas sem gravação usam as vozes antigas.</>
+                      : <>Nenhuma fala gravada encontrada em <code>/audio/voice</code>. Gere com <code>npm run voice:generate</code> (veja scripts/voice/README.md). Enquanto isso o jogo usa as vozes antigas.</>}
+                  </p>
+                  {voiceStat.count > 0 && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] text-slate-600">
+                        {voiceStat.missing === 0 ? 'Nenhuma fala sem gravação até agora.' : `${voiceStat.missing} fala(s) pedida(s) sem gravação.`}
+                      </span>
+                      {voiceStat.missing > 0 && (
+                        <span className="flex gap-1.5">
+                          <button type="button" onClick={handleCopyMissing} className="text-[11px] font-bold px-2 py-1 rounded-lg bg-white border border-sky-300 text-sky-800">Copiar lista</button>
+                          <button type="button" onClick={handleClearMissing} className="text-[11px] font-bold px-2 py-1 rounded-lg bg-white border border-slate-300 text-slate-600">Limpar</button>
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {voiceCopied && <p className="text-[11px] text-emerald-700 font-bold">Copiado! Cole em scripts/voice/extra.json e rode o gerador.</p>}
+                </div>
+
                 {/* Diagnóstico das vozes + modo de jogo */}
                 <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5">
                   <span className="text-xs font-black text-slate-800 uppercase tracking-wide">Diagnóstico das vozes</span>
                   <div className="grid grid-cols-2 gap-2">
-                    <button
+                    {PIPER_ENABLED && <button
                       type="button"
                       disabled={testingVoice || piper.status !== 'ready'}
                       onClick={handleTestVoice}
                       className="py-2 px-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-xl font-black text-xs"
                     >
                       {testingVoice ? 'Falando…' : 'Testar voz Faber'}
-                    </button>
+                    </button>}
                     <button
                       type="button"
                       disabled={testingBrain}
@@ -3547,7 +3267,7 @@ export default function EducationalApp() {
                       {testingBrain ? 'Perguntando…' : 'Testar tutor (Gemini)'}
                     </button>
                   </div>
-                  {piper.status !== 'ready' && (
+                  {PIPER_ENABLED && piper.status !== 'ready' && (
                     <p className="text-[11px] text-slate-500">Ative a voz Faber acima para poder testá-la.</p>
                   )}
                   {voiceTest && <p className="text-[11px] text-slate-700 bg-white border border-slate-200 rounded-lg p-2">{voiceTest}</p>}
