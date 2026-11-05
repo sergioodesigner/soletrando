@@ -13,6 +13,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { estimateF0, suggestRate, STANDARD_RATES } from './pitch.mjs';
 
 const ROOT = process.cwd();
 const args = Object.fromEntries(
@@ -135,8 +136,8 @@ const fileFor = (e) => {
   return null;
 };
 
-/** Taxa de amostragem do PCM: --pcm-rate > voices.json (por personagem ou default) > 24000. */
-const pcmRateFor = (sp) => Number(args['pcm-rate'] || voices.speakers?.[sp]?.pcmRate || voices.default?.pcmRate || 24000);
+/** Taxa de amostragem do PCM: --pcm-rate > voices.json (por personagem ou default) > 44100. */
+const pcmRateFor = (sp) => Number(args['pcm-rate'] || voices.speakers?.[sp]?.pcmRate || voices.default?.pcmRate || 44100);
 
 /** PCM 16-bit mono → WAV (reserva quando não há ffmpeg; arquivos maiores). */
 function pcmToWav(pcm, rate) {
@@ -166,29 +167,6 @@ function pcmToMp3(pcm, rate) {
   if (filters.length) argv.push('-af', filters.join(','));
   argv.push('-ar', '24000', '-ac', '1', '-b:a', '64k', '-f', 'mp3', 'pipe:1');
   return execFileSync('ffmpeg', argv, { input: pcm, maxBuffer: 64 * 1024 * 1024 });
-}
-
-/** Duração (s) da parte FALADA (sem o silêncio do começo/fim) do PCM. */
-function activeSamples(pcm) {
-  let peak = 0;
-  for (let i = 0; i < pcm.length - 1; i += 2) peak = Math.max(peak, Math.abs(pcm.readInt16LE(i)));
-  const th = Math.max(30, peak * 0.03);
-  let first = -1, last = -1;
-  for (let i = 0; i < pcm.length - 1; i += 2) if (Math.abs(pcm.readInt16LE(i)) > th) { if (first < 0) first = i; last = i; }
-  return first < 0 ? 0 : (last - first) / 2;
-}
-
-/** Ajuda a descobrir a taxa do PCM: compara a duração falada com o esperado para o texto (≈13,5 caracteres/s). */
-function rateHint(pcm, chars, used) {
-  const samples = activeSamples(pcm);
-  const expected = Math.max(0.3, chars / 13.5);
-  const dur = (r) => samples / r;
-  const rows = [16000, 22050, 24000, 44100, 48000].map((r) => ({ r, d: dur(r) }));
-  const ratio = dur(used) / expected;
-  const list = `    duração falada por taxa: ${rows.map((x) => `${x.r}Hz→${x.d.toFixed(1)}s`).join(' · ')} (esperado ≈${expected.toFixed(1)}s)`;
-  if (ratio > 0.65 && ratio < 1.6) return `${list}\n    taxa ${used} Hz plausível ✔ (ouça o arquivo: se soar muito agudo/rápido ou grave/lento, mude --pcm-rate)`;
-  const best = rows.reduce((a, b) => (Math.abs(b.d - expected) < Math.abs(a.d - expected) ? b : a));
-  return `${list}\n    ⚠ com ${used} Hz a fala dura ${(ratio * 100).toFixed(0)}% do esperado; ${best.r} Hz fica mais próximo — tente --pcm-rate=${best.r} (ou "pcmRate" no voices.json)`;
 }
 
 async function synth(e, info = {}) {
@@ -295,22 +273,50 @@ const todo = list.filter((e) => FORCE || REDO.length || !fileFor(e));
 
 if (args.probe) {
   if (!KEY) { console.error('Informe --key=...'); process.exit(1); }
-  fs.mkdirSync(path.join(OUT, '_probe'), { recursive: true });
+  const PDIR = path.join(OUT, '_probe');
+  fs.mkdirSync(PDIR, { recursive: true });
   const seen = new Set();
+  const found = []; // { speaker, gender, f0, rate, exact }
+  const raws = {};
   for (const e of entries.filter((x) => !SPEAKERS.length || SPEAKERS.includes(x.speaker))) {
     if (seen.has(e.speaker)) continue;
     seen.add(e.speaker);
     const v = voiceFor(e.speaker);
     process.stdout.write(`[${e.speaker}] voz=${v.voice ?? '(padrão)'} "${e.say.slice(0, 50)}" … `);
     try {
-      let hint = '';
-      const b = await synth(e, { onRaw: (pcm, rate) => (hint = rateHint(pcm, e.say.length, rate)) });
-      const f = path.join(OUT, '_probe', `${e.speaker}.${extOf(b)}`); fs.writeFileSync(f, b);
+      let raw = null;
+      const b = await synth(e, { onRaw: (pcm, rate) => (raw = { pcm, rate }) });
+      const f = path.join(PDIR, `${e.speaker}.${extOf(b)}`); fs.writeFileSync(f, b);
       console.log(`ok (${Math.round(b.length / 1024)} KB) → ${path.relative(ROOT, f)}`);
-      if (hint) console.log(hint);
-    }
-    catch (err) { console.log(`FALHOU: ${err.message}`); }
+      if (raw) {
+        const gender = voices.speakers?.[e.speaker]?.genero === 'f' ? 'f' : 'm';
+        const f0 = estimateF0(raw.pcm, raw.rate);
+        if (f0) { const s2 = suggestRate(f0, raw.rate, gender); found.push({ speaker: e.speaker, gender, f0, rate: raw.rate, exact: s2.exact }); console.log(`    tom ≈ ${Math.round(f0)} Hz a ${raw.rate} Hz (voz ${gender === 'f' ? 'feminina' : 'masculina'}) → taxa provável ≈ ${s2.exact} Hz`); }
+        raws[e.speaker] = raw;
+      }
+    } catch (err) { console.log(`FALHOU: ${err.message}`); }
     await sleep(DELAY);
+  }
+  if (found.length) {
+    // a taxa é UMA só para o modelo: combina as estimativas de todos os personagens (mediana)
+    const exacts = found.map((x) => x.exact).sort((a, b) => a - b);
+    const med = exacts[Math.floor(exacts.length / 2)];
+    const rec = STANDARD_RATES.reduce((a, b) => (Math.abs(Math.log(b / med)) < Math.abs(Math.log(a / med)) ? b : a));
+    const used = pcmRateFor(found[0].speaker);
+    console.log(`\nTaxa do PCM: estimativas ${exacts.join(', ')} → mediana ≈ ${med} Hz → recomendada: ${rec} Hz (em uso: ${used} Hz)`);
+    // candidatas gravadas para você escolher OUVINDO (a voz certa soa natural; taxa baixa demais = grossa e lenta)
+    const cands = [...new Set([32000, 44100, 48000, rec])].sort((a, b) => a - b);
+    const picks = [found.find((x) => x.gender === 'm'), found.find((x) => x.gender === 'f')].filter(Boolean);
+    const TD = path.join(PDIR, 'teste-de-taxa');
+    fs.mkdirSync(TD, { recursive: true });
+    if (haveFfmpeg()) for (const pk of picks) for (const r of cands) fs.writeFileSync(path.join(TD, `${pk.speaker}_${r}Hz.mp3`), pcmToMp3(raws[pk.speaker].pcm, r));
+    console.log(`Teste de taxa: ouça ${path.relative(ROOT, TD)}/ — a versão que soa NATURAL (nem grossa/lenta, nem fina/rápida) mostra a taxa certa.`);
+    if (rec === used) console.log(`✔ A taxa em uso (${used} Hz) bate com a estimada. Ouça os arquivos de _probe/ para confirmar.`);
+    else console.log(`⚠ A taxa em uso (${used} Hz) difere da estimada. Rode de novo com --fix-rate (grava ${rec} no voices.json) ou ajuste "pcmRate" à mão.`);
+    if (args['fix-rate']) {
+      const vj = readJson(VOICES, {}); vj.default = { ...(vj.default || {}), pcmRate: rec }; fs.writeFileSync(VOICES, JSON.stringify(vj, null, 2) + '\n');
+      console.log(`voices.json atualizado: pcmRate = ${rec}`);
+    }
   }
   process.exit(0);
 }

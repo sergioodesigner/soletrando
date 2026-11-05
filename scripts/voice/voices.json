@@ -1,130 +1,150 @@
 {
-  "_ajuda": "voice = id da voz do modelo (conhecidas: 'bram' masculina e 'nadine' feminina). rate = tom/velocidade ao tocar no jogo (<1 mais grave e lento, >1 mais agudo e rápido): diferencia personagens que dividem a mesma voz. extra = parâmetros extras do modelo. pcmRate = taxa do PCM devolvido (padrão 24000; o --probe diz se está certa).",
+  "_ajuda": "voice = id da voz do modelo (conhecidas: 'bram' masculina e 'nadine' feminina). rate = tom/velocidade ao tocar no jogo (<1 mais grave e lento, >1 mais agudo e rápido): diferencia personagens que dividem a mesma voz. extra = parâmetros extras do modelo. pcmRate = taxa do PCM devolvido (44100 estimado pelo tom das vozes; o --probe confere e você escolhe ouvindo). genero = m/f (usado para deduzir a taxa pelo tom).",
   "default": {
     "voice": null,
     "extra": {},
-    "pcmRate": 24000
+    "pcmRate": 44100
   },
   "speakers": {
     "fox": {
       "_nota": "Rufo, o Raposo Letrado — masculino, curioso e animado",
       "voice": "bram",
       "rate": 1.0,
-      "extra": {}
+      "extra": {},
+      "genero": "m"
     },
     "owl": {
       "_nota": "Sofia, a Coruja — feminina, sábia e calma",
       "voice": "nadine",
       "rate": 1.0,
-      "extra": {}
+      "extra": {},
+      "genero": "f"
     },
     "borrao": {
       "_nota": "Dragão Borrão — masculino, grave e brincalhão (tom mais baixo)",
       "voice": "bram",
       "rate": 0.8,
-      "extra": {}
+      "extra": {},
+      "genero": "m"
     },
     "hidra": {
       "_nota": "Hidra das Contas — feminina, voz mais aguda e animada",
       "voice": "nadine",
       "rate": 1.1,
-      "extra": {}
+      "extra": {},
+      "genero": "f"
     },
     "tiao": {
       "_nota": "Seu Tião (fazendeiro) — masculino, adulto",
       "voice": "bram",
       "rate": 0.94,
-      "extra": {}
+      "extra": {},
+      "genero": "m"
     },
     "rosa": {
       "_nota": "Dona Rosa (padeira) — feminina, alegre",
       "voice": "nadine",
       "rate": 1.04,
-      "extra": {}
+      "extra": {},
+      "genero": "f"
     },
     "moa": {
       "_nota": "Seu Moa (moleiro) — masculino, mais velho",
       "voice": "bram",
       "rate": 0.9,
-      "extra": {}
+      "extra": {},
+      "genero": "m"
     },
     "bia": {
       "_nota": "Guarda Bia — feminina, firme",
       "voice": "nadine",
       "rate": 0.98,
-      "extra": {}
+      "extra": {},
+      "genero": "f"
     },
     "lia": {
       "_nota": "Dona Lia (feirante) — feminina, simpática",
       "voice": "nadine",
       "rate": 1.06,
-      "extra": {}
+      "extra": {},
+      "genero": "f"
     },
     "beto": {
       "_nota": "Seu Beto (taverneiro) — masculino, risonho",
       "voice": "bram",
       "rate": 0.97,
-      "extra": {}
+      "extra": {},
+      "genero": "m"
     },
     "bento": {
       "_nota": "Velho Bento (bibliotecário) — masculino, idoso",
       "voice": "bram",
       "rate": 0.88,
-      "extra": {}
+      "extra": {},
+      "genero": "m"
     },
     "rei": {
       "_nota": "Rei Bartolomeu — masculino, idoso e solene",
       "voice": "bram",
       "rate": 0.86,
-      "extra": {}
+      "extra": {},
+      "genero": "m"
     },
     "nico": {
       "_nota": "Capitão Nico — masculino, marinheiro",
       "voice": "bram",
       "rate": 0.95,
-      "extra": {}
+      "extra": {},
+      "genero": "m"
     },
     "olivia": {
       "_nota": "Dona Olívia — feminina, idosa e carinhosa",
       "voice": "nadine",
       "rate": 0.93,
-      "extra": {}
+      "extra": {},
+      "genero": "f"
     },
     "dimitri": {
       "_nota": "Dimitri (mercador) — masculino, falante",
       "voice": "bram",
       "rate": 1.03,
-      "extra": {}
+      "extra": {},
+      "genero": "m"
     },
     "teo": {
       "_nota": "Faroleiro Teo — masculino, idoso",
       "voice": "bram",
       "rate": 0.89,
-      "extra": {}
+      "extra": {},
+      "genero": "m"
     },
     "ariadne": {
       "_nota": "Ariadne (atriz) — feminina, expressiva",
       "voice": "nadine",
       "rate": 1.08,
-      "extra": {}
+      "extra": {},
+      "genero": "f"
     },
     "pan": {
       "_nota": "Corredor Pan — masculino, jovem e enérgico",
       "voice": "bram",
       "rate": 1.07,
-      "extra": {}
+      "extra": {},
+      "genero": "m"
     },
     "selene": {
       "_nota": "Sábia Selene — feminina, serena",
       "voice": "nadine",
       "rate": 0.97,
-      "extra": {}
+      "extra": {},
+      "genero": "f"
     },
     "zenon": {
       "_nota": "Zênon (guardião do templo) — masculino, idoso e sábio",
       "voice": "bram",
       "rate": 0.86,
-      "extra": {}
+      "extra": {},
+      "genero": "m"
     }
   }
 }

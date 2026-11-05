@@ -9,7 +9,7 @@ O jogo só toca o que existe em `public/audio/voice/manifest.json`. Falas sem ar
 O modelo `heygen/heygen-voice-1-turbo:free` devolve **PCM** (áudio cru, 16-bit mono, sem cabeçalho). O script pede PCM, converte para **MP3 compacto** com o `ffmpeg`, **corta o silêncio** do começo/fim e **nivela o volume** entre as falas (sem isso umas ficam bem mais baixas que outras).
 
 - **Precisa do `ffmpeg`** (`brew install ffmpeg` · `apt install ffmpeg`; no GitHub Actions já vem). Sem ele o script grava WAV, que funciona mas ocupa ~6× mais espaço.
-- **Taxa do PCM:** padrão 24000 Hz. O `--probe` confere e avisa se parecer errada (voz acelerada/lenta); ajuste com `--pcm-rate=` ou `"pcmRate"` no `voices.json`.
+- **Taxa do PCM:** o PCM não diz a própria taxa de amostragem. Se estiver errada a voz sai **grossa e lenta** (taxa assumida baixa demais) ou fina e rápida. O padrão é **44100 Hz** (estimado pelo tom das vozes do heygen). O `--probe` mede o tom de cada voz, recomenda a taxa e grava a mesma fala em 3 taxas em `_probe/teste-de-taxa/` para você escolher **ouvindo**. Ajuste com `--pcm-rate=`, `"pcmRate"` no `voices.json` ou `--probe --fix-rate`.
 
 Vozes (`scripts/voice/voices.json`): **Rufo = `bram`**, **Sofia = `nadine`**. Os outros personagens usam a voz do **mesmo gênero** (masculinos `bram`, femininos `nadine`) e ganham um `rate` próprio (tom/velocidade ao tocar: 0,9 = mais grave e lento) para não soarem idênticos. Se o modelo tiver mais vozes, troque o `voice` de qualquer personagem.
 
