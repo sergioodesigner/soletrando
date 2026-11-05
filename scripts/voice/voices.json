@@ -1,150 +1,160 @@
 {
-  "_ajuda": "voice = id da voz do modelo (conhecidas: 'bram' masculina e 'nadine' feminina). rate = tom/velocidade ao tocar no jogo (<1 mais grave e lento, >1 mais agudo e rápido): diferencia personagens que dividem a mesma voz. extra = parâmetros extras do modelo. pcmRate = taxa do PCM devolvido (44100 estimado pelo tom das vozes; o --probe confere e você escolhe ouvindo). genero = m/f (usado para deduzir a taxa pelo tom).",
+  "_ajuda": "voice = id da voz do modelo. 'vozes' = gênero ASSUMIDO de cada voz (pelo nome; o --probe-voices confere pelo tom). rate = tom/velocidade ao tocar no jogo (<1 mais grave e lento, >1 mais agudo e rápido; use perto de 1). extra = parâmetros extras do modelo. pcmRate = taxa do PCM (44100–48000 soam bem; qualquer número funciona).",
   "default": {
     "voice": null,
     "extra": {},
     "pcmRate": 44100
+  },
+  "vozes": {
+    "bram": "m",
+    "gareth": "m",
+    "weston": "m",
+    "lucian": "m",
+    "nadine": "f",
+    "noelle": "f",
+    "meredith": "f",
+    "sabrina": "f"
   },
   "speakers": {
     "fox": {
       "_nota": "Rufo, o Raposo Letrado — masculino, curioso e animado",
       "voice": "bram",
       "rate": 1.0,
-      "extra": {},
-      "genero": "m"
+      "genero": "m",
+      "extra": {}
     },
     "owl": {
       "_nota": "Sofia, a Coruja — feminina, sábia e calma",
       "voice": "nadine",
       "rate": 1.0,
-      "extra": {},
-      "genero": "f"
+      "genero": "f",
+      "extra": {}
     },
     "borrao": {
-      "_nota": "Dragão Borrão — masculino, grave e brincalhão (tom mais baixo)",
-      "voice": "bram",
-      "rate": 0.8,
-      "extra": {},
-      "genero": "m"
+      "_nota": "Dragão Borrão — masculino, travesso; tom mais baixo",
+      "voice": "weston",
+      "rate": 0.88,
+      "genero": "m",
+      "extra": {}
     },
     "hidra": {
-      "_nota": "Hidra das Contas — feminina, voz mais aguda e animada",
-      "voice": "nadine",
-      "rate": 1.1,
-      "extra": {},
-      "genero": "f"
+      "_nota": "Hidra das Contas — feminina, animada; tom mais alto",
+      "voice": "noelle",
+      "rate": 1.07,
+      "genero": "f",
+      "extra": {}
     },
     "tiao": {
       "_nota": "Seu Tião (fazendeiro) — masculino, adulto",
-      "voice": "bram",
-      "rate": 0.94,
-      "extra": {},
-      "genero": "m"
+      "voice": "gareth",
+      "rate": 1.0,
+      "genero": "m",
+      "extra": {}
     },
     "rosa": {
       "_nota": "Dona Rosa (padeira) — feminina, alegre",
-      "voice": "nadine",
-      "rate": 1.04,
-      "extra": {},
-      "genero": "f"
+      "voice": "meredith",
+      "rate": 1.0,
+      "genero": "f",
+      "extra": {}
     },
     "moa": {
       "_nota": "Seu Moa (moleiro) — masculino, mais velho",
-      "voice": "bram",
-      "rate": 0.9,
-      "extra": {},
-      "genero": "m"
+      "voice": "lucian",
+      "rate": 0.95,
+      "genero": "m",
+      "extra": {}
     },
     "bia": {
       "_nota": "Guarda Bia — feminina, firme",
-      "voice": "nadine",
-      "rate": 0.98,
-      "extra": {},
-      "genero": "f"
+      "voice": "sabrina",
+      "rate": 1.0,
+      "genero": "f",
+      "extra": {}
     },
     "lia": {
       "_nota": "Dona Lia (feirante) — feminina, simpática",
-      "voice": "nadine",
-      "rate": 1.06,
-      "extra": {},
-      "genero": "f"
+      "voice": "noelle",
+      "rate": 1.0,
+      "genero": "f",
+      "extra": {}
     },
     "beto": {
       "_nota": "Seu Beto (taverneiro) — masculino, risonho",
-      "voice": "bram",
-      "rate": 0.97,
-      "extra": {},
-      "genero": "m"
+      "voice": "weston",
+      "rate": 1.02,
+      "genero": "m",
+      "extra": {}
     },
     "bento": {
       "_nota": "Velho Bento (bibliotecário) — masculino, idoso",
-      "voice": "bram",
-      "rate": 0.88,
-      "extra": {},
-      "genero": "m"
+      "voice": "gareth",
+      "rate": 0.92,
+      "genero": "m",
+      "extra": {}
     },
     "rei": {
       "_nota": "Rei Bartolomeu — masculino, idoso e solene",
-      "voice": "bram",
-      "rate": 0.86,
-      "extra": {},
-      "genero": "m"
+      "voice": "lucian",
+      "rate": 0.9,
+      "genero": "m",
+      "extra": {}
     },
     "nico": {
       "_nota": "Capitão Nico — masculino, marinheiro",
-      "voice": "bram",
-      "rate": 0.95,
-      "extra": {},
-      "genero": "m"
+      "voice": "weston",
+      "rate": 1.0,
+      "genero": "m",
+      "extra": {}
     },
     "olivia": {
       "_nota": "Dona Olívia — feminina, idosa e carinhosa",
-      "voice": "nadine",
-      "rate": 0.93,
-      "extra": {},
-      "genero": "f"
+      "voice": "meredith",
+      "rate": 0.95,
+      "genero": "f",
+      "extra": {}
     },
     "dimitri": {
       "_nota": "Dimitri (mercador) — masculino, falante",
       "voice": "bram",
-      "rate": 1.03,
-      "extra": {},
-      "genero": "m"
+      "rate": 1.0,
+      "genero": "m",
+      "extra": {}
     },
     "teo": {
       "_nota": "Faroleiro Teo — masculino, idoso",
-      "voice": "bram",
-      "rate": 0.89,
-      "extra": {},
-      "genero": "m"
+      "voice": "gareth",
+      "rate": 0.92,
+      "genero": "m",
+      "extra": {}
     },
     "ariadne": {
       "_nota": "Ariadne (atriz) — feminina, expressiva",
-      "voice": "nadine",
-      "rate": 1.08,
-      "extra": {},
-      "genero": "f"
+      "voice": "sabrina",
+      "rate": 1.04,
+      "genero": "f",
+      "extra": {}
     },
     "pan": {
       "_nota": "Corredor Pan — masculino, jovem e enérgico",
-      "voice": "bram",
-      "rate": 1.07,
-      "extra": {},
-      "genero": "m"
+      "voice": "lucian",
+      "rate": 1.05,
+      "genero": "m",
+      "extra": {}
     },
     "selene": {
       "_nota": "Sábia Selene — feminina, serena",
-      "voice": "nadine",
+      "voice": "noelle",
       "rate": 0.97,
-      "extra": {},
-      "genero": "f"
+      "genero": "f",
+      "extra": {}
     },
     "zenon": {
       "_nota": "Zênon (guardião do templo) — masculino, idoso e sábio",
-      "voice": "bram",
-      "rate": 0.86,
-      "extra": {},
-      "genero": "m"
+      "voice": "gareth",
+      "rate": 0.9,
+      "genero": "m",
+      "extra": {}
     }
   }
 }

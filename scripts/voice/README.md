@@ -11,11 +11,23 @@ O modelo `heygen/heygen-voice-1-turbo:free` devolve **PCM** (áudio cru, 16-bit 
 - **Precisa do `ffmpeg`** (`brew install ffmpeg` · `apt install ffmpeg`; no GitHub Actions já vem). Sem ele o script grava WAV, que funciona mas ocupa ~6× mais espaço.
 - **Taxa do PCM:** o PCM não diz a própria taxa de amostragem. Se estiver errada a voz sai **grossa e lenta** (taxa assumida baixa demais) ou fina e rápida. O padrão é **44100 Hz** (estimado pelo tom das vozes do heygen). O `--probe` mede o tom de cada voz, recomenda a taxa e grava a mesma fala em 3 taxas em `_probe/teste-de-taxa/` para você escolher **ouvindo**. Ajuste com `--pcm-rate=`, `"pcmRate"` no `voices.json` ou `--probe --fix-rate`.
 
-Vozes (`scripts/voice/voices.json`): **Rufo = `bram`**, **Sofia = `nadine`**. Os outros personagens usam a voz do **mesmo gênero** (masculinos `bram`, femininos `nadine`) e ganham um `rate` próprio (tom/velocidade ao tocar: 0,9 = mais grave e lento) para não soarem idênticos. Se o modelo tiver mais vozes, troque o `voice` de qualquer personagem.
+Vozes (`scripts/voice/voices.json`): **8 vozes** — masculinas `bram`, `gareth`, `weston`, `lucian` e femininas `nadine`, `noelle`, `meredith`, `sabrina` (gênero assumido pelo nome; o teste abaixo confere pelo tom).
+
+| Personagem | Voz | | Personagem | Voz |
+|---|---|---|---|---|
+| Rufo (mascote) | `bram` | | Sofia (mascote) | `nadine` |
+| Dragão Borrão | `weston` | | Hidra | `noelle` |
+| Seu Tião · Velho Bento · Faroleiro Teo · Zênon | `gareth` | | Dona Rosa · Dona Olívia | `meredith` |
+| Seu Moa · Rei Bartolomeu · Corredor Pan | `lucian` | | Guarda Bia · Ariadne | `sabrina` |
+| Seu Beto · Capitão Nico | `weston` | | Dona Lia · Sábia Selene | `noelle` |
+| Dimitri | `bram` | | | |
+
+Regra: o personagem de uma fase **nunca usa a voz do mascote que aparece junto** (Letras: ninguém usa `bram`; Grécia: ninguém usa `nadine`). Para trocar a voz de alguém, edite `voice` (e `genero`) dele no `voices.json`. `rate` (perto de 1) dá um leve toque extra de tom/velocidade ao tocar no jogo.
 
 ```bash
 npm run voice:info                         # o que o OpenRouter publica sobre o modelo
-npm run voice:probe -- --key=SUA_CHAVE     # 1 fala por personagem → public/audio/voice/_probe/ (ouça antes de gerar tudo)
+npm run voice:vozes -- --key=SUA_CHAVE     # a MESMA frase em cada uma das 8 vozes → _probe/vozes/ (confere o gênero pelo tom)
+npm run voice:probe -- --key=SUA_CHAVE     # 1 fala por personagem → _probe/ (ouça antes de gerar tudo)
 ```
 
 ## 2. Gerar

@@ -271,6 +271,39 @@ document.addEventListener('change',()=>{n.textContent=document.querySelectorAll(
 const list = selected();
 const todo = list.filter((e) => FORCE || REDO.length || !fileFor(e));
 
+// ---------------------------------------------------------------------------- --probe-voices: ouvir cada VOZ do modelo
+if (args['probe-voices']) {
+  if (!KEY) { console.error('Informe --key=...'); process.exit(1); }
+  const VD = path.join(OUT, '_probe', 'vozes');
+  fs.mkdirSync(VD, { recursive: true });
+  const assumed = voices.vozes || {};
+  const ids = [...new Set([...Object.keys(assumed), ...Object.values(voices.speakers || {}).map((v) => v?.voice).filter(Boolean)])];
+  const sample = 'Olá! Eu sou um dos personagens do jogo. Vamos aprender juntos?';
+  console.log(`Gravando a mesma frase em ${ids.length} vozes → ${path.relative(ROOT, VD)}/\n`);
+  const rows = [];
+  for (const v of ids) {
+    const sp = `__voz_${v}`;
+    voices.speakers[sp] = { voice: v, genero: assumed[v] || 'm' };
+    process.stdout.write(`[${v}] … `);
+    try {
+      let raw = null;
+      const b = await synth({ speaker: sp, say: sample, id: sp, label: sp }, { onRaw: (pcm, rate) => (raw = { pcm, rate }) });
+      fs.writeFileSync(path.join(VD, `${v}.${extOf(b)}`), b);
+      const f0 = raw ? estimateF0(raw.pcm, raw.rate) : 0;
+      const est = f0 ? (f0 > 165 ? 'f' : 'm') : '?';
+      const flag = assumed[v] && est !== '?' && est !== assumed[v] ? '  ⚠ tom parece de voz ' + (est === 'f' ? 'FEMININA' : 'MASCULINA') + ` (assumi ${assumed[v] === 'f' ? 'feminina' : 'masculina'})` : '';
+      console.log(`ok  tom ≈ ${f0 ? Math.round(f0) : '?'} Hz${flag}`);
+      rows.push({ v, f0, assumed: assumed[v], est });
+    } catch (err) { console.log(`FALHOU: ${String(err.message).slice(0, 200)}`); }
+    await sleep(DELAY);
+  }
+  rows.sort((a, b) => a.f0 - b.f0);
+  console.log('\nDo mais grave ao mais agudo:');
+  for (const r of rows) console.log(`  ${String(r.f0 ? Math.round(r.f0) : '?').padStart(4)} Hz  ${r.v.padEnd(9)} (assumida ${r.assumed === 'f' ? 'feminina' : 'masculina'})`);
+  console.log('\nOuça os arquivos para conferir. Se alguma voz estiver com o gênero trocado, corrija em "vozes" e no "genero" dos personagens que a usam (voices.json).');
+  process.exit(0);
+}
+
 if (args.probe) {
   if (!KEY) { console.error('Informe --key=...'); process.exit(1); }
   const PDIR = path.join(OUT, '_probe');
