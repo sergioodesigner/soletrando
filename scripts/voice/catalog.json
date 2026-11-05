@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-05T01:54:04.141Z",
+ "generatedAt": "2026-11-05T02:13:05.634Z",
  "speakers": [
   {
    "id": "fox",
@@ -109,7 +109,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "A",
-   "say": "Letra A.",
+   "say": "Letra, á.",
    "aliases": [
     "h1r9wi7g",
     "k_letra_a"
@@ -121,7 +121,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é A!",
-   "say": "A próxima letra é A!",
+   "say": "A próxima letra é á!",
    "aliases": [
     "k_proxima_letra_a"
    ]
@@ -132,7 +132,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Bê",
-   "say": "Letra Bê.",
+   "say": "Letra, bê.",
    "aliases": [
     "h1s3vbad",
     "k_letra_b"
@@ -144,7 +144,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é Bê!",
-   "say": "A próxima letra é Bê!",
+   "say": "A próxima letra é bê!",
    "aliases": [
     "k_proxima_letra_b"
    ]
@@ -155,7 +155,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Cê",
-   "say": "Letra Cê.",
+   "say": "Letra, cê.",
    "aliases": [
     "h1rtvple",
     "k_letra_c"
@@ -167,7 +167,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é Cê!",
-   "say": "A próxima letra é Cê!",
+   "say": "A próxima letra é cê!",
    "aliases": [
     "k_proxima_letra_c"
    ]
@@ -178,7 +178,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Dê",
-   "say": "Letra Dê.",
+   "say": "Letra, dê.",
    "aliases": [
     "h1qfxp4j",
     "k_letra_d"
@@ -190,7 +190,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é Dê!",
-   "say": "A próxima letra é Dê!",
+   "say": "A próxima letra é dê!",
    "aliases": [
     "k_proxima_letra_d"
    ]
@@ -201,7 +201,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "E",
-   "say": "Letra E.",
+   "say": "Letra, é.",
    "aliases": [
     "h1q5y3fk",
     "k_letra_e"
@@ -213,7 +213,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é E!",
-   "say": "A próxima letra é E!",
+   "say": "A próxima letra é é!",
    "aliases": [
     "k_proxima_letra_e"
    ]
@@ -224,7 +224,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "efe",
-   "say": "Letra efe.",
+   "say": "Letra, efe.",
    "aliases": [
     "h1qzwwih",
     "k_letra_f"
@@ -247,7 +247,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Gê",
-   "say": "Letra Gê.",
+   "say": "Letra, gê.",
    "aliases": [
     "h1qpxati",
     "k_letra_g"
@@ -259,7 +259,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é Gê!",
-   "say": "A próxima letra é Gê!",
+   "say": "A próxima letra é gê!",
    "aliases": [
     "k_proxima_letra_g"
    ]
@@ -270,7 +270,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "agá",
-   "say": "Letra agá.",
+   "say": "Letra, agá.",
    "aliases": [
     "h1trsxg7",
     "k_letra_h"
@@ -293,7 +293,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "I",
-   "say": "Letra I.",
+   "say": "Letra, í.",
    "aliases": [
     "h1thtbr8",
     "k_letra_i"
@@ -305,7 +305,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é I!",
-   "say": "A próxima letra é I!",
+   "say": "A próxima letra é í!",
    "aliases": [
     "k_proxima_letra_i"
    ]
@@ -316,7 +316,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "jota",
-   "say": "Letra jota.",
+   "say": "Letra, jota.",
    "aliases": [
     "h1ubs4u5",
     "k_letra_j"
@@ -339,7 +339,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "cá",
-   "say": "Letra cá.",
+   "say": "Letra, cá.",
    "aliases": [
     "h1u1sj56",
     "k_letra_k"
@@ -362,7 +362,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "ele",
-   "say": "Letra ele.",
+   "say": "Letra, ele.",
    "aliases": [
     "h1snuiob",
     "k_letra_l"
@@ -385,7 +385,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "eme",
-   "say": "Letra eme.",
+   "say": "Letra, eme.",
    "aliases": [
     "h1sduwzc",
     "k_letra_m"
@@ -408,7 +408,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "ene",
-   "say": "Letra ene.",
+   "say": "Letra, ene.",
    "aliases": [
     "h1t7tq29",
     "k_letra_n"
@@ -431,7 +431,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "O",
-   "say": "Letra O.",
+   "say": "Letra, ó.",
    "aliases": [
     "h1sxu4da",
     "k_letra_o"
@@ -443,7 +443,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é O!",
-   "say": "A próxima letra é O!",
+   "say": "A próxima letra é ó!",
    "aliases": [
     "k_proxima_letra_o"
    ]
@@ -454,7 +454,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Pê",
-   "say": "Letra Pê.",
+   "say": "Letra, pê.",
    "aliases": [
     "h1vzpqzz",
     "k_letra_p"
@@ -466,7 +466,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é Pê!",
-   "say": "A próxima letra é Pê!",
+   "say": "A próxima letra é pê!",
    "aliases": [
     "k_proxima_letra_p"
    ]
@@ -477,7 +477,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "quê",
-   "say": "Letra quê.",
+   "say": "Letra, quê.",
    "aliases": [
     "h1vpq5b0",
     "k_letra_q"
@@ -500,7 +500,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "erre",
-   "say": "Letra erre.",
+   "say": "Letra, erre.",
    "aliases": [
     "h1wjoydx",
     "k_letra_r"
@@ -523,7 +523,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "esse",
-   "say": "Letra esse.",
+   "say": "Letra, esse.",
    "aliases": [
     "h1w9pcoy",
     "k_letra_s"
@@ -546,7 +546,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "tê",
-   "say": "Letra tê.",
+   "say": "Letra, tê.",
    "aliases": [
     "h1uvrc83",
     "k_letra_t"
@@ -569,7 +569,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "U",
-   "say": "Letra U.",
+   "say": "Letra, ú.",
    "aliases": [
     "h1ulrqj4",
     "k_letra_u"
@@ -581,7 +581,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é U!",
-   "say": "A próxima letra é U!",
+   "say": "A próxima letra é ú!",
    "aliases": [
     "k_proxima_letra_u"
    ]
@@ -592,7 +592,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Vê",
-   "say": "Letra Vê.",
+   "say": "Letra, vê.",
    "aliases": [
     "h1vfqjm1",
     "k_letra_v"
@@ -604,7 +604,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é Vê!",
-   "say": "A próxima letra é Vê!",
+   "say": "A próxima letra é vê!",
    "aliases": [
     "k_proxima_letra_v"
    ]
@@ -615,7 +615,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "dáblio",
-   "say": "Letra dáblio.",
+   "say": "Letra, dáblio.",
    "aliases": [
     "h1v5qxx2",
     "k_letra_w"
@@ -638,7 +638,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "xis",
-   "say": "Letra xis.",
+   "say": "Letra, xis.",
    "aliases": [
     "h1y7mkjr",
     "k_letra_x"
@@ -661,7 +661,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "ípsilon",
-   "say": "Letra ípsilon.",
+   "say": "Letra, ípsilon.",
    "aliases": [
     "h1xxmyus",
     "k_letra_y"
@@ -684,7 +684,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Zê",
-   "say": "Letra Zê.",
+   "say": "Letra, zê.",
    "aliases": [
     "h1yrlrxp",
     "k_letra_z"
@@ -696,7 +696,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é Zê!",
-   "say": "A próxima letra é Zê!",
+   "say": "A próxima letra é zê!",
    "aliases": [
     "k_proxima_letra_z"
    ]

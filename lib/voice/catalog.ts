@@ -65,11 +65,14 @@ export function buildCatalog(): CatalogEntry[] {
   };
 
   // ------------------------------------------------------------------ letras (Rufo)
+  // Forma ESCRITA para a voz (o modelo lê com sotaque de inglês se receber "Bê" solto): vírgula + minúscula
+  // + vogais acentuadas funcionaram nos testes de voz (voice:lab: "Letra, bê." / "Letra, á.").
+  const VOGAL_ACENTO: Record<string, string> = { A: 'á', E: 'é', I: 'í', O: 'ó', U: 'ú' };
   for (const [L, phon] of Object.entries(PT_LETTER_PHONETICS)) {
     const l = L.toLowerCase();
-    // letra solta: uma palavra isolada é lida como inglês e fica curtíssima; dentro de uma frase em português o idioma fica certo
-    add('letras', 'fox', phon, { label: `letra_${l}`, say: `Letra ${phon}.`, aliases: [textKey(L), staticKeyId(`letra_${l}`)] });
-    add('proxima_letra', 'fox', pProximaLetra(phon), { label: `proxima_letra_${l}`, aliases: [staticKeyId(`proxima_letra_${l}`)] });
+    const spoken = VOGAL_ACENTO[L] ?? phon.toLowerCase();
+    add('letras', 'fox', phon, { label: `letra_${l}`, say: `Letra, ${spoken}.`, aliases: [textKey(L), staticKeyId(`letra_${l}`)] });
+    add('proxima_letra', 'fox', pProximaLetra(phon), { label: `proxima_letra_${l}`, say: `A próxima letra é ${spoken}!`, aliases: [staticKeyId(`proxima_letra_${l}`)] });
   }
 
   // ------------------------------------------------------------------ palavras (Rufo)
