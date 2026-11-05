@@ -71,8 +71,14 @@ export function buildCatalog(): CatalogEntry[] {
   for (const [L, phon] of Object.entries(PT_LETTER_PHONETICS)) {
     const l = L.toLowerCase();
     const spoken = VOGAL_ACENTO[L] ?? phon.toLowerCase();
-    add('letras', 'fox', phon, { label: `letra_${l}`, say: `Letra, ${spoken}.`, aliases: [textKey(L), staticKeyId(`letra_${l}`)] });
-    add('proxima_letra', 'fox', pProximaLetra(phon), { label: `proxima_letra_${l}`, say: `A próxima letra é ${spoken}!`, aliases: [staticKeyId(`proxima_letra_${l}`)] });
+    // Ajustes de pronúncia pedidos após ouvir os áudios
+    const FALA_LETRA: Record<string, string> = {
+      Z: 'Lê, tra, zê.', Y: 'Lê, tra, ípsilon.', X: 'Lê, tra, xís.', W: 'Lê, tra, dáblio.', I: 'Lê, tra, í.',
+      S: 'Letra, éssi.', R: 'Letra, érri.', N: 'Letra, éni.', J: 'Letra, Jóta.',
+    };
+    const FALA_PROX: Record<string, string> = { S: 'éssi', N: 'ení', M: 'emí', L: 'éli' };
+    add('letras', 'fox', phon, { label: `letra_${l}`, say: FALA_LETRA[L] ?? `Letra, ${spoken}.`, aliases: [textKey(L), staticKeyId(`letra_${l}`)] });
+    add('proxima_letra', 'fox', pProximaLetra(phon), { label: `proxima_letra_${l}`, say: `A próxima letra é ${FALA_PROX[L] ?? spoken}!`, aliases: [staticKeyId(`proxima_letra_${l}`)] });
   }
 
   // ------------------------------------------------------------------ palavras (Rufo)

@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-05T02:13:05.634Z",
+ "generatedAt": "2026-11-05T02:28:28.838Z",
  "speakers": [
   {
    "id": "fox",
@@ -293,7 +293,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "I",
-   "say": "Letra, í.",
+   "say": "Lê, tra, í.",
    "aliases": [
     "h1thtbr8",
     "k_letra_i"
@@ -316,7 +316,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "jota",
-   "say": "Letra, jota.",
+   "say": "Letra, Jóta.",
    "aliases": [
     "h1ubs4u5",
     "k_letra_j"
@@ -374,7 +374,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é ele!",
-   "say": "A próxima letra é ele!",
+   "say": "A próxima letra é éli!",
    "aliases": [
     "k_proxima_letra_l"
    ]
@@ -397,7 +397,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é eme!",
-   "say": "A próxima letra é eme!",
+   "say": "A próxima letra é emí!",
    "aliases": [
     "k_proxima_letra_m"
    ]
@@ -408,7 +408,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "ene",
-   "say": "Letra, ene.",
+   "say": "Letra, éni.",
    "aliases": [
     "h1t7tq29",
     "k_letra_n"
@@ -420,7 +420,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é ene!",
-   "say": "A próxima letra é ene!",
+   "say": "A próxima letra é ení!",
    "aliases": [
     "k_proxima_letra_n"
    ]
@@ -500,7 +500,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "erre",
-   "say": "Letra, erre.",
+   "say": "Letra, érri.",
    "aliases": [
     "h1wjoydx",
     "k_letra_r"
@@ -523,7 +523,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "esse",
-   "say": "Letra, esse.",
+   "say": "Letra, éssi.",
    "aliases": [
     "h1w9pcoy",
     "k_letra_s"
@@ -535,7 +535,7 @@
    "group": "proxima_letra",
    "speaker": "fox",
    "text": "A próxima letra é esse!",
-   "say": "A próxima letra é esse!",
+   "say": "A próxima letra é éssi!",
    "aliases": [
     "k_proxima_letra_s"
    ]
@@ -615,7 +615,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "dáblio",
-   "say": "Letra, dáblio.",
+   "say": "Lê, tra, dáblio.",
    "aliases": [
     "h1v5qxx2",
     "k_letra_w"
@@ -638,7 +638,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "xis",
-   "say": "Letra, xis.",
+   "say": "Lê, tra, xís.",
    "aliases": [
     "h1y7mkjr",
     "k_letra_x"
@@ -661,7 +661,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "ípsilon",
-   "say": "Letra, ípsilon.",
+   "say": "Lê, tra, ípsilon.",
    "aliases": [
     "h1xxmyus",
     "k_letra_y"
@@ -684,7 +684,7 @@
    "group": "letras",
    "speaker": "fox",
    "text": "Zê",
-   "say": "Letra, zê.",
+   "say": "Lê, tra, zê.",
    "aliases": [
     "h1yrlrxp",
     "k_letra_z"
