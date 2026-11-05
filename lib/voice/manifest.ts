@@ -6,6 +6,8 @@ import { staticKeyId, textKey } from './ids';
 interface VoiceManifest {
   version: string;
   model?: string;
+  /** tom/velocidade por personagem (voices.json → rate) */
+  rates?: Record<string, number>;
   files: Record<string, { s: string; t: string; f: string; m?: string }>;
   index: Record<string, string>;
 }
@@ -48,6 +50,12 @@ export interface VoiceQuery {
   audioKey?: string;
   /** Nome estático antigo (ex.: letra_b). */
   staticKey?: string;
+}
+
+/** Tom/velocidade ao tocar o personagem (1 = normal). Diferencia personagens que dividem a mesma voz. */
+export function voiceRateFor(speaker: string): number {
+  const r = manifest?.rates?.[speaker];
+  return typeof r === 'number' && r > 0.5 && r < 2 ? r : 1;
 }
 
 /** URL do áudio pré-gravado, ou null. Só funciona depois de `loadVoiceManifest()`. */

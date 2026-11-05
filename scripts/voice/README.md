@@ -4,21 +4,19 @@ Gera **todas as falas do jogo** — letras, palavras, pistas, contas, tutoriais,
 
 O jogo só toca o que existe em `public/audio/voice/manifest.json`. Falas sem arquivo caem nas vozes antigas, então dá para gerar aos poucos.
 
-## 1. Conferir o modelo e escolher as vozes
+## 1. Vozes e formato
+
+O modelo `heygen/heygen-voice-1-turbo:free` devolve **PCM** (áudio cru, 16-bit mono, sem cabeçalho). O script pede PCM, converte para **MP3 compacto** com o `ffmpeg`, **corta o silêncio** do começo/fim e **nivela o volume** entre as falas (sem isso umas ficam bem mais baixas que outras).
+
+- **Precisa do `ffmpeg`** (`brew install ffmpeg` · `apt install ffmpeg`; no GitHub Actions já vem). Sem ele o script grava WAV, que funciona mas ocupa ~6× mais espaço.
+- **Taxa do PCM:** padrão 24000 Hz. O `--probe` confere e avisa se parecer errada (voz acelerada/lenta); ajuste com `--pcm-rate=` ou `"pcmRate"` no `voices.json`.
+
+Vozes (`scripts/voice/voices.json`): **Rufo = `bram`**, **Sofia = `nadine`**. Os outros personagens usam a voz do **mesmo gênero** (masculinos `bram`, femininos `nadine`) e ganham um `rate` próprio (tom/velocidade ao tocar: 0,9 = mais grave e lento) para não soarem idênticos. Se o modelo tiver mais vozes, troque o `voice` de qualquer personagem.
 
 ```bash
-npm run voice:info                      # o que o OpenRouter publica sobre o modelo
+npm run voice:info                         # o que o OpenRouter publica sobre o modelo
+npm run voice:probe -- --key=SUA_CHAVE     # 1 fala por personagem → public/audio/voice/_probe/ (ouça antes de gerar tudo)
 ```
-
-Abra `scripts/voice/voices.json` e preencha `voice` de cada personagem com um id de voz do modelo
-(`null` = voz padrão — todos soariam iguais). Em `extra` vai qualquer parâmetro do modelo (ex.: `{"speed": 1.0}`).
-Os ids de voz estão na página do modelo no OpenRouter; se errar um id, o erro da API aparece no `--probe`.
-
-```bash
-npm run voice:probe -- --key=SUA_CHAVE   # 1 fala por personagem → public/audio/voice/_probe/
-```
-
-Ouça os arquivos de `_probe/` antes de gerar tudo.
 
 ## 2. Gerar
 
@@ -67,3 +65,4 @@ O fluxo gera os áudios e envia para um branch `audio/voice-<número>` — é s�
 - O áudio é gravado **sem o nome da criança** (“Oi! Eu sou o Rufo…”); na tela o texto continua com o nome.
 - Nada disto roda no navegador do jogador: os arquivos ficam em `public/audio/voice/` e funcionam offline depois de baixados.
 - A voz Faber no navegador (Piper) está em standby; para religar: `NEXT_PUBLIC_ENABLE_PIPER=1`.
+- Opções de áudio: `--no-trim` (não corta silêncio) · `--no-normalize` (não nivela volume) · `--format=mp3` (se o modelo passar a devolver MP3).

@@ -4,7 +4,7 @@
 import { getCachedAudio, saveCachedAudio, getCachedAudioCount, clearCachedAudios } from './audioStorage';
 import recordedManifest from './recordedAudioManifest.json';
 import { PT_LETTER_PHONETICS } from './voice/letters';
-import { findVoiceUrl, loadVoiceManifest, noteMissingVoice } from './voice/manifest';
+import { findVoiceUrl, loadVoiceManifest, noteMissingVoice, voiceRateFor } from './voice/manifest';
 import { isPiperReady, synthesizePiperPcm, pcmToWavBlob, type PiperStats } from './piperTts';
 
 // Nomes das letras (soletrar): fonte única em lib/voice/letters.ts
@@ -504,7 +504,8 @@ export async function playSmartAudio(
         voiceUrl,
         generation,
         () => onVoiceTypeUsed?.('kore_static'),
-        { onPlaybackStart, onPlaybackEnd }
+        { onPlaybackStart, onPlaybackEnd },
+        voiceRateFor(speaker)
       );
       if (ok || generation !== playGeneration) return;
     } else {
@@ -714,7 +715,8 @@ function playRecordedUrl(
   audioUrl: string,
   generation: number,
   onStart?: () => void,
-  events?: { onPlaybackStart?: (info: PlaybackInfo) => void; onPlaybackEnd?: () => void }
+  events?: { onPlaybackStart?: (info: PlaybackInfo) => void; onPlaybackEnd?: () => void },
+  rate = 1
 ): Promise<boolean> {
   return new Promise((resolve) => {
     if (generation !== playGeneration) {
@@ -749,7 +751,13 @@ function playRecordedUrl(
       ? audioUrl
       : `${audioUrl}?v=${encodeURIComponent(AUDIO_CACHE_VERSION)}`;
     audio.src = bust;
-    if (events) wireMediaEvents(audio, 1, events);
+    if (rate !== 1) {
+      // tom e velocidade mudam juntos (voz mais grave/lenta ou mais aguda/rápida)
+      audio.preservesPitch = false;
+      (audio as HTMLAudioElement & { webkitPreservesPitch?: boolean }).webkitPreservesPitch = false;
+      audio.playbackRate = rate;
+    }
+    if (events) wireMediaEvents(audio, rate, events);
     activeAudioElement = audio;
     onStart?.();
 

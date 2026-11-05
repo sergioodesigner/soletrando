@@ -1,108 +1,129 @@
 {
-  "_ajuda": "Preencha \"voice\" de cada personagem com um id de voz do modelo (null = voz padr\u00e3o do modelo). \"extra\" \u00e9 mesclado ao corpo da requisi\u00e7\u00e3o (ex.: {\"speed\":1.0}).",
+  "_ajuda": "voice = id da voz do modelo (conhecidas: 'bram' masculina e 'nadine' feminina). rate = tom/velocidade ao tocar no jogo (<1 mais grave e lento, >1 mais agudo e rápido): diferencia personagens que dividem a mesma voz. extra = parâmetros extras do modelo. pcmRate = taxa do PCM devolvido (padrão 24000; o --probe diz se está certa).",
   "default": {
     "voice": null,
-    "extra": {}
+    "extra": {},
+    "pcmRate": 24000
   },
   "speakers": {
     "fox": {
-      "_nota": "Rufo, o Raposo Letrado \u2014 curioso, alegre, voz jovem e animada",
-      "voice": null,
+      "_nota": "Rufo, o Raposo Letrado — masculino, curioso e animado",
+      "voice": "bram",
+      "rate": 1.0,
       "extra": {}
     },
     "owl": {
-      "_nota": "Sofia, a Coruja \u2014 s\u00e1bia, calma e carinhosa, voz feminina suave",
-      "voice": null,
+      "_nota": "Sofia, a Coruja — feminina, sábia e calma",
+      "voice": "nadine",
+      "rate": 1.0,
       "extra": {}
     },
     "borrao": {
-      "_nota": "Drag\u00e3o Borr\u00e3o \u2014 travesso, voz grave e brincalhona (nada assustadora)",
-      "voice": null,
+      "_nota": "Dragão Borrão — masculino, grave e brincalhão (tom mais baixo)",
+      "voice": "bram",
+      "rate": 0.8,
       "extra": {}
     },
     "hidra": {
-      "_nota": "Hidra das Contas \u2014 voz aguda, animada e engra\u00e7ada",
-      "voice": null,
+      "_nota": "Hidra das Contas — feminina, voz mais aguda e animada",
+      "voice": "nadine",
+      "rate": 1.1,
       "extra": {}
     },
     "tiao": {
-      "_nota": "Seu Ti\u00e3o (npc)",
-      "voice": null,
+      "_nota": "Seu Tião (fazendeiro) — masculino, adulto",
+      "voice": "bram",
+      "rate": 0.94,
       "extra": {}
     },
     "rosa": {
-      "_nota": "Dona Rosa (npc)",
-      "voice": null,
+      "_nota": "Dona Rosa (padeira) — feminina, alegre",
+      "voice": "nadine",
+      "rate": 1.04,
       "extra": {}
     },
     "moa": {
-      "_nota": "Seu Moa (npc)",
-      "voice": null,
+      "_nota": "Seu Moa (moleiro) — masculino, mais velho",
+      "voice": "bram",
+      "rate": 0.9,
       "extra": {}
     },
     "bia": {
-      "_nota": "Guarda Bia (npc)",
-      "voice": null,
+      "_nota": "Guarda Bia — feminina, firme",
+      "voice": "nadine",
+      "rate": 0.98,
       "extra": {}
     },
     "lia": {
-      "_nota": "Dona Lia (npc)",
-      "voice": null,
+      "_nota": "Dona Lia (feirante) — feminina, simpática",
+      "voice": "nadine",
+      "rate": 1.06,
       "extra": {}
     },
     "beto": {
-      "_nota": "Seu Beto (npc)",
-      "voice": null,
+      "_nota": "Seu Beto (taverneiro) — masculino, risonho",
+      "voice": "bram",
+      "rate": 0.97,
       "extra": {}
     },
     "bento": {
-      "_nota": "Velho Bento (npc)",
-      "voice": null,
+      "_nota": "Velho Bento (bibliotecário) — masculino, idoso",
+      "voice": "bram",
+      "rate": 0.88,
       "extra": {}
     },
     "rei": {
-      "_nota": "Rei Bartolomeu (npc)",
-      "voice": null,
+      "_nota": "Rei Bartolomeu — masculino, idoso e solene",
+      "voice": "bram",
+      "rate": 0.86,
       "extra": {}
     },
     "nico": {
-      "_nota": "Capit\u00e3o Nico (npc)",
-      "voice": null,
+      "_nota": "Capitão Nico — masculino, marinheiro",
+      "voice": "bram",
+      "rate": 0.95,
       "extra": {}
     },
     "olivia": {
-      "_nota": "Dona Ol\u00edvia (npc)",
-      "voice": null,
+      "_nota": "Dona Olívia — feminina, idosa e carinhosa",
+      "voice": "nadine",
+      "rate": 0.93,
       "extra": {}
     },
     "dimitri": {
-      "_nota": "Dimitri (npc)",
-      "voice": null,
+      "_nota": "Dimitri (mercador) — masculino, falante",
+      "voice": "bram",
+      "rate": 1.03,
       "extra": {}
     },
     "teo": {
-      "_nota": "Faroleiro Teo (npc)",
-      "voice": null,
+      "_nota": "Faroleiro Teo — masculino, idoso",
+      "voice": "bram",
+      "rate": 0.89,
       "extra": {}
     },
     "ariadne": {
-      "_nota": "Ariadne (npc)",
-      "voice": null,
+      "_nota": "Ariadne (atriz) — feminina, expressiva",
+      "voice": "nadine",
+      "rate": 1.08,
       "extra": {}
     },
     "pan": {
-      "_nota": "Corredor Pan (npc)",
-      "voice": null,
+      "_nota": "Corredor Pan — masculino, jovem e enérgico",
+      "voice": "bram",
+      "rate": 1.07,
       "extra": {}
     },
     "selene": {
-      "_nota": "S\u00e1bia Selene (npc)",
-      "voice": null,
+      "_nota": "Sábia Selene — feminina, serena",
+      "voice": "nadine",
+      "rate": 0.97,
       "extra": {}
     },
     "zenon": {
-      "_nota": "Z\u00eanon (npc)",
-      "voice": null,
+      "_nota": "Zênon (guardião do templo) — masculino, idoso e sábio",
+      "voice": "bram",
+      "rate": 0.86,
       "extra": {}
     }
   }

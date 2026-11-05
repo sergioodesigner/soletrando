@@ -28,6 +28,9 @@ const BASE = (args['base-url'] || process.env.OPENROUTER_BASE_URL || 'https://op
 const OUT = path.resolve(ROOT, args.out || 'public/audio/voice');
 const DELAY = Number(args.delay ?? 1200);
 const RETRIES = Number(args.retries ?? 6);
+const FORMAT = String(args.format || 'pcm'); // o heygen devolve PCM (16-bit mono, sem cabeçalho)
+const NO_TRIM = Boolean(args['no-trim']);
+const NO_NORM = Boolean(args['no-normalize']);
 const FORCE = Boolean(args.force);
 const DRY = Boolean(args['dry-run']);
 const LIMIT = args.limit ? Number(args.limit) : Infinity;
@@ -100,10 +103,10 @@ const PERSONA = {
 };
 if (!fs.existsSync(VOICES)) {
   const speakers = {};
-  for (const s of catalog.speakers) speakers[s.id] = { _nota: PERSONA[s.id] || `${s.name} (${s.kind})`, voice: null, extra: {} };
+  for (const s of catalog.speakers) speakers[s.id] = { _nota: PERSONA[s.id] || `${s.name} (${s.kind})`, voice: null, rate: 1, extra: {} };
   fs.writeFileSync(VOICES, JSON.stringify({
-    _ajuda: 'Preencha "voice" de cada personagem com um id de voz do modelo (null = voz padrão do modelo). "extra" é mesclado ao corpo da requisição (ex.: {"speed":1.0}).',
-    default: { voice: null, extra: {} },
+    _ajuda: 'Preencha "voice" de cada personagem. "rate" muda tom/velocidade ao tocar (0.9 = mais grave). "extra" é mesclado ao corpo da requisição. "pcmRate" = taxa do PCM do modelo (24000 é o padrão).',
+    default: { voice: null, extra: {}, pcmRate: 24000 },
     speakers,
   }, null, 2));
   console.log(`Criei ${path.relative(ROOT, VOICES)} — preencha as vozes de cada personagem.`);
@@ -116,14 +119,13 @@ const voiceFor = (sp) => {
 };
 
 // ---------------------------------------------------------------------------- áudio
-function isPlayable(buf) {
-  if (!buf || buf.length < 400) return false;
-  if (buf.slice(0, 3).toString() === 'ID3') return true;                                  // MP3 com tag
-  if (buf[0] === 0xff && (buf[1] & 0xe0) === 0xe0) return true;                            // MP3 frame sync
-  if (buf.slice(0, 4).toString() === 'RIFF' && buf.slice(8, 12).toString() === 'WAVE') return true; // WAV
-  if (buf.slice(0, 4).toString() === 'OggS') return true;                                  // OGG
-  return false;
-}
+const hasContainer = (buf) =>
+  buf.length > 12 && (
+    buf.slice(0, 3).toString() === 'ID3' ||
+    (buf[0] === 0xff && (buf[1] & 0xe0) === 0xe0) ||
+    (buf.slice(0, 4).toString() === 'RIFF' && buf.slice(8, 12).toString() === 'WAVE') ||
+    buf.slice(0, 4).toString() === 'OggS');
+const isPlayable = (buf) => !!buf && buf.length >= 400 && hasContainer(buf);
 const extOf = (buf) => (buf.slice(0, 4).toString() === 'RIFF' ? 'wav' : buf.slice(0, 4).toString() === 'OggS' ? 'ogg' : 'mp3');
 const fileFor = (e) => {
   for (const ext of ['mp3', 'wav', 'ogg']) {
@@ -133,9 +135,66 @@ const fileFor = (e) => {
   return null;
 };
 
-async function synth(e) {
+/** Taxa de amostragem do PCM: --pcm-rate > voices.json (por personagem ou default) > 24000. */
+const pcmRateFor = (sp) => Number(args['pcm-rate'] || voices.speakers?.[sp]?.pcmRate || voices.default?.pcmRate || 24000);
+
+/** PCM 16-bit mono → WAV (reserva quando não há ffmpeg; arquivos maiores). */
+function pcmToWav(pcm, rate) {
+  const h = Buffer.alloc(44);
+  h.write('RIFF', 0); h.writeUInt32LE(36 + pcm.length, 4); h.write('WAVE', 8); h.write('fmt ', 12);
+  h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(1, 22); h.writeUInt32LE(rate, 24);
+  h.writeUInt32LE(rate * 2, 28); h.writeUInt16LE(2, 32); h.writeUInt16LE(16, 34); h.write('data', 36); h.writeUInt32LE(pcm.length, 40);
+  return Buffer.concat([h, pcm]);
+}
+
+let ffmpegOk = null;
+function haveFfmpeg() {
+  if (ffmpegOk === null) {
+    try { execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' }); ffmpegOk = true; } catch { ffmpegOk = false; }
+    if (!ffmpegOk) console.warn('\n⚠ ffmpeg não encontrado: vou gravar WAV (funciona, mas os arquivos ficam ~6x maiores).\n  Instale o ffmpeg (brew install ffmpeg / apt install ffmpeg) para gerar MP3 compacto.\n');
+  }
+  return ffmpegOk;
+}
+
+/** Corta silêncio do começo/fim, nivela o volume e comprime em MP3 mono. */
+function pcmToMp3(pcm, rate) {
+  const trim = 'silenceremove=start_periods=1:start_duration=0.01:start_threshold=-48dB:detection=peak';
+  const filters = [];
+  if (!NO_TRIM) filters.push(trim, 'areverse', trim, 'areverse', 'apad=pad_dur=0.08');
+  if (!NO_NORM) filters.push('loudnorm=I=-18:TP=-2:LRA=9');
+  const argv = ['-v', 'error', '-f', 's16le', '-ar', String(rate), '-ac', '1', '-i', 'pipe:0'];
+  if (filters.length) argv.push('-af', filters.join(','));
+  argv.push('-ar', '24000', '-ac', '1', '-b:a', '64k', '-f', 'mp3', 'pipe:1');
+  return execFileSync('ffmpeg', argv, { input: pcm, maxBuffer: 64 * 1024 * 1024 });
+}
+
+/** Duração (s) da parte FALADA (sem o silêncio do começo/fim) do PCM. */
+function activeSamples(pcm) {
+  let peak = 0;
+  for (let i = 0; i < pcm.length - 1; i += 2) peak = Math.max(peak, Math.abs(pcm.readInt16LE(i)));
+  const th = Math.max(30, peak * 0.03);
+  let first = -1, last = -1;
+  for (let i = 0; i < pcm.length - 1; i += 2) if (Math.abs(pcm.readInt16LE(i)) > th) { if (first < 0) first = i; last = i; }
+  return first < 0 ? 0 : (last - first) / 2;
+}
+
+/** Ajuda a descobrir a taxa do PCM: compara a duração falada com o esperado para o texto (≈13,5 caracteres/s). */
+function rateHint(pcm, chars, used) {
+  const samples = activeSamples(pcm);
+  const expected = Math.max(0.3, chars / 13.5);
+  const dur = (r) => samples / r;
+  const rows = [16000, 22050, 24000, 44100, 48000].map((r) => ({ r, d: dur(r) }));
+  const ratio = dur(used) / expected;
+  const list = `    duração falada por taxa: ${rows.map((x) => `${x.r}Hz→${x.d.toFixed(1)}s`).join(' · ')} (esperado ≈${expected.toFixed(1)}s)`;
+  if (ratio > 0.65 && ratio < 1.6) return `${list}\n    taxa ${used} Hz plausível ✔ (ouça o arquivo: se soar muito agudo/rápido ou grave/lento, mude --pcm-rate)`;
+  const best = rows.reduce((a, b) => (Math.abs(b.d - expected) < Math.abs(a.d - expected) ? b : a));
+  return `${list}\n    ⚠ com ${used} Hz a fala dura ${(ratio * 100).toFixed(0)}% do esperado; ${best.r} Hz fica mais próximo — tente --pcm-rate=${best.r} (ou "pcmRate" no voices.json)`;
+}
+
+async function synth(e, info = {}) {
   const { voice, extra } = voiceFor(e.speaker);
-  const body = { model: MODEL, input: e.say, response_format: 'mp3', ...(voice ? { voice } : {}), ...extra };
+  const body = { model: MODEL, input: e.say, response_format: FORMAT, ...(voice ? { voice } : {}), ...extra };
+  const rate = pcmRateFor(e.speaker);
   let lastErr;
   for (let attempt = 0; attempt <= RETRIES; attempt++) {
     try {
@@ -152,19 +211,24 @@ async function synth(e) {
         err.retryAfter = Number(res.headers.get('retry-after')) || 0;
         throw err;
       }
-      let buf = Buffer.from(await res.arrayBuffer());
-      if (ct.includes('json') && !isPlayable(buf)) throw Object.assign(new Error(`Resposta JSON sem áudio: ${buf.toString('utf8').slice(0, 300)}`), { status: 0, fatal: false });
-      if (!isPlayable(buf) && (ct.includes('pcm') || ct.includes('octet'))) {
-        const rate = String(args['pcm-rate'] || 24000);
-        try {
-          const tmp = path.join(OUT, '.tmp.pcm');
-          fs.writeFileSync(tmp, buf);
-          buf = execFileSync('ffmpeg', ['-v', 'error', '-f', 's16le', '-ar', rate, '-ac', '1', '-i', tmp, '-f', 'mp3', '-'], { maxBuffer: 64 * 1024 * 1024 });
-          fs.rmSync(tmp, { force: true });
-        } catch { /* sem ffmpeg: cai no erro abaixo */ }
+      const raw = Buffer.from(await res.arrayBuffer());
+      // erro em JSON/texto com status 200
+      if (raw[0] === 0x7b || raw[0] === 0x3c || ct.includes('json') || ct.includes('text/')) {
+        throw Object.assign(new Error(`Resposta sem áudio: ${raw.toString('utf8').slice(0, 300)}`), { status: 0 });
       }
-      if (!isPlayable(buf)) throw Object.assign(new Error(`Áudio inválido (content-type=${ct || '?'}, ${buf.length} bytes)`), { fatal: true });
-      return buf;
+      // já veio com cabeçalho (mp3/wav/ogg) e não é declarado PCM → usa como veio
+      if (!ct.includes('pcm') && hasContainer(raw)) {
+        if (!isPlayable(raw)) throw Object.assign(new Error('Áudio curto demais'), { fatal: true });
+        return raw;
+      }
+      // PCM cru 16-bit mono
+      const pcm = raw.length % 2 ? raw.subarray(0, raw.length - 1) : raw;
+      if (pcm.length < rate * 2 * 0.08) throw Object.assign(new Error(`PCM curto demais (${pcm.length} bytes)`), { status: 0 });
+      let peak = 0;
+      for (let i = 0; i < pcm.length - 1; i += 2) { const v = Math.abs(pcm.readInt16LE(i)); if (v > peak) peak = v; if (peak > 400) break; }
+      if (peak < 40) throw Object.assign(new Error('Áudio vazio (só silêncio)'), { status: 0 });
+      if (info.onRaw) info.onRaw(pcm, rate);
+      return haveFfmpeg() ? pcmToMp3(pcm, rate) : pcmToWav(pcm, rate);
     } catch (err) {
       lastErr = err;
       const retryable = !err.fatal && (err.status === 429 || err.status >= 500 || err.status === undefined || err.status === 0);
@@ -204,7 +268,10 @@ function writeManifest() {
     index[`${e.speaker}|${e.id.slice(e.speaker.length + 1)}`] = e.id;
     for (const a of e.aliases || []) index[`${e.speaker}|${a}`] = e.id;
   }
-  fs.writeFileSync(path.join(OUT, 'manifest.json'), JSON.stringify({ version: Date.now().toString(36), model: MODEL, generatedAt: new Date().toISOString(), files, index }));
+  // "rate" por personagem (voices.json): <1 mais grave/lento, >1 mais agudo/rápido — diferencia personagens que dividem a mesma voz
+  const rates = {};
+  for (const [sp, v] of Object.entries(voices.speakers || {})) if (v && typeof v.rate === 'number' && v.rate !== 1) rates[sp] = v.rate;
+  fs.writeFileSync(path.join(OUT, 'manifest.json'), JSON.stringify({ version: Date.now().toString(36), model: MODEL, generatedAt: new Date().toISOString(), rates, files, index }));
   // página de revisão (ouvir tudo e marcar o que refazer)
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
   const groups = {};
@@ -235,7 +302,13 @@ if (args.probe) {
     seen.add(e.speaker);
     const v = voiceFor(e.speaker);
     process.stdout.write(`[${e.speaker}] voz=${v.voice ?? '(padrão)'} "${e.say.slice(0, 50)}" … `);
-    try { const b = await synth(e); const f = path.join(OUT, '_probe', `${e.speaker}.${extOf(b)}`); fs.writeFileSync(f, b); console.log(`ok (${Math.round(b.length / 1024)} KB) → ${path.relative(ROOT, f)}`); }
+    try {
+      let hint = '';
+      const b = await synth(e, { onRaw: (pcm, rate) => (hint = rateHint(pcm, e.say.length, rate)) });
+      const f = path.join(OUT, '_probe', `${e.speaker}.${extOf(b)}`); fs.writeFileSync(f, b);
+      console.log(`ok (${Math.round(b.length / 1024)} KB) → ${path.relative(ROOT, f)}`);
+      if (hint) console.log(hint);
+    }
     catch (err) { console.log(`FALHOU: ${err.message}`); }
     await sleep(DELAY);
   }
