@@ -14,7 +14,8 @@
     "voice:generate": "node scripts/voice/generate.mjs",
     "voice:probe": "node scripts/voice/generate.mjs --probe",
     "voice:info": "node scripts/voice/generate.mjs --info",
-    "voice:vozes": "node scripts/voice/generate.mjs --probe-voices"
+    "voice:vozes": "node scripts/voice/generate.mjs --probe-voices",
+    "voice:lab": "node scripts/voice/generate.mjs --lab"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

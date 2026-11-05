@@ -283,6 +283,46 @@ const stale = list.filter((e) => fileFor(e) && meta[e.id] !== fnv(e.say)).length
 const todo = list.filter((e) => FORCE || REDO.length || !isFresh(e));
 if (stale) console.log(`(${stale} arquivo(s) foram gerados com um texto antigo ou desconhecido e serão refeitos)`);
 
+// ---------------------------------------------------------------------------- --lab: descobrir como tirar o sotaque
+if (args.lab) {
+  if (!KEY) { console.error('Informe --key=...'); process.exit(1); }
+  const LD = path.join(OUT, '_probe', 'lab');
+  fs.mkdirSync(LD, { recursive: true });
+  const baseVoice = voices.speakers?.fox?.voice ?? null;
+  const T = [
+    ['texto', 'Letra Bê. (atual)', 'Letra Bê.', {}],
+    ['texto', 'A letra é Bê.', 'A letra é Bê.', {}],
+    ['texto', 'minúsculo, com vírgula', 'Letra, bê.', {}],
+    ['texto', 'Letra A. (atual)', 'Letra A.', {}],
+    ['texto', 'A letra é A.', 'A letra é A.', {}],
+    ['texto', 'Letra á (acentuado)', 'Letra, á.', {}],
+    ['param', 'language=pt-BR', 'Letra Bê.', { language: 'pt-BR' }],
+    ['param', 'language=pt', 'Letra Bê.', { language: 'pt' }],
+    ['param', 'lang=pt-BR', 'Letra Bê.', { lang: 'pt-BR' }],
+    ['param', 'locale=pt-BR', 'Letra Bê.', { locale: 'pt-BR' }],
+    ['param', 'language_code=pt', 'Letra Bê.', { language_code: 'pt' }],
+    ['param', 'provider.options.heygen.language=pt-BR', 'Letra Bê.', { provider: { options: { heygen: { language: 'pt-BR' } } } }],
+    ['frase', 'frase longa (referência de sotaque)', 'Muito bem! Você completou a palavra casa!', {}],
+  ];
+  console.log(`Gravando ${T.length} variações (voz ${baseVoice ?? 'padrão'}) → ${path.relative(ROOT, LD)}/\n`);
+  let i = 0;
+  for (const [kind, desc, text, extra] of T) {
+    i++;
+    const sp = `__lab_${i}`;
+    voices.speakers[sp] = { voice: baseVoice, extra };
+    const name = `${String(i).padStart(2, '0')}_${kind}_${desc.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}`;
+    process.stdout.write(`${String(i).padStart(2)}. [${kind}] ${desc.padEnd(40)} "${text}" … `);
+    try {
+      const b = await synth({ speaker: sp, say: text, group: 'lab', id: sp, label: sp });
+      fs.writeFileSync(path.join(LD, `${name}.${extOf(b)}`), b);
+      console.log('ok');
+    } catch (err) { console.log(`FALHOU: ${String(err.message).slice(0, 160)}`); }
+    await sleep(DELAY);
+  }
+  console.log(`\nOuça os arquivos de ${path.relative(ROOT, LD)}/ em ordem.\nNos [param]: se um parâmetro não existir, o modelo costuma ignorá-lo (o áudio sai igual ao 01) — o que importa é se algum SOA MAIS PORTUGUÊS.\nMe diga o número do que soou melhor.`);
+  process.exit(0);
+}
+
 // ---------------------------------------------------------------------------- --probe-voices: ouvir cada VOZ do modelo
 if (args['probe-voices']) {
   if (!KEY) { console.error('Informe --key=...'); process.exit(1); }
