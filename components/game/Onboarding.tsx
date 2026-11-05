@@ -183,10 +183,8 @@ export function ProfileScreen({ onCreate, onBack }: ProfileProps) {
 
 type Who = 'fox' | 'owl';
 const script = (name: string): { who: Who; text: string }[] => [
-  { who: 'fox', text: `Oi, ${name}! Eu sou o Rufo, o Raposo Letrado. Bem-vindo ao Reino das Letras!` },
-  { who: 'owl', text: 'E eu sou a Sofia, a Coruja. Cuido dos números lá na Grécia.' },
-  { who: 'fox', text: 'Um vento maluco espalhou as letras e os números! Você me ajuda a arrumar tudo?' },
-  { who: 'owl', text: 'Cada fase que você vencer ganha estrelas e figurinhas. Vamos começar?' },
+  { who: 'fox', text: `Oi, ${name}! Eu sou o Rufo. Um vento maluco bagunçou as letras!` },
+  { who: 'owl', text: 'Eu sou a Sofia e cuido dos números. Vamos arrumar tudo juntos?' },
 ];
 
 interface IntroProps {

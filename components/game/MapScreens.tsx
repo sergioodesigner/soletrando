@@ -240,7 +240,7 @@ export function WorldMap({
                 data-coach={available && p.index === firstOpen ? 'pin-available' : undefined}
                 data-tv-autofocus={p.index === firstOpen ? true : undefined}
                 aria-label={`Fase ${p.index + 1}: ${p.name}${!unlocked ? ' (trancada)' : ''}`}
-                className="absolute flex flex-col items-center"
+                className="absolute z-20 flex flex-col items-center"
                 style={{ left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -100%)', minWidth: 48, minHeight: 48, justifyContent: 'flex-end' }}
               >
                 <span className={available ? 'px-pin-bounce' : ''}>

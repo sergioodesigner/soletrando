@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, HelpCircle } from 'lucide-react';
 import { Mascot, type MascotMood } from './Mascot';
+import { speakerOf } from '@/lib/game/types';
 import { DialogueBox } from './DialogueBox';
 import { CoachLayer } from './CoachLayer';
 import { IconBtn, SoundSettings, Stats } from './Hud';
@@ -16,7 +17,7 @@ import {
   markIntroSeen, noteWeak, pinStars, relieveWeak, resetCoachIds, setActiveProfile, setProfileAge, useGameData,
 } from '@/lib/game/store';
 import { pinMath, pinWords, trainingMath, trainingWords, type MathItem, type WordItem } from '@/lib/game/content';
-import { ALLY_LINES, BOSS_OF, STORIES, sceneBg } from '@/lib/game/story';
+import { ALLY_LINES, BOSS_OF, STORIES, fillName, sceneBg, type Line } from '@/lib/game/story';
 import type { AgeId, PinDef, WorldDef } from '@/lib/game/types';
 import { pinUnlocked, starsFor, WORLDS } from '@/lib/game/worlds';
 import { askBrain, FALLBACK_FACTS, type BrainRequest } from '@/lib/brain';
@@ -81,6 +82,12 @@ export function GameRoot({
   const profile = activeProfile(data);
   const piper = usePiperState();
   const dialogue = useDialogue({ soundEnabled, preferPiper: piper.enabled && piper.status === 'ready' });
+  // O tutorial tem a PRÓPRIA fala: se dividisse a do jogo, todo balão da tela repetiria o texto dele (caixas duplicadas)
+  const coachDialogue = useDialogue({ soundEnabled, preferPiper: piper.enabled && piper.status === 'ready' });
+  const dlgStatus = useRef(dialogue.status);
+  useEffect(() => {
+    dlgStatus.current = dialogue.status;
+  });
 
   const [phase, setPhase] = useState<Phase>('title');
   const [world, setWorld] = useState<WorldDef | null>(null);
@@ -97,6 +104,8 @@ export function GameRoot({
 
   const stats = useRef({ wins: 0, mistakes: 0, giveUps: 0, comboBonus: 0 });
   const pendingResult = useRef<ResultData | null>(null);
+  const openingRef = useRef<Promise<void> | null>(null);
+  const openingLine = useRef<Line | null>(null);
   const comboRef = useRef(0);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finishTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -149,10 +158,11 @@ export function GameRoot({
   const goPhase = useCallback(
     (p: Phase) => {
       dialogue.stop();
+      coachDialogue.stop();
       setCoach(null);
       setPhase(p);
     },
-    [dialogue]
+    [dialogue, coachDialogue]
   );
 
   const changeAge = useCallback(
@@ -287,8 +297,10 @@ export function GameRoot({
   );
 
   const beginPlay = useCallback(
-    (w: WorldDef, p: PinDef, isTraining: boolean) => {
+    (w: WorldDef, p: PinDef, isTraining: boolean, openLine: Line | null = null) => {
       stats.current = { wins: 0, mistakes: 0, giveUps: 0, comboBonus: 0 };
+      openingRef.current = null;
+      openingLine.current = openLine;
       comboRef.current = 0;
       setCombo(0);
       if (finishTimer.current) clearTimeout(finishTimer.current);
@@ -309,12 +321,14 @@ export function GameRoot({
     (p: PinDef) => {
       if (!world || !profile) return;
       const first = (pinStars(profile, world.id)[p.index] ?? 0) === 0;
-      if (first && world.subject && STORIES[world.subject as 'letras' | 'matematica']?.[p.index]) {
+      const story = world.subject ? STORIES[world.subject as 'letras' | 'matematica']?.[p.index] : undefined;
+      if (first && story && p.kind === 'boss') {
         setPin(p);
         setTraining(false);
-        goPhase('sceneOpen');
+        goPhase('sceneOpen'); // só o chefe tem cena de abertura (é o momento dramático)
       } else {
-        beginPlay(world, p, false);
+        // as demais fases já começam no jogo: o personagem fala UMA frase e o desafio aparece
+        beginPlay(world, p, false, first && story ? story.open[0] : null);
       }
     },
     [world, profile, beginPlay, goPhase]
@@ -368,8 +382,10 @@ export function GameRoot({
   /* ---------------- fala / tutor dentro da fase ---------------- */
 
   const speak = useCallback(
-    (text: string, staticKey?: string) => {
+    async (text: string, staticKey?: string) => {
       speakSeq.current++;
+      // a fala de abertura do personagem termina antes de o mascote ler a pergunta
+      if (openingRef.current) await openingRef.current;
       const tiny = text.trim().length <= 2 || /^letra_/.test(staticKey ?? '');
       return dialogue.say(text, { mascot: mascotId, staticKey, bubble: !tiny });
     },
@@ -414,26 +430,36 @@ export function GameRoot({
       return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < window.innerHeight;
     };
     const t = setInterval(() => {
+      // no jogo, o tutorial espera o mascote terminar de falar (nada de dois textos ao mesmo tempo)
+      if (phase === 'play' && dlgStatus.current !== 'done' && dlgStatus.current !== 'idle') return;
+      const hasClear = profile ? Object.values(profile.progress).some((a) => a.some((x) => x > 0)) : false;
       const next = COACH_STEPS.find(
-        (s) => !data.coachSeen[s.id] && (s.screen === screenKey || (s.screen === 'play' && phase === 'play')) && visible(s.target)
+        (s) =>
+          !data.coachSeen[s.id] &&
+          (s.after !== 'firstClear' || hasClear) &&
+          (s.screen === screenKey || (s.screen === 'play' && phase === 'play')) &&
+          visible(s.target)
       );
       // o tutorial fala pelo mascote do mundo atual (Rufo nas Letras, Sofia na Grécia); no mapa-múndi, o Rufo
-      if (next) setCoach(screenKey === 'worlds' || !world?.mascot ? next : { ...next, mascot: world.mascot });
+      if (next) {
+        dialogue.stop();
+        setCoach(screenKey === 'worlds' || !world?.mascot ? next : { ...next, mascot: world.mascot });
+      }
     }, 700);
     return () => clearInterval(t);
-  }, [screenKey, paused, coach, phase, sheetOpen, data.coachSeen, world]);
+  }, [screenKey, paused, coach, phase, sheetOpen, data.coachSeen, world, profile, dialogue]);
 
   const closeCoach = useCallback(() => {
     if (coach) markCoachSeen(coach.id);
-    dialogue.stop();
+    coachDialogue.stop();
     setCoach(null);
-  }, [coach, dialogue]);
+  }, [coach, coachDialogue]);
 
   const skipAllCoach = useCallback(() => {
     COACH_STEPS.filter((s) => s.screen === screenKey || (s.screen === 'play' && phase === 'play')).forEach((s) => markCoachSeen(s.id));
-    dialogue.stop();
+    coachDialogue.stop();
     setCoach(null);
-  }, [screenKey, phase, dialogue]);
+  }, [screenKey, phase, coachDialogue]);
 
   /** "Como se joga?": faz as explicações da tela atual reaparecerem. */
   const replayCoach = useCallback(
@@ -446,6 +472,18 @@ export function GameRoot({
     },
     []
   );
+
+  // Abertura da fase: o personagem fala UMA frase já com o desafio na tela (nada de cena longa antes de jogar)
+  useEffect(() => {
+    if (phase !== 'play' || !openingLine.current || !profile) return;
+    const line = openingLine.current;
+    openingLine.current = null;
+    const p = dialogue.say(fillName(line.text, profile.name), { mascot: line.who });
+    openingRef.current = p;
+    void p.finally(() => {
+      if (openingRef.current === p) openingRef.current = null;
+    });
+  }, [phase, profile, dialogue]);
 
   /* ---------------- controle remoto: Voltar, OK e foco automático ---------------- */
 
@@ -477,9 +515,9 @@ export function GameRoot({
 
   // OK com nada focado: pula a digitação do balão
   useEffect(() => {
-    setAdvanceHandler(() => dialogue.skip());
+    setAdvanceHandler(() => (coach ? coachDialogue.skip() : dialogue.skip()));
     return () => setAdvanceHandler(null);
-  }, [dialogue]);
+  }, [dialogue, coachDialogue, coach]);
 
   // Ao trocar de tela (ou fechar tutorial/ficha), com o controle em uso, foca o controle principal
   useEffect(() => {
@@ -646,10 +684,14 @@ export function GameRoot({
       />
     );
   } else if (phase === 'play' && profile && world && pin) {
+    // Tela larga (TV/computador): personagem e balão à esquerda, desafio à direita — as respostas nunca ficam cortadas
+    const landscape = box.w > 0 && box.w / box.h >= 1.3;
+    const speakerId = dialogue.line?.mascot ?? mascotId;
+    const speakerIsMascot = speakerOf(speakerId).kind === 'mascot';
     body = (
       <div className="game-root relative flex-1 min-h-0 flex flex-col" style={sceneBg(training ? undefined : pin.scene)}>
         <div className="absolute inset-0 bg-[#1a1033]/30" />
-        <div className="relative z-10 mx-auto w-full max-w-xl flex-1 min-h-0 flex flex-col">
+        <div className={`relative z-10 mx-auto w-full flex-1 min-h-0 flex flex-col ${landscape ? 'max-w-6xl' : 'max-w-xl'}`}>
         {/* barra de cima */}
         <div className="relative z-10 flex items-center gap-1.5 p-2">
           <span data-coach="back">
@@ -669,64 +711,72 @@ export function GameRoot({
           <SoundSettings {...top} />
         </div>
 
-        {/* mascote + balão */}
-        <div className="relative z-10 px-2 flex items-end gap-2">
-          <Mascot
-            id={mascotId}
-            size={92}
-            flip={mascotId === 'owl'}
-            mood={dialogue.status === 'typing' ? 'talk' : mood}
-            className="shrink-0"
-            data-coach="mascot-play"
-            onClick={() => {
-              void dialogue.say('Estou aqui com você! Toque no "?" azul se quiser rever as explicações.', { mascot: mascotId });
-            }}
-          />
-          <DialogueBox
-            data-coach="bubble"
-            dialogue={dialogue}
-            className={`flex-1 ${coach && !coach.target.includes('bubble') ? 'invisible' : ''}`}
-            idleHint={`Vamos lá, ${profile.name}! Eu falo e escrevo aqui para você.`}
-          />
-        </div>
-
-        {/* chefe: barra de vida (cada acerto tira um pedaço) */}
-        {pin.kind === 'boss' && !training && BOSS_OF[world.id] && (
-          <div data-coach="boss-bar" className="relative z-10 px-2 pt-1.5 flex items-center gap-2">
-            <span className={bossAnim === 'hit' ? 'mascot-sad' : ''}>
-              <Portrait who={BOSS_OF[world.id].id} size={58} talking={bossAnim === 'taunt'} />
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="px-title text-[8px] text-[#fff4d6] [text-shadow:2px_2px_0_#3b2a1a] mb-1">{BOSS_OF[world.id].name.toUpperCase()}</p>
-              <div className="flex gap-0.5" aria-label={`Vida do chefe: ${Math.max(0, pin.challenges - pips)} de ${pin.challenges}`}>
-                {Array.from({ length: pin.challenges }).map((_, i) => (
-                  <span key={i} className={`h-3.5 flex-1 border-2 border-[#3b2a1a] ${i < pin.challenges - pips ? 'bg-[#e8624a]' : 'bg-[#4a3a66]'}`} />
-                ))}
-              </div>
+        <div className={landscape ? 'relative z-10 flex-1 min-h-0 flex flex-row gap-3 px-2 pb-2' : 'contents'}>
+          <div className={landscape ? 'w-[38%] shrink-0 min-h-0 flex flex-col justify-center gap-3' : 'contents'}>
+            {/* quem está falando + balão */}
+            <div className={`relative z-10 px-2 flex gap-2 ${landscape ? 'flex-col items-center' : 'items-end'}`}>
+              {speakerIsMascot ? (
+                <Mascot
+                  id={mascotId}
+                  size={landscape ? 150 : 92}
+                  flip={mascotId === 'owl'}
+                  mood={dialogue.status === 'typing' ? 'talk' : mood}
+                  className="shrink-0"
+                  data-coach="mascot-play"
+                  onClick={() => {
+                    void dialogue.say('Estou aqui com você! Toque no "?" azul se quiser rever as explicações.', { mascot: mascotId });
+                  }}
+                />
+              ) : (
+                <Portrait who={speakerId} size={landscape ? 150 : 92} talking={dialogue.status === 'typing'} />
+              )}
+              <DialogueBox
+                data-coach="bubble"
+                dialogue={dialogue}
+                className="flex-1 w-full"
+                idleHint={`Vamos lá, ${profile.name}! Eu falo e escrevo aqui para você.`}
+              />
             </div>
-          </div>
-        )}
 
-        {comboToast !== null && (
-          <div className="absolute z-30 left-1/2 top-24 -translate-x-1/2 pointer-events-none">
-            <span className="px-title px-notch px-3 py-2 bg-[#facc15] text-[#3b2a1a] border-4 border-[#3b2a1a] text-[12px] px-float inline-block">
-              COMBO ×{comboToast}! +1
-            </span>
+            {/* chefe: barra de vida (cada acerto tira um pedaço) */}
+            {pin.kind === 'boss' && !training && BOSS_OF[world.id] && (
+              <div data-coach="boss-bar" className="relative z-10 px-2 pt-1.5 flex items-center gap-2">
+                <span className={bossAnim === 'hit' ? 'mascot-sad' : ''}>
+                  <Portrait who={BOSS_OF[world.id].id} size={58} talking={bossAnim === 'taunt'} />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="px-title text-[8px] text-[#fff4d6] [text-shadow:2px_2px_0_#3b2a1a] mb-1">{BOSS_OF[world.id].name.toUpperCase()}</p>
+                  <div className="flex gap-0.5" aria-label={`Vida do chefe: ${Math.max(0, pin.challenges - pips)} de ${pin.challenges}`}>
+                    {Array.from({ length: pin.challenges }).map((_, i) => (
+                      <span key={i} className={`h-3.5 flex-1 border-2 border-[#3b2a1a] ${i < pin.challenges - pips ? 'bg-[#e8624a]' : 'bg-[#4a3a66]'}`} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        )}
 
-        {/* o jogo por dentro */}
-        <div className="relative z-10 flex-1 min-h-0 px-2 pt-2 pb-2">
-          <div className="game-stage max-h-full overflow-y-auto p-1 flex flex-col items-center">
-            {/* speak/askTutor só são chamados em eventos e effects dos jogos — nunca durante o render */}
-            {/* eslint-disable-next-line react-hooks/refs */}
-            {renderStage({
-              world, pin, speak, askTutor,
-              onWin: handleWin,
-              onMistake: handleMistake,
-              onGiveUp: handleGiveUp,
-              training,
-            })}
+          {comboToast !== null && (
+            <div className="absolute z-30 left-1/2 top-24 -translate-x-1/2 pointer-events-none">
+              <span className="px-title px-notch px-3 py-2 bg-[#facc15] text-[#3b2a1a] border-4 border-[#3b2a1a] text-[12px] px-float inline-block">
+                COMBO ×{comboToast}! +1
+              </span>
+            </div>
+          )}
+
+          {/* o jogo por dentro */}
+          <div className={landscape ? 'relative z-10 flex-1 min-w-0 min-h-0 flex flex-col justify-center' : 'relative z-10 flex-1 min-h-0 px-2 pt-2 pb-2'}>
+            <div className="game-stage max-h-full overflow-y-auto p-1 flex flex-col items-center">
+              {/* speak/askTutor só são chamados em eventos e effects dos jogos — nunca durante o render */}
+              {/* eslint-disable-next-line react-hooks/refs */}
+              {renderStage({
+                world, pin, speak, askTutor,
+                onWin: handleWin,
+                onMistake: handleMistake,
+                onGiveUp: handleGiveUp,
+                training,
+              })}
+            </div>
           </div>
         </div>
         <div className="absolute z-20 right-3" style={{ bottom: 10 }}>
@@ -760,7 +810,7 @@ export function GameRoot({
         </div>
       </div>
       {coach && !paused && (
-        <CoachLayer step={coach} dialogue={dialogue} onDone={closeCoach} onSkipAll={skipAllCoach} scale={scale} />
+        <CoachLayer step={coach} dialogue={coachDialogue} onDone={closeCoach} onSkipAll={skipAllCoach} scale={scale} />
       )}
     </>
   );

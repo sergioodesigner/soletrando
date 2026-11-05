@@ -7,12 +7,26 @@
 export function isDpad(): boolean {
   if (typeof document === 'undefined') return false;
   const c = document.documentElement.classList;
+  if (c.contains('using-pointer')) return false;
   return c.contains('using-dpad') || c.contains('tv-mode');
 }
 
 export function setDpad(on: boolean): void {
   if (typeof document === 'undefined') return;
-  document.documentElement.classList.toggle('using-dpad', on);
+  const c = document.documentElement.classList;
+  c.toggle('using-dpad', on);
+  if (on) c.remove('using-pointer');
+}
+
+/**
+ * Muitos navegadores de TV (ex.: TCL/Android TV) movem um CURSOR com o controle e não mandam setas.
+ * Ao ver o mouse mexer, entramos em "modo ponteiro": sem anel de foco, com destaque ao passar o cursor.
+ */
+export function setPointer(on: boolean): void {
+  if (typeof document === 'undefined') return;
+  const c = document.documentElement.classList;
+  if (on) c.remove('using-dpad');
+  c.toggle('using-pointer', on);
 }
 
 type BackHandler = () => boolean | void;

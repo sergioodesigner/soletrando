@@ -7,7 +7,7 @@
 const FOCUSABLE =
   'button:not([disabled]):not([aria-hidden="true"]), a[href], [tabindex]:not([tabindex="-1"])';
 
-import { isBackKey, isBackspace, runAdvance, runBack, setDpad } from './dpad';
+import { isBackKey, isBackspace, runAdvance, runBack, setDpad, setPointer } from './dpad';
 
 type Dir = 'up' | 'down' | 'left' | 'right';
 
@@ -332,9 +332,16 @@ export function initTvSpatialNavigation(): () => void {
 
   // toque/clique some com o anel de foco; no RPG não roubamos o foco ao abrir (só depois da 1ª tecla)
   const onPointer = () => setDpad(false);
+  // cursor de TV (o controle move um ponteiro): vira modo ponteiro
+  const onMove = (e: Event) => {
+    const pe = e as PointerEvent;
+    if (pe.pointerType && pe.pointerType !== 'mouse') return;
+    if (!document.documentElement.classList.contains('using-pointer')) setPointer(true);
+  };
 
   window.addEventListener('keydown', onKeyDown, true);
   window.addEventListener('pointerdown', onPointer, true);
+  window.addEventListener('pointermove', onMove, true);
 
   const t = window.setTimeout(() => {
     const gameActive = (window as unknown as { __soletrandoGameActive?: boolean }).__soletrandoGameActive;
@@ -345,5 +352,6 @@ export function initTvSpatialNavigation(): () => void {
     window.clearTimeout(t);
     window.removeEventListener('keydown', onKeyDown, true);
     window.removeEventListener('pointerdown', onPointer, true);
+    window.removeEventListener('pointermove', onMove, true);
   };
 }

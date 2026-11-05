@@ -242,7 +242,7 @@ html.tv-mode main.tv-main {
 
 /* ---- foco por setas/controle (RPG): anel amarelo bem visível, sem clip-path (ele cortaria o contorno) ---- */
 html.using-dpad .game-root :is(button, a, [tabindex]):focus,
-html.tv-mode .game-root :is(button, a, [tabindex]):focus,
+html.tv-mode:not(.using-pointer) .game-root :is(button, a, [tabindex]):focus,
 html.using-dpad :is(.game-stage, [data-tv-modal]) :is(button, a, [tabindex]):focus {
   outline: 5px solid #facc15 !important;
   outline-offset: 3px !important;
@@ -253,3 +253,15 @@ html.using-dpad :is(.game-stage, [data-tv-modal]) :is(button, a, [tabindex]):foc
 }
 html.using-dpad .game-root button:focus:not(:focus-visible) { outline: 5px solid #facc15 !important; }
 .game-root button:focus { outline-color: transparent; }
+
+/* ---- TV com cursor (controle move um ponteiro): cursor sempre visível e destaque ao passar por cima ---- */
+html.tv-mode.game-active body { cursor: auto; }
+html.tv-mode .game-root :is(button, a, [tabindex]):hover:not(:disabled),
+html.using-pointer .game-root :is(button, a, [tabindex]):hover:not(:disabled) {
+  outline: 5px solid #facc15;
+  outline-offset: 3px;
+  clip-path: none;
+  box-shadow: 0 0 0 9px rgba(250, 204, 21, 0.45), 0 8px 24px rgba(0, 0, 0, 0.45);
+  filter: brightness(1.12);
+  z-index: 25;
+}

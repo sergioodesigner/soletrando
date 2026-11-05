@@ -62,7 +62,7 @@ export function CoachLayer({ step, dialogue, onDone, onSkipAll, scale = 1 }: Pro
 
   if (!rect || rect.w === 0) return null;
   // quando o alvo É o balão da cena, a fala já aparece nele (o diálogo é compartilhado): sem balão duplicado
-  const targetIsBubble = step.target.includes('bubble');
+  const targetIsBubble = false; // o tutorial tem fala/balão próprios
 
   const pad = 6;
   const hx = Math.max(0, rect.x - pad);

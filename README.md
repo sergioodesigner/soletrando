@@ -41,6 +41,8 @@ Fluxo: **Título → Perfil (nome + idade) → Introdução → Mapa-múndi → 
 - **Momento Treino:** 3 desafios com as palavras em que a criança mais errou + palavras "que valem a pena"; bônus de moedas (cheio na 1ª vez perfeita). **Jogo da Memória** nas duas categorias (figura ↔ palavra; número ↔ quantidade; conta ↔ resultado), também com bônus. Ambos aparecem no resultado da fase e nas fases já vencidas.
 - **Combo:** a cada 3 acertos seguidos, +1 moeda.
 - **TV / controle remoto:** o RPG funciona só com **setas + OK + Voltar** (`?tv=1` ou navegador de Smart TV). O jogo se amplia sozinho para a tela (escala por altura), o anel amarelo mostra o foco, janelas e tutoriais prendem o foco e o **Voltar** (Escape/Backspace, Tizen 10009, webOS 461) fecha a janela ou sobe uma tela. Sem teclado, o perfil tem nomes rápidos. Código: `lib/dpad.ts` e `lib/tvSpatialNav.ts`.
+- **TV com cursor:** alguns navegadores de TV (ex.: TCL/Android TV) movem um cursor em vez de mandar setas. O jogo detecta o mouse se mexendo e entra em *modo ponteiro* (sem anel de setas, destaque ao passar o cursor). Em telas largas o jogo vira duas colunas (personagem à esquerda, desafio à direita), então as respostas nunca ficam cortadas.
+- **Começo leve:** só o chefe tem cena de abertura; as outras fases abrem direto no desafio com UMA fala do personagem. O tutorial é gradual (poucos passos antes do 1º desafio, o resto só depois da 1ª fase vencida) e tem fala própria.
 - **Modo clássico** (sem mapa) em Configurações; o modo TV usa a interface clássica por enquanto e será reformulado.
 
 ## Voz Faber no navegador (Piper)
