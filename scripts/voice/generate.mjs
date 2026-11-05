@@ -222,6 +222,13 @@ async function synth(e, info = {}) {
   throw lastErr;
 }
 
+// ---------------------------------------------------------------------------- qual texto gerou cada arquivo
+// Sem isso, um arquivo gerado com um texto antigo (ex.: "Bê." antes de virar "Letra Bê.") seria tratado como pronto.
+const META = path.join(OUT, '.say.json');
+const meta = readJson(META, {});
+const saveMeta = () => { fs.mkdirSync(OUT, { recursive: true }); fs.writeFileSync(META, JSON.stringify(meta)); };
+const isFresh = (e) => !!fileFor(e) && meta[e.id] === fnv(e.say);
+
 // ---------------------------------------------------------------------------- seleção
 function selected() {
   let list = entries;
@@ -272,7 +279,9 @@ document.addEventListener('change',()=>{n.textContent=document.querySelectorAll(
 
 // ---------------------------------------------------------------------------- execução
 const list = selected();
-const todo = list.filter((e) => FORCE || REDO.length || !fileFor(e));
+const stale = list.filter((e) => fileFor(e) && meta[e.id] !== fnv(e.say)).length;
+const todo = list.filter((e) => FORCE || REDO.length || !isFresh(e));
+if (stale) console.log(`(${stale} arquivo(s) foram gerados com um texto antigo ou desconhecido e serão refeitos)`);
 
 // ---------------------------------------------------------------------------- --probe-voices: ouvir cada VOZ do modelo
 if (args['probe-voices']) {
@@ -381,6 +390,8 @@ for (const e of queue) {
     fs.mkdirSync(dir, { recursive: true });
     for (const ext of ['mp3', 'wav', 'ogg']) fs.rmSync(path.join(dir, `${e.id}.${ext}`), { force: true });
     fs.writeFileSync(path.join(dir, `${e.id}.${extOf(buf)}`), buf);
+    meta[e.id] = fnv(e.say);
+    saveMeta();
     console.log(`ok ${Math.round(buf.length / 1024)} KB`);
   } catch (err) {
     console.log(`FALHOU: ${String(err.message).slice(0, 160)}`);
